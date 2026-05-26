@@ -164,6 +164,9 @@ Likely provider or auth throttle. Check SMTP provider logs and retry after coold
 ### "PKCE code verifier not found in storage"
 Magic link was opened in a different browser/device than the one used to request it (common on iPhone Gmail in-app browser). Request a new magic link and open it in the same browser context. If needed, use `/login` -> `Sign in with code` and enter the 6-digit backup code from the same email. Ensure Supabase Magic Link template uses token-hash confirm route (`/auth/confirm?token_hash=...&type=email`) and includes `{{ .Token }}`.
 
+### "code challenge does not match previously saved code verifier"
+Treat this as the same PKCE browser-context mismatch. Use `/login` -> `Sign in with code` from the newest email, or move into Safari and request a fresh sign-in email.
+
 ### "stack depth limit exceeded"
 Likely RLS helper recursion caused by `SECURITY INVOKER` on `app_user_role()` / `app_user_year()`. Apply migration `20260525233000_torch_live_fix_rls_helper_definer.sql`.
 

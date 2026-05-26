@@ -6,7 +6,7 @@ function SubmitButton() {
   const { pending } = useFormStatus();
   return (
     <button type="submit" className="button button-primary" disabled={pending}>
-      {pending ? "Sending link..." : "Send magic link"}
+      {pending ? "Sending sign-in email..." : "Send sign-in email"}
     </button>
   );
 }

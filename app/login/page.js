@@ -3,6 +3,7 @@ import Link from "next/link";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import EmailSignInForm from "../../components/auth/EmailSignInForm";
+import InAppBrowserWarning from "../../components/auth/InAppBrowserWarning";
 import { getHomeForRole, getSessionContext } from "../../lib/auth";
 import { createAdminSupabaseClient } from "../../lib/supabase/admin";
 import { createSupabaseServerClient } from "../../lib/supabase/server";
@@ -11,6 +12,15 @@ import { getSiteUrl } from "../../lib/supabase/env";
 const LAST_LOGIN_EMAIL_COOKIE = "torch_last_login_email";
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function isPkceBrowserMismatch(normalizedMessage) {
+  return (
+    normalizedMessage.includes("pkce code verifier not found") ||
+    normalizedMessage.includes("flow_state_not_found") ||
+    normalizedMessage.includes("code challenge does not match previously saved code verifier") ||
+    normalizedMessage.includes("bad_code_verifier")
+  );
+}
+
 function normalizeAuthError(message) {
   const fallback = "Unable to send sign-in link right now. Please try again.";
   const raw = String(message || "").trim();
@@ -18,8 +28,12 @@ function normalizeAuthError(message) {
 
   const normalized = raw.toLowerCase();
 
-  if (normalized.includes("pkce code verifier not found")) {
-    return "Sign-in link opened in a different browser/device. Request a new magic link, then open the new link in the same browser. On iPhone Gmail, use Open in Safari first.";
+  if (isPkceBrowserMismatch(normalized)) {
+    return "Sign-in link opened in a different browser/device. Return to login and use the 6-digit code from your latest TORCH sign-in email.";
+  }
+
+  if (normalized.includes("use @supabase/ssr")) {
+    return "That sign-in link could not finish in this browser. Use Sign in with code below, or request a fresh sign-in email.";
   }
 
   if (
@@ -56,7 +70,7 @@ function alertFromParams(params) {
   if (params?.sent === "1") {
     return {
       className: "alert alert-success",
-      text: `Magic link sent to ${params.email || "your inbox"}.`,
+      text: `Sign-in email sent to ${params.email || "your inbox"}. Use the newest email and enter the 6-digit code if the link does not finish.`,
     };
   }
 
@@ -250,6 +264,7 @@ export default async function LoginPage({ searchParams }) {
   const cookieStore = await cookies();
   const lastEmail = cookieStore.get(LAST_LOGIN_EMAIL_COOKIE)?.value || "";
   const defaultEmail = params?.email || lastEmail;
+  const useCodeFallback = params?.use_code === "1";
   const alert = alertFromParams(params || {});
   const session = await getSessionContext();
 
@@ -272,9 +287,16 @@ export default async function LoginPage({ searchParams }) {
         <p className="brand-kicker">
           Torch Leadership Academy live operations app. Sign in with your registered email.
         </p>
+        <InAppBrowserWarning />
         {alert ? <p className={alert.className}>{alert.text}</p> : null}
+        {useCodeFallback ? (
+          <p className="alert alert-warn mt-sm">
+            This browser could not complete the sign-in link. Use Sign in with code below from your
+            newest TORCH email.
+          </p>
+        ) : null}
         <EmailSignInForm action={sendMagicLink} defaultEmail={defaultEmail} />
-        <div className="surface surface-pad-sm mt-md">
+        <div className={`surface surface-pad-sm mt-md${useCodeFallback ? " code-focus" : ""}`}>
           <h3 className="card-subtitle">Use Email Code Instead</h3>
           <p className="muted">
             If the link does not open correctly, enter the 6-digit code from your latest TORCH
@@ -315,6 +337,7 @@ export default async function LoginPage({ searchParams }) {
                 required
                 inputMode="numeric"
                 autoComplete="one-time-code"
+                autoFocus={useCodeFallback}
               />
             </div>
             <button type="submit" className="button button-secondary">

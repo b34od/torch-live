@@ -270,6 +270,12 @@ img {
   border: 1px solid rgba(40, 154, 72, 0.23);
 }
 
+.alert-warn {
+  background: rgba(238, 183, 95, 0.18);
+  color: #794800;
+  border: 1px solid rgba(212, 141, 25, 0.34);
+}
+
 .app-shell {
   max-width: 1140px;
   margin: 0 auto;
@@ -948,6 +954,11 @@ img {
   font-size: 0.9rem;
   display: grid;
   gap: 0.3rem;
+}
+
+.code-focus {
+  border-color: rgba(212, 141, 25, 0.48);
+  box-shadow: 0 0 0 2px rgba(238, 183, 95, 0.22), var(--shadow-soft);
 }
 
 .auth-legal-links a {

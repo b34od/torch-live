@@ -14,11 +14,11 @@ If any of these fail, stop and contact Bryan.
 ## 2) Sign In
 
 1. Open `https://live.torchleadershipacademy.org/login`.
-2. Enter your email and click `Send Magic Link`.
-3. Open your email and click `Sign in to TORCH Live`.
+2. Enter your email and click `Send sign-in email`.
+3. Open your newest email and either click `Sign in to TORCH Live` or use the 6-digit code.
 4. If the link opens in the wrong browser, return to `/login` and use `Sign in with code` with the 6-digit backup code shown in the same email.
 5. Confirm you land on admin pages with tabs like `Schedule`, `Announcements`, `Resources`, `Users`, `Settings`.
-6. Important on iPhone/Gmail: if the email opens inside Gmail's browser, use `Open in Safari` and request a fresh link there before retrying.
+6. Important on iPhone/Gmail: if the email opens inside Gmail's browser, use `Open in Safari` and request a fresh sign-in email there before retrying.
 
 ## 3) Your 5 Core Jobs
 
@@ -101,6 +101,9 @@ Account is missing or not active. Escalate.
 
 ### "PKCE code verifier not found in storage"
 Request a fresh magic link and open it in the same browser where you requested it. On iPhone Gmail, open in Safari first, then retry.
+
+### "code challenge does not match previously saved code verifier"
+This is the same browser-context issue. Return to `/login` and use `Sign in with code` from the newest email, or open in Safari and request a fresh sign-in email.
 
 ### Magic link opens but does not finish sign-in
 Use `Sign in with code` on `/login` and enter the 6-digit code from the same email.

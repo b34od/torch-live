@@ -3,6 +3,15 @@ import { NextResponse } from "next/server";
 import { ROLE_HOME } from "../../../lib/navigation";
 import { getPublicSupabaseConfig } from "../../../lib/supabase/env";
 
+function isPkceBrowserMismatch(normalizedMessage) {
+  return (
+    normalizedMessage.includes("pkce code verifier not found") ||
+    normalizedMessage.includes("flow_state_not_found") ||
+    normalizedMessage.includes("code challenge does not match previously saved code verifier") ||
+    normalizedMessage.includes("bad_code_verifier")
+  );
+}
+
 function normalizeAuthError(message) {
   const fallback = "Unable to complete sign-in. Please request a new magic link.";
   const raw = String(message || "").trim();
@@ -10,8 +19,8 @@ function normalizeAuthError(message) {
 
   const normalized = raw.toLowerCase();
 
-  if (normalized.includes("pkce code verifier not found")) {
-    return "Sign-in link opened in a different browser/device. Go back to TORCH Live, request a new link, then open that new link in the same browser.";
+  if (isPkceBrowserMismatch(normalized)) {
+    return "Sign-in link opened in a different browser/device. Go back to TORCH Live and use Sign in with code from your latest email.";
   }
 
   if (normalized.includes("token has expired") || normalized.includes("otp expired")) {
@@ -31,6 +40,11 @@ function normalizeAuthError(message) {
   }
 
   return raw;
+}
+
+function shouldUseCodeFallback(message) {
+  const normalized = String(message || "").toLowerCase();
+  return isPkceBrowserMismatch(normalized);
 }
 
 function normalizeOtpType(type) {
@@ -54,11 +68,19 @@ export async function GET(request) {
   const type = requestUrl.searchParams.get("type");
   const callbackError =
     requestUrl.searchParams.get("error_description") || requestUrl.searchParams.get("error");
+  const callbackErrorCode = requestUrl.searchParams.get("error_code");
+  const callbackErrorSignal = [callbackError, callbackErrorCode].filter(Boolean).join(" ").trim();
   const redirectUrl = new URL("/login", request.url);
   const response = NextResponse.redirect(redirectUrl);
 
-  if (callbackError) {
-    redirectUrl.searchParams.set("error", normalizeAuthError(callbackError));
+  if (callbackError || callbackErrorCode) {
+    redirectUrl.searchParams.set(
+      "error",
+      normalizeAuthError(callbackErrorSignal || "Unable to complete sign-in."),
+    );
+    if (shouldUseCodeFallback(callbackErrorSignal)) {
+      redirectUrl.searchParams.set("use_code", "1");
+    }
     response.headers.set("Location", redirectUrl.toString());
     return response;
   }
@@ -107,7 +129,11 @@ export async function GET(request) {
   }
 
   if (error) {
-    redirectUrl.searchParams.set("error", normalizeAuthError(error.message));
+    const errorSignal = [error.code, error.message].filter(Boolean).join(" ").trim();
+    redirectUrl.searchParams.set("error", normalizeAuthError(errorSignal || error.message));
+    if (shouldUseCodeFallback(errorSignal || error.message)) {
+      redirectUrl.searchParams.set("use_code", "1");
+    }
     response.headers.set("Location", redirectUrl.toString());
     return response;
   }
