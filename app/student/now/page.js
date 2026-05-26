@@ -6,7 +6,7 @@ import {
   getCurrentAndNextItem,
   getStudentScheduleByDay,
 } from "../../../lib/data";
-import { normalizeDayForTrack } from "../../../lib/schedule";
+import { resolveDayForTrack } from "../../../lib/schedule";
 
 function eventLabel(item) {
   if (!item) return "No scheduled block";
@@ -19,7 +19,7 @@ export const metadata = {
 
 export default async function StudentNowPage({ searchParams }) {
   const params = searchParams instanceof Promise ? await searchParams : searchParams;
-  const day = normalizeDayForTrack(params?.day, "student");
+  const day = resolveDayForTrack(params?.day, "student");
   const { supabase, profile } = await requireUser(["student"]);
   const { data: scheduleItems, error: scheduleError } = await getStudentScheduleByDay(
     supabase,

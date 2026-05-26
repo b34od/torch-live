@@ -11,6 +11,8 @@ import { getSiteUrl } from "../../lib/supabase/env";
 
 const LAST_LOGIN_EMAIL_COOKIE = "torch_last_login_email";
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const OTP_MIN_LENGTH = 6;
+const OTP_MAX_LENGTH = 8;
 
 function isPkceBrowserMismatch(normalizedMessage) {
   return (
@@ -29,7 +31,7 @@ function normalizeAuthError(message) {
   const normalized = raw.toLowerCase();
 
   if (isPkceBrowserMismatch(normalized)) {
-    return "Sign-in link opened in a different browser/device. Return to login and use the 6-digit code from your latest TORCH sign-in email.";
+    return "Sign-in link opened in a different browser/device. Return to login and use the sign-in code from your latest TORCH sign-in email.";
   }
 
   if (normalized.includes("use @supabase/ssr")) {
@@ -70,7 +72,7 @@ function alertFromParams(params) {
   if (params?.sent === "1") {
     return {
       className: "alert alert-success",
-      text: `Sign-in email sent to ${params.email || "your inbox"}. Use the newest email and enter the 6-digit code if the link does not finish.`,
+      text: `Sign-in email sent to ${params.email || "your inbox"}. Use the newest email and enter the sign-in code if the link does not finish.`,
     };
   }
 
@@ -95,6 +97,74 @@ function normalizeOtpToken(value) {
   return String(value || "")
     .trim()
     .replace(/\D/g, "");
+}
+
+function normalizeOtpType(type) {
+  const normalized = String(type || "")
+    .trim()
+    .toLowerCase();
+  const allowed = new Set(["email", "signup", "invite", "recovery", "email_change", "magiclink"]);
+  return allowed.has(normalized) ? normalized : "email";
+}
+
+function hashParams(rawHash) {
+  const normalized = String(rawHash || "")
+    .replace(/^#/, "")
+    .replace(/^\//, "");
+  return new URLSearchParams(normalized);
+}
+
+function parseAuthLinkPayload(rawLink) {
+  const link = String(rawLink || "").trim();
+  if (!link) {
+    return { error: "Paste the full sign-in link from your email." };
+  }
+
+  let parsed;
+  try {
+    parsed = new URL(link);
+  } catch {
+    return { error: "Paste the full sign-in link, including https://." };
+  }
+
+  const query = parsed.searchParams;
+  const fragment = hashParams(parsed.hash);
+  const value = (...keys) => {
+    for (const key of keys) {
+      const queryValue = String(query.get(key) || "").trim();
+      if (queryValue) return queryValue;
+      const fragmentValue = String(fragment.get(key) || "").trim();
+      if (fragmentValue) return fragmentValue;
+    }
+    return "";
+  };
+
+  const callbackError = value("error_description", "error");
+  if (callbackError) {
+    return { error: normalizeAuthError(callbackError) };
+  }
+
+  const code = value("code");
+  const tokenHash = value("token_hash");
+  const type = value("type");
+  const accessToken = value("access_token");
+  const refreshToken = value("refresh_token");
+  const hasSessionPair = Boolean(accessToken && refreshToken);
+
+  if (!code && !tokenHash && !hasSessionPair) {
+    return {
+      error:
+        "Could not find a valid sign-in token in that link. Paste the complete URL from your newest email.",
+    };
+  }
+
+  return {
+    code,
+    tokenHash,
+    type,
+    accessToken,
+    refreshToken,
+  };
 }
 
 function setLastLoginEmailCookie(cookieStore, email) {
@@ -216,8 +286,8 @@ async function verifyEmailCode(formData) {
     redirect("/login?error=Please+enter+a+valid+email+address.");
   }
 
-  if (token.length !== 6) {
-    redirect("/login?error=Enter+the+6-digit+code+from+your+email.");
+  if (token.length < OTP_MIN_LENGTH || token.length > OTP_MAX_LENGTH) {
+    redirect("/login?error=Enter+the+code+from+your+email+(6-8+digits).");
   }
 
   const cookieStore = await cookies();
@@ -229,6 +299,63 @@ async function verifyEmailCode(formData) {
     token,
     type: "email",
   });
+
+  if (error) {
+    redirect(`/login?error=${encodeURIComponent(normalizeAuthError(error.message))}`);
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login?error=Unable+to+complete+sign-in.");
+  }
+
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("role, is_active")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!profile || !profile.is_active) {
+    redirect("/login?error=Account+is+not+active.");
+  }
+
+  redirect(getHomeForRole(profile.role));
+}
+
+async function verifyPastedLink(formData) {
+  "use server";
+
+  const link = String(formData.get("auth_link") || "").trim();
+  const parsed = parseAuthLinkPayload(link);
+
+  if (parsed.error) {
+    redirect(`/login?error=${encodeURIComponent(parsed.error)}`);
+  }
+
+  const supabase = await createSupabaseServerClient();
+  let error = null;
+
+  if (parsed.tokenHash) {
+    const verify = await supabase.auth.verifyOtp({
+      token_hash: parsed.tokenHash,
+      type: normalizeOtpType(parsed.type),
+    });
+    error = verify.error;
+  } else if (parsed.code) {
+    const exchange = await supabase.auth.exchangeCodeForSession(parsed.code);
+    error = exchange.error;
+  } else if (parsed.accessToken && parsed.refreshToken) {
+    const restore = await supabase.auth.setSession({
+      access_token: parsed.accessToken,
+      refresh_token: parsed.refreshToken,
+    });
+    error = restore.error;
+  } else {
+    error = { message: "Invalid sign-in link." };
+  }
 
   if (error) {
     redirect(`/login?error=${encodeURIComponent(normalizeAuthError(error.message))}`);
@@ -299,7 +426,7 @@ export default async function LoginPage({ searchParams }) {
         <div className={`surface surface-pad-sm mt-md${useCodeFallback ? " code-focus" : ""}`}>
           <h3 className="card-subtitle">Use Email Code Instead</h3>
           <p className="muted">
-            If the link does not open correctly, enter the 6-digit code from your latest TORCH
+            If the link does not open correctly, enter the code from your latest TORCH
             email.
           </p>
           <form action={verifyEmailCode} className="stack">
@@ -323,17 +450,17 @@ export default async function LoginPage({ searchParams }) {
             </div>
             <div className="field">
               <label className="label" htmlFor="otp_token">
-                6-Digit Code
+                Sign-In Code
               </label>
               <input
                 id="otp_token"
                 type="text"
                 name="otp_token"
                 className="input"
-                placeholder="123456"
-                minLength={6}
-                maxLength={6}
-                pattern="[0-9]{6}"
+                placeholder="12345678"
+                minLength={OTP_MIN_LENGTH}
+                maxLength={OTP_MAX_LENGTH}
+                pattern="[0-9]{6,8}"
                 required
                 inputMode="numeric"
                 autoComplete="one-time-code"
@@ -345,6 +472,34 @@ export default async function LoginPage({ searchParams }) {
             </button>
           </form>
         </div>
+        <div className="surface surface-pad-sm mt-md">
+          <h3 className="card-subtitle">Paste Sign-In Link Instead</h3>
+          <p className="muted">
+            If your email does not show a sign-in code, paste the full sign-in link from that
+            email here.
+          </p>
+          <form action={verifyPastedLink} className="stack">
+            <div className="field">
+              <label className="label" htmlFor="auth_link">
+                Full Sign-In Link
+              </label>
+              <input
+                id="auth_link"
+                type="url"
+                name="auth_link"
+                className="input"
+                placeholder="https://..."
+                required
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
+              />
+            </div>
+            <button type="submit" className="button button-ghost">
+              Sign in with pasted link
+            </button>
+          </form>
+        </div>
         <p className="muted mt-md">
           Check spam/junk if you do not see the email. Use the same email used for program
           registration.
@@ -353,6 +508,7 @@ export default async function LoginPage({ searchParams }) {
           <li>Use the exact email your admin uploaded.</li>
           <li>Tap the newest magic link email if multiple were sent.</li>
           <li>Open the login link in the same browser where you requested it.</li>
+          <li>If the sign-in code is missing, paste the full sign-in link into the field above.</li>
           <li>If using Gmail on iPhone, choose Open in Safari before tapping a fresh link.</li>
           <li>After sign-in, add TORCH Live to your home screen.</li>
         </ul>

@@ -13,7 +13,7 @@ import {
   dayNumbersForTrack,
   formatTimeLabel,
   formatTimeRange,
-  normalizeDayForTrack,
+  resolveDayForTrack,
   timeToMinutes,
 } from "../../../lib/schedule";
 
@@ -21,7 +21,7 @@ const MIN_YEAR = 2020;
 const MAX_YEAR = 2100;
 
 function parseDay(value, track) {
-  return normalizeDayForTrack(value, track);
+  return resolveDayForTrack(value, track);
 }
 
 function parseTrack(value) {
@@ -589,7 +589,14 @@ export default async function AdminSchedulePage({ searchParams }) {
               <strong>{formatTimeLabel(firstItem.start_time)}</strong> · ends at{" "}
               <strong>{formatTimeLabel(lastEndTime)}</strong>
             </p>
-            <ScheduleTimeline items={items} track={track} showNowMarker showConflicts />
+            <ScheduleTimeline
+              items={items}
+              track={track}
+              showNowMarker
+              showConflicts
+              dayNumber={day}
+              programYear={selectedYear}
+            />
           </>
         )}
       </section>

@@ -3,10 +3,12 @@ import ScheduleTimeline from "../../../components/ui/ScheduleTimeline";
 import { requireUser } from "../../../lib/auth";
 import { getStudentScheduleByDay } from "../../../lib/data";
 import {
+  addMinutesToTime,
   dayLabel,
-  formatTimeRange,
-  normalizeDayForTrack,
+  formatTimeLabel,
+  resolveDayForTrack,
   STUDENT_DAY_NUMBERS,
+  timeToMinutes,
 } from "../../../lib/schedule";
 
 export const metadata = {
@@ -15,9 +17,18 @@ export const metadata = {
 
 export default async function StudentSchedulePage({ searchParams }) {
   const params = searchParams instanceof Promise ? await searchParams : searchParams;
-  const day = normalizeDayForTrack(params?.day, "student");
+  const day = resolveDayForTrack(params?.day, "student");
   const { supabase, profile } = await requireUser(["student"]);
   const { data: items, error } = await getStudentScheduleByDay(supabase, profile.program_year, day);
+  const sortedItems = [...(items || [])].sort((a, b) => {
+    const aStart = timeToMinutes(a.start_time) || 0;
+    const bStart = timeToMinutes(b.start_time) || 0;
+    if (aStart !== bStart) return aStart - bStart;
+    return Number(a.sort_order || 0) - Number(b.sort_order || 0);
+  });
+  const firstItem = sortedItems[0] || null;
+  const lastItem = sortedItems[sortedItems.length - 1] || null;
+  const endTime = lastItem ? addMinutesToTime(lastItem.start_time, lastItem.duration_minutes) : "";
 
   return (
     <section className="card">
@@ -35,52 +46,21 @@ export default async function StudentSchedulePage({ searchParams }) {
         </p>
       ) : (
         <>
-          <h3 className="mt-md">Agenda Timeline</h3>
+          <p className="muted mt-sm">
+            {items.length} item{items.length === 1 ? "" : "s"} · starts at{" "}
+            <strong>{formatTimeLabel(firstItem.start_time)}</strong> · ends at{" "}
+            <strong>{formatTimeLabel(endTime)}</strong>
+          </p>
+          <h3 id="student-timeline" className="section-anchor mt-md">Agenda Timeline</h3>
           <p className="muted">
             Calendar-style view so you can quickly see what happens next and how long each block runs.
           </p>
-          <ScheduleTimeline items={items} track="student" />
-
-          <h3 className="mt-md">Agenda Details</h3>
-          <div className="schedule-card-list mobile-only mt-md">
-            {items.map((item) => (
-              <article key={item.id} className="schedule-card">
-                <div className="schedule-card-header">
-                  <span className="schedule-time">{formatTimeRange(item.start_time, item.duration_minutes)}</span>
-                  <span className="schedule-duration">{item.duration_minutes}m</span>
-                </div>
-                <p className="schedule-activity">
-                  {item.activity_name}
-                </p>
-                <p className="schedule-detail">
-                  <span className="schedule-label">Location:</span> {item.location || "TBD"}
-                </p>
-              </article>
-            ))}
-          </div>
-
-          <div className="table-wrap mt-md desktop-only">
-            <table className="schedule-table">
-              <thead>
-                <tr>
-                  <th>Time Range</th>
-                  <th>Duration</th>
-                  <th>Activity</th>
-                  <th>Location</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => (
-                  <tr key={item.id}>
-                    <td>{formatTimeRange(item.start_time, item.duration_minutes)}</td>
-                    <td>{item.duration_minutes}m</td>
-                    <td>{item.activity_name}</td>
-                    <td>{item.location || "TBD"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ScheduleTimeline
+            items={items}
+            track="student"
+            dayNumber={day}
+            programYear={profile.program_year}
+          />
         </>
       )}
     </section>

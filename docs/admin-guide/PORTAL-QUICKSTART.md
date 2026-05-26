@@ -1,6 +1,6 @@
 # TORCH Live Portal Quickstart
 
-Last updated: May 25, 2026
+Last updated: May 26, 2026
 Audience: non-technical admins using only `https://live.torchleadershipacademy.org`
 
 ## 1) What You Need Before You Start
@@ -8,6 +8,7 @@ Audience: non-technical admins using only `https://live.torchleadershipacademy.o
 1. Your own admin account email is active.
 2. You can receive a sign-in link by email.
 3. You know the current program year (example: `2026`).
+4. Schedule times are anchored to Stockton, NJ (`America/New_York` Eastern Time) for all users.
 
 If any of these fail, stop and contact Bryan.
 
@@ -15,8 +16,8 @@ If any of these fail, stop and contact Bryan.
 
 1. Open `https://live.torchleadershipacademy.org/login`.
 2. Enter your email and click `Send sign-in email`.
-3. Open your newest email and either click `Sign in to TORCH Live` or use the 6-digit code.
-4. If the link opens in the wrong browser, return to `/login` and use `Sign in with code` with the 6-digit backup code shown in the same email.
+3. Open your newest email and either click `Sign in to TORCH Live` or use the sign-in code (6-8 digits).
+4. If the link opens in the wrong browser, return to `/login` and use `Sign in with code` with the 6-8 digit backup code shown in the same email.
 5. Confirm you land on admin pages with tabs like `Schedule`, `Announcements`, `Resources`, `Users`, `Settings`.
 6. Important on iPhone/Gmail: if the email opens inside Gmail's browser, use `Open in Safari` and request a fresh sign-in email there before retrying.
 
@@ -106,7 +107,7 @@ Request a fresh magic link and open it in the same browser where you requested i
 This is the same browser-context issue. Return to `/login` and use `Sign in with code` from the newest email, or open in Safari and request a fresh sign-in email.
 
 ### Magic link opens but does not finish sign-in
-Use `Sign in with code` on `/login` and enter the 6-digit code from the same email.
+Use `Sign in with code` on `/login` and enter the 6-8 digit code from the same email.
 
 ### Link opens wrong site/domain
 Do not continue. Escalate and include a screenshot.

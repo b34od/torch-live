@@ -422,21 +422,22 @@ img {
   left: 0;
   right: 0;
   display: flex;
-  gap: 0.35rem;
+  gap: 0.45rem;
   padding: 0.55rem 0.7rem calc(0.65rem + env(safe-area-inset-bottom));
   background: rgba(255, 255, 255, 0.96);
   border-top: 1px solid rgba(44, 44, 44, 0.12);
   backdrop-filter: blur(8px);
   overflow-x: auto;
   scrollbar-width: thin;
+  scroll-snap-type: x proximity;
   z-index: 30;
 }
 
 .bottom-nav-link {
-  flex: 1 1 0;
-  min-width: 76px;
+  flex: 0 0 auto;
+  min-width: 88px;
   min-height: 44px;
-  padding: 0.42rem 0.35rem;
+  padding: 0.42rem 0.58rem;
   border-radius: 12px;
   font-size: 0.82rem;
   font-weight: 700;
@@ -446,6 +447,8 @@ img {
   align-items: center;
   justify-content: center;
   text-align: center;
+  white-space: nowrap;
+  scroll-snap-align: center;
 }
 
 .bottom-nav-link-active {
@@ -492,6 +495,10 @@ img {
 
 .card p {
   margin: 0.35rem 0;
+}
+
+.section-anchor {
+  scroll-margin-top: 0.75rem;
 }
 
 .card-subtitle {
@@ -639,6 +646,8 @@ img {
 
 .schedule-time {
   font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
 }
 
 .schedule-duration {
@@ -703,6 +712,16 @@ img {
   margin-bottom: 0.6rem;
 }
 
+.timeline-single-location {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  color: #585959;
+}
+
+.timeline-single-location strong {
+  color: #3f4040;
+}
+
 .timeline-legend-chip {
   display: inline-flex;
   align-items: center;
@@ -752,7 +771,8 @@ img {
   right: 0.35rem;
   height: 0;
   border-top: 2px solid rgba(40, 154, 72, 0.9);
-  z-index: 4;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .timeline-now-line span {
@@ -770,47 +790,91 @@ img {
 .timeline-block {
   position: absolute;
   left: 0.5rem;
-  right: 0.5rem;
+  width: calc(100% - 1rem);
+  box-sizing: border-box;
   border: 1px solid;
   border-left-width: 4px;
   border-radius: 10px;
-  padding: 0.4rem 0.48rem;
+  padding: 0.48rem 0.52rem;
   box-shadow: 0 5px 12px rgba(44, 44, 44, 0.08);
   overflow: hidden;
+  overflow: clip;
+  z-index: 2;
+}
+
+.timeline-block-overlap {
+  box-shadow: 0 5px 12px rgba(44, 44, 44, 0.06);
 }
 
 .timeline-block-current {
   border-color: rgba(40, 154, 72, 0.9) !important;
   border-left-width: 6px;
   box-shadow: 0 0 0 2px rgba(40, 154, 72, 0.22), 0 6px 14px rgba(44, 44, 44, 0.12);
+  z-index: 3;
 }
 
 .timeline-block-next {
   border-left-width: 6px;
   box-shadow: 0 0 0 2px rgba(113, 60, 151, 0.18), 0 6px 14px rgba(44, 44, 44, 0.1);
+  z-index: 3;
 }
 
 .timeline-block-title {
   margin: 0;
   font-weight: 800;
-  font-size: 0.86rem;
+  font-size: 0.84rem;
   line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+}
+
+.timeline-block-compact .timeline-block-title {
+  font-size: 0.78rem;
+  line-height: 1.15;
+}
+
+.timeline-block-tiny .timeline-block-title {
+  font-size: 0.74rem;
+  line-height: 1.1;
+  -webkit-line-clamp: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .timeline-block-time {
-  margin: 0.2rem 0 0;
-  font-size: 0.78rem;
+  margin: 0.18rem 0 0;
+  font-size: 0.76rem;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
   color: #4a4b4b;
 }
 
 .timeline-block-meta {
-  margin: 0.16rem 0 0;
-  font-size: 0.74rem;
+  margin: 0.14rem 0 0;
+  font-size: 0.72rem;
   color: #5d5e5e;
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
+}
+
+.timeline-block-compact {
+  padding: 0.38rem 0.42rem;
+}
+
+.timeline-block-tiny {
+  padding: 0.24rem 0.32rem;
+}
+
+.timeline-block-compact .timeline-block-time {
+  margin-top: 0.12rem;
+  font-size: 0.72rem;
 }
 
 .timeline-scale {
@@ -831,6 +895,8 @@ img {
   padding: 0.08rem 0.25rem;
   font-size: 0.74rem;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
   color: #636464;
   background: rgba(255, 255, 255, 0.9);
   border-radius: 4px;
@@ -1053,7 +1119,7 @@ img {
   .topbar {
     position: relative;
     top: 0;
-    padding: 0.75rem;
+    padding: 0.66rem;
   }
 
   .topbar::before {
@@ -1062,49 +1128,56 @@ img {
 
   .topbar-row {
     margin-top: 0.08rem;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.62rem;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 0.5rem;
+    flex-wrap: nowrap;
   }
 
   .topbar-brand {
-    gap: 0.65rem;
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 0.56rem;
     align-items: flex-start;
   }
 
   .topbar-logo {
-    width: 126px;
+    width: 116px;
   }
 
   .topbar-title {
-    font-size: 0.7rem;
+    font-size: 0.66rem;
   }
 
   .topbar-name {
-    font-size: 1rem;
-    line-height: 1.2;
+    margin-top: 0.08rem;
+    font-size: 0.94rem;
+    line-height: 1.16;
     max-width: 100%;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .topbar-actions {
-    width: 100%;
+    width: auto;
     display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 0.48rem;
-    align-items: center;
-    justify-items: stretch;
+    grid-template-columns: 1fr;
+    gap: 0.34rem;
+    align-items: end;
+    justify-items: end;
   }
 
   .topbar-actions .pill {
-    justify-self: start;
+    justify-self: end;
   }
 
   .topbar-actions .button {
-    width: 100%;
-  }
-
-  .topbar-name {
-    max-width: 100%;
+    width: auto;
+    min-height: 38px;
+    padding: 0.34rem 0.62rem;
   }
 
   .card {
@@ -1116,8 +1189,7 @@ img {
   }
 
   .schedule-jump-link {
-    flex: 1 1 auto;
-    min-width: 112px;
+    min-width: 104px;
   }
 
   .bottom-nav {
@@ -1125,7 +1197,7 @@ img {
   }
 
   .bottom-nav-link {
-    min-width: 66px;
+    min-width: 80px;
     padding: 0.38rem 0.24rem;
     font-size: 0.76rem;
     line-height: 1.15;
@@ -1149,24 +1221,65 @@ img {
   }
 
   .timeline-grid {
-    grid-template-columns: minmax(0, 1fr) 86px;
+    grid-template-columns: minmax(0, 1fr) 72px;
     gap: 0.4rem;
   }
 
   .timeline-block {
     left: 0.35rem;
-    right: 0.35rem;
+    width: calc(100% - 0.7rem);
     padding: 0.3rem 0.35rem;
   }
 
   .timeline-block-meta {
     font-size: 0.7rem;
   }
+
+  .timeline-scale-tick span {
+    margin-left: 0.36rem;
+    padding: 0.06rem 0.2rem;
+    font-size: 0.68rem;
+  }
 }
 
 @media (max-width: 760px) {
   .nav-row {
     display: none;
+  }
+
+  .timeline-legend {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.08rem;
+    margin-bottom: 0.46rem;
+    scrollbar-width: thin;
+  }
+
+  .timeline-single-location {
+    margin-bottom: 0.42rem;
+    font-size: 0.74rem;
+  }
+
+  .timeline-legend-chip {
+    flex: 0 0 auto;
+    max-width: 9.2rem;
+    font-size: 0.72rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .day-tabs,
+  .schedule-jump-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    padding-bottom: 0.1rem;
+  }
+
+  .day-tab,
+  .schedule-jump-link {
+    flex: 0 0 auto;
   }
 
   .card[id] {

@@ -6,7 +6,7 @@ import {
   getCurrentAndNextItem,
   getStaffScheduleByDay,
 } from "../../../lib/data";
-import { normalizeDayForTrack } from "../../../lib/schedule";
+import { resolveDayForTrack } from "../../../lib/schedule";
 
 function detailedLabel(item) {
   if (!item) return "No scheduled block";
@@ -20,7 +20,7 @@ export const metadata = {
 
 export default async function StaffNowPage({ searchParams }) {
   const params = searchParams instanceof Promise ? await searchParams : searchParams;
-  const day = normalizeDayForTrack(params?.day, "staff");
+  const day = resolveDayForTrack(params?.day, "staff");
   const { supabase, profile } = await requireUser(["staff", "admin"]);
   const { data: scheduleItems, error: scheduleError } = await getStaffScheduleByDay(
     supabase,

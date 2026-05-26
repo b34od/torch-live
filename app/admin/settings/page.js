@@ -2,6 +2,10 @@ import Link from "next/link";
 import { requireUser } from "../../../lib/auth";
 import { dayLabel, timeToMinutes } from "../../../lib/schedule";
 
+const REQUIRED_STAFF_DAYS = [0, 1, 2, 3, 4];
+const REQUIRED_STUDENT_DAYS = [1, 2, 3, 4];
+const REQUIRED_ROLES = ["admin", "staff", "student"];
+
 function configured(value) {
   return value ? "Configured" : "Missing";
 }
@@ -58,6 +62,29 @@ function conflictByDay(rows) {
   return results.sort((a, b) => a.dayNumber - b.dayNumber);
 }
 
+function missingRequiredDays(rows, requiredDays) {
+  const populated = new Set((rows || []).map((row) => Number(row.day_number)));
+  return requiredDays.filter((dayNumber) => !populated.has(dayNumber));
+}
+
+function activeRoleCounts(rows) {
+  const counts = {
+    admin: 0,
+    staff: 0,
+    student: 0,
+  };
+
+  (rows || []).forEach((row) => {
+    const role = String(row.role || "");
+    if (!Object.prototype.hasOwnProperty.call(counts, role)) return;
+    if (row.is_active) {
+      counts[role] += 1;
+    }
+  });
+
+  return counts;
+}
+
 export const metadata = {
   title: "Admin Settings",
 };
@@ -71,7 +98,7 @@ export default async function AdminSettingsPage() {
   const serviceKeyConfigured = isConfigured(process.env.SUPABASE_SERVICE_ROLE_KEY);
   const supabaseUrlConfigured = isConfigured(process.env.NEXT_PUBLIC_SUPABASE_URL);
 
-  const [studentRowsResponse, staffRowsResponse] = await Promise.all([
+  const [studentRowsResponse, staffRowsResponse, rosterResponse] = await Promise.all([
     supabase
       .from("student_schedule_items")
       .select("id, day_number, start_time, duration_minutes, activity_name")
@@ -80,12 +107,28 @@ export default async function AdminSettingsPage() {
       .from("staff_schedule_items")
       .select("id, day_number, start_time, duration_minutes, activity_name")
       .eq("program_year", profile.program_year),
+    supabase
+      .from("user_profiles")
+      .select("id, role, is_active")
+      .eq("program_year", profile.program_year),
   ]);
 
-  const studentConflicts = conflictByDay(studentRowsResponse.data || []);
-  const staffConflicts = conflictByDay(staffRowsResponse.data || []);
+  const studentRows = studentRowsResponse.data || [];
+  const staffRows = staffRowsResponse.data || [];
+  const rosterRows = rosterResponse.data || [];
+
+  const studentConflicts = conflictByDay(studentRows);
+  const staffConflicts = conflictByDay(staffRows);
   const studentConflictCount = studentConflicts.reduce((sum, day) => sum + day.pairs.length, 0);
   const staffConflictCount = staffConflicts.reduce((sum, day) => sum + day.pairs.length, 0);
+  const studentMissingDays = missingRequiredDays(studentRows, REQUIRED_STUDENT_DAYS);
+  const staffMissingDays = missingRequiredDays(staffRows, REQUIRED_STAFF_DAYS);
+  const roleCounts = activeRoleCounts(rosterRows);
+  const missingRoles = REQUIRED_ROLES.filter((role) => roleCounts[role] === 0);
+
+  const studentDayCoverageReady = !studentRowsResponse.error && studentMissingDays.length === 0;
+  const staffDayCoverageReady = !staffRowsResponse.error && staffMissingDays.length === 0;
+  const rosterCoverageReady = !rosterResponse.error && missingRoles.length === 0;
 
   const readinessItems = [
     {
@@ -112,6 +155,33 @@ export default async function AdminSettingsPage() {
       label: "Auth Confirm Route",
       ready: true,
       detail: "Enabled at /auth/confirm to reduce cross-browser mobile login failures.",
+    },
+    {
+      label: "Student Day Coverage",
+      ready: studentDayCoverageReady,
+      detail: studentRowsResponse.error
+        ? `Unable to read student schedule: ${studentRowsResponse.error.message}`
+        : studentMissingDays.length === 0
+          ? "All required student days (Saturday-Tuesday) have schedule entries."
+          : `Missing student schedule entries for: ${studentMissingDays.map(dayLabel).join(", ")}.`,
+    },
+    {
+      label: "Staff Day Coverage",
+      ready: staffDayCoverageReady,
+      detail: staffRowsResponse.error
+        ? `Unable to read staff schedule: ${staffRowsResponse.error.message}`
+        : staffMissingDays.length === 0
+          ? "All required staff days (Friday-Tuesday) have schedule entries."
+          : `Missing staff schedule entries for: ${staffMissingDays.map(dayLabel).join(", ")}.`,
+    },
+    {
+      label: "Active Roster Coverage",
+      ready: rosterCoverageReady,
+      detail: rosterResponse.error
+        ? `Unable to read roster coverage: ${rosterResponse.error.message}`
+        : missingRoles.length === 0
+          ? "Active admin, staff, and student users are present for this year."
+          : `No active ${missingRoles.join(", ")} users found for this year.`,
     },
     {
       label: "Student Schedule Overlaps",
@@ -176,6 +246,88 @@ export default async function AdminSettingsPage() {
             <p className="muted">Data model is ready; UI toggle wiring is next.</p>
           </article>
         </div>
+      </section>
+
+      <section className="card">
+        <h2>Schedule Day Coverage Audit</h2>
+        <p className="muted">
+          Required launch baseline: staff has Friday-Tuesday items, and students have Saturday-Tuesday items.
+        </p>
+        <div className="stack mt-md">
+          <article className="surface surface-pad-sm status-row">
+            <div>
+              <strong>Student Track Days</strong>
+              <p className="muted">
+                {studentRowsResponse.error
+                  ? studentRowsResponse.error.message
+                  : studentMissingDays.length === 0
+                    ? "All required days are populated."
+                    : `Missing: ${studentMissingDays.map(dayLabel).join(", ")}`}
+              </p>
+              <p className="muted">
+                <Link href={`/admin/schedule?track=student&year=${profile.program_year}`} className="text-link">
+                  Open student schedule planning
+                </Link>
+              </p>
+            </div>
+            <span className={`status-pill ${studentDayCoverageReady ? "status-pill-good" : "status-pill-warn"}`}>
+              {studentDayCoverageReady ? "Ready" : "Action Needed"}
+            </span>
+          </article>
+          <article className="surface surface-pad-sm status-row">
+            <div>
+              <strong>Staff Track Days</strong>
+              <p className="muted">
+                {staffRowsResponse.error
+                  ? staffRowsResponse.error.message
+                  : staffMissingDays.length === 0
+                    ? "All required days are populated."
+                    : `Missing: ${staffMissingDays.map(dayLabel).join(", ")}`}
+              </p>
+              <p className="muted">
+                <Link href={`/admin/schedule?track=staff&year=${profile.program_year}`} className="text-link">
+                  Open staff schedule planning
+                </Link>
+              </p>
+            </div>
+            <span className={`status-pill ${staffDayCoverageReady ? "status-pill-good" : "status-pill-warn"}`}>
+              {staffDayCoverageReady ? "Ready" : "Action Needed"}
+            </span>
+          </article>
+        </div>
+      </section>
+
+      <section className="card">
+        <h2>Roster Coverage Audit</h2>
+        <p className="muted">
+          Launch readiness requires at least one active admin, staff, and student user in year {profile.program_year}.
+        </p>
+        {rosterResponse.error ? (
+          <p className="alert alert-error mt-md">{rosterResponse.error.message}</p>
+        ) : (
+          <div className="status-grid mt-md">
+            {REQUIRED_ROLES.map((role) => {
+              const count = roleCounts[role];
+              const roleReady = count > 0;
+              return (
+                <article key={role} className="surface surface-pad-sm status-row">
+                  <div>
+                    <strong>{role[0].toUpperCase() + role.slice(1)} Active Users</strong>
+                    <p className="muted">{count} active account(s) in this program year.</p>
+                    <p className="muted">
+                      <Link href={`/admin/users?year=${profile.program_year}`} className="text-link">
+                        Open user management
+                      </Link>
+                    </p>
+                  </div>
+                  <span className={`status-pill ${roleReady ? "status-pill-good" : "status-pill-warn"}`}>
+                    {roleReady ? "Ready" : "Action Needed"}
+                  </span>
+                </article>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       <section className="card">

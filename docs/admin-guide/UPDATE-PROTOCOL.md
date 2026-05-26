@@ -1,6 +1,6 @@
 # Admin Guide Update Protocol
 
-Last updated: May 25, 2026
+Last updated: May 26, 2026
 
 ## Why This Exists
 

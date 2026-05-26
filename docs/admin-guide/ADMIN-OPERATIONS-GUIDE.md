@@ -1,6 +1,6 @@
 # TORCH Live Technical Owner Guide
 
-Last updated: May 25, 2026
+Last updated: May 26, 2026
 Owner: TORCH Live Technical Owner
 Audience: Bryan now, Ben/Nat later
 
@@ -78,7 +78,11 @@ This guide covers technical operations that should not be handled by frontline p
 3. Destructive removals are confirm-gated in UI
 
 ### `/admin/settings`
-Read-only readiness view for core environment variables.
+Readiness center covering:
+1. Core environment-variable status
+2. Schedule overlap scanning
+3. Schedule day-coverage checks (staff Friday-Tuesday, student Saturday-Tuesday)
+4. Active roster-role coverage checks (admin, staff, student)
 
 ## 5) Auth and User Lifecycle Boundaries
 
@@ -86,7 +90,7 @@ Read-only readiness view for core environment variables.
 1. User requests magic link in `/login`.
 2. `/auth/confirm` page extracts auth params from either query string or URL fragment and forwards to `/auth/callback`.
 3. `/auth/callback` completes auth via `verifyOtp(token_hash,type)`, `exchangeCodeForSession(code)`, or fallback `setSession(access_token,refresh_token)`.
-4. If magic-link browser handoff fails, user can submit email + 6-digit code in `/login` (`verifyOtp(email,token,type=email)`).
+4. If magic-link browser handoff fails, user can submit email + 6-8 digit code in `/login` (`verifyOtp(email,token,type=email)`).
 5. Role + active profile checks drive final route.
 
 ### Service-Role Use
@@ -116,6 +120,9 @@ Required environment variables:
 3. `SUPABASE_SERVICE_ROLE_KEY`
 4. `NEXT_PUBLIC_SITE_URL`
 5. `TORCH_PROGRAM_YEAR`
+
+Program time policy:
+1. Program schedule timing is fixed to Stockton, NJ (`America/New_York`) for all users.
 
 Optional one-time bootstrap:
 1. `TORCH_BOOTSTRAP_ADMIN_EMAIL`
@@ -162,7 +169,7 @@ Likely missing auth user or disabled signup path. Create/repair user in `/admin/
 Likely provider or auth throttle. Check SMTP provider logs and retry after cooldown.
 
 ### "PKCE code verifier not found in storage"
-Magic link was opened in a different browser/device than the one used to request it (common on iPhone Gmail in-app browser). Request a new magic link and open it in the same browser context. If needed, use `/login` -> `Sign in with code` and enter the 6-digit backup code from the same email. Ensure Supabase Magic Link template uses token-hash confirm route (`/auth/confirm?token_hash=...&type=email`) and includes `{{ .Token }}`.
+Magic link was opened in a different browser/device than the one used to request it (common on iPhone Gmail in-app browser). Request a new magic link and open it in the same browser context. If needed, use `/login` -> `Sign in with code` and enter the 6-8 digit backup code from the same email. Ensure Supabase Magic Link template uses token-hash confirm route (`/auth/confirm?token_hash=...&type=email`) and includes `{{ .Token }}`.
 
 ### "code challenge does not match previously saved code verifier"
 Treat this as the same PKCE browser-context mismatch. Use `/login` -> `Sign in with code` from the newest email, or move into Safari and request a fresh sign-in email.

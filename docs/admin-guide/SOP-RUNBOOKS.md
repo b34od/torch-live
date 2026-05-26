@@ -1,6 +1,6 @@
 # TORCH Live SOP Runbooks
 
-Last updated: May 25, 2026
+Last updated: May 26, 2026
 
 ## Audience Split
 
@@ -16,7 +16,7 @@ Confirm the portal is ready before making changes.
 
 ### Steps
 1. Sign in at `/login`.
-2. If magic-link handoff fails, use `Sign in with code` and enter the 6-digit backup code from the same email.
+2. If magic-link handoff fails, use `Sign in with code` and enter the 6-8 digit backup code from the same email.
 3. Open `Users` and confirm `Roster Year`.
 4. Open `Schedule` and confirm `Track`, `Program Year`, and `Day`.
 5. Open `Announcements` and review recent pinned posts.

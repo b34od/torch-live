@@ -134,13 +134,14 @@ export default function AppShell({ role, profile, children }) {
       <nav className="bottom-nav" aria-label="Primary mobile navigation">
         {navItems.map((item) => {
           const active = pathname === item.href || (pathname.startsWith(item.href) && item.href !== "/");
+          const mobileLabel = item.mobileLabel || item.label;
           return (
             <Link
               key={`mobile-${item.href}`}
               href={item.href}
               className={`bottom-nav-link ${active ? "bottom-nav-link-active" : ""}`}
             >
-              {item.label}
+              {mobileLabel}
             </Link>
           );
         })}

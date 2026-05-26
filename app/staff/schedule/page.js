@@ -3,10 +3,13 @@ import ScheduleTimeline from "../../../components/ui/ScheduleTimeline";
 import { requireUser } from "../../../lib/auth";
 import { getStaffScheduleByDay } from "../../../lib/data";
 import {
+  addMinutesToTime,
   dayLabel,
+  formatTimeLabel,
   formatTimeRange,
-  normalizeDayForTrack,
+  resolveDayForTrack,
   STAFF_DAY_NUMBERS,
+  timeToMinutes,
 } from "../../../lib/schedule";
 
 export const metadata = {
@@ -15,9 +18,18 @@ export const metadata = {
 
 export default async function StaffSchedulePage({ searchParams }) {
   const params = searchParams instanceof Promise ? await searchParams : searchParams;
-  const day = normalizeDayForTrack(params?.day, "staff");
+  const day = resolveDayForTrack(params?.day, "staff");
   const { supabase, profile } = await requireUser(["staff", "admin"]);
   const { data: items, error } = await getStaffScheduleByDay(supabase, profile.program_year, day);
+  const sortedItems = [...(items || [])].sort((a, b) => {
+    const aStart = timeToMinutes(a.start_time) || 0;
+    const bStart = timeToMinutes(b.start_time) || 0;
+    if (aStart !== bStart) return aStart - bStart;
+    return Number(a.sort_order || 0) - Number(b.sort_order || 0);
+  });
+  const firstItem = sortedItems[0] || null;
+  const lastItem = sortedItems[sortedItems.length - 1] || null;
+  const endTime = lastItem ? addMinutesToTime(lastItem.start_time, lastItem.duration_minutes) : "";
 
   return (
     <section className="card">
@@ -35,13 +47,33 @@ export default async function StaffSchedulePage({ searchParams }) {
         </p>
       ) : (
         <>
-          <h3 className="mt-md">Ops Timeline</h3>
+          <p className="muted mt-sm">
+            {items.length} item{items.length === 1 ? "" : "s"} · starts at{" "}
+            <strong>{formatTimeLabel(firstItem.start_time)}</strong> · ends at{" "}
+            <strong>{formatTimeLabel(endTime)}</strong>
+          </p>
+          <nav className="schedule-jump-nav mt-sm" aria-label="Staff schedule sections">
+            <a href="#staff-timeline" className="schedule-jump-link">
+              Timeline
+            </a>
+            <a href="#staff-details" className="schedule-jump-link">
+              Details
+            </a>
+          </nav>
+
+          <h3 id="staff-timeline" className="section-anchor mt-md">Ops Timeline</h3>
           <p className="muted">
             Calendar-style view for quick handoffs, location checks, and what is next.
           </p>
-          <ScheduleTimeline items={items} track="staff" showNowMarker />
+          <ScheduleTimeline
+            items={items}
+            track="staff"
+            showNowMarker
+            dayNumber={day}
+            programYear={profile.program_year}
+          />
 
-          <h3 className="mt-md">Ops Details</h3>
+          <h3 id="staff-details" className="section-anchor mt-md">Ops Details</h3>
           <div className="schedule-card-list mobile-only mt-md">
             {items.map((item) => (
               <article key={item.id} className="schedule-card">
