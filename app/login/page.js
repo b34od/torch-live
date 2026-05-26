@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import EmailSignInForm from "../../components/auth/EmailSignInForm";
+import EmailSignInForm, { FormSubmitButton } from "../../components/auth/EmailSignInForm";
 import InAppBrowserWarning from "../../components/auth/InAppBrowserWarning";
 import { getHomeForRole, getSessionContext } from "../../lib/auth";
 import { createAdminSupabaseClient } from "../../lib/supabase/admin";
@@ -453,26 +453,29 @@ export default async function LoginPage({ searchParams }) {
             </div>
             <div className="field">
               <label className="label" htmlFor="otp_token">
-                Sign-In Code
+                Sign-In Code (6-8 digits)
               </label>
               <input
                 id="otp_token"
                 type="text"
                 name="otp_token"
                 className="input"
-                placeholder="12345678"
+                placeholder="123456 or 12345678"
                 minLength={OTP_MIN_LENGTH}
                 maxLength={OTP_MAX_LENGTH}
                 pattern="[0-9]{6,8}"
+                title="Enter the 6-8 digit backup code from your newest TORCH sign-in email."
                 required
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 autoFocus={useCodeFallback}
               />
             </div>
-            <button type="submit" className="button button-secondary">
-              Sign in with code
-            </button>
+            <FormSubmitButton
+              className="button button-secondary"
+              idleLabel="Sign in with code"
+              pendingLabel="Signing in with code..."
+            />
           </form>
         </div>
         <div className="surface surface-pad-sm mt-md">
@@ -498,9 +501,11 @@ export default async function LoginPage({ searchParams }) {
                 spellCheck="false"
               />
             </div>
-            <button type="submit" className="button button-ghost">
-              Sign in with pasted link
-            </button>
+            <FormSubmitButton
+              className="button button-ghost"
+              idleLabel="Sign in with pasted link"
+              pendingLabel="Signing in..."
+            />
           </form>
         </div>
         <p className="muted mt-md">

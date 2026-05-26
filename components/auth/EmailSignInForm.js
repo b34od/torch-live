@@ -2,11 +2,15 @@
 
 import { useFormStatus } from "react-dom";
 
-function SubmitButton() {
+export function FormSubmitButton({
+  className = "button button-primary",
+  idleLabel = "Submit",
+  pendingLabel = "Submitting...",
+}) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" className="button button-primary" disabled={pending}>
-      {pending ? "Sending sign-in email..." : "Send sign-in email"}
+    <button type="submit" className={className} disabled={pending} aria-disabled={pending}>
+      {pending ? pendingLabel : idleLabel}
     </button>
   );
 }
@@ -32,7 +36,7 @@ export default function EmailSignInForm({ action, defaultEmail }) {
           spellCheck="false"
         />
       </div>
-      <SubmitButton />
+      <FormSubmitButton idleLabel="Send sign-in email" pendingLabel="Sending sign-in email..." />
     </form>
   );
 }

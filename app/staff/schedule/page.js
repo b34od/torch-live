@@ -66,7 +66,7 @@ export default async function StaffSchedulePage({ searchParams }) {
             Calendar-style view for quick handoffs, location checks, and what is next.
           </p>
           <ScheduleTimeline
-            items={items}
+            items={sortedItems}
             track="staff"
             showNowMarker
             dayNumber={day}
@@ -75,7 +75,7 @@ export default async function StaffSchedulePage({ searchParams }) {
 
           <h3 id="staff-details" className="section-anchor mt-md">Ops Details</h3>
           <div className="schedule-card-list mobile-only mt-md">
-            {items.map((item) => (
+            {sortedItems.map((item) => (
               <article key={item.id} className="schedule-card">
                 <div className="schedule-card-header">
                   <span className="schedule-time">{formatTimeRange(item.start_time, item.duration_minutes)}</span>
@@ -120,7 +120,7 @@ export default async function StaffSchedulePage({ searchParams }) {
                 </tr>
               </thead>
               <tbody>
-                {items.map((item) => (
+                {sortedItems.map((item) => (
                   <tr key={item.id}>
                     <td>{formatTimeRange(item.start_time, item.duration_minutes)}</td>
                     <td>{item.duration_minutes}m</td>

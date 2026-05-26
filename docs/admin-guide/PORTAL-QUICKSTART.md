@@ -16,10 +16,11 @@ If any of these fail, stop and contact Bryan.
 
 1. Open `https://live.torchleadershipacademy.org/login`.
 2. Enter your email and click `Send sign-in email`.
-3. Open your newest email and either click `Sign in to TORCH Live` or use the sign-in code (6-8 digits).
-4. If the link opens in the wrong browser, return to `/login` and use `Sign in with code` with the 6-8 digit backup code shown in the same email.
-5. Confirm you land on admin pages with tabs like `Schedule`, `Announcements`, `Resources`, `Users`, `Settings`.
-6. Important on iPhone/Gmail: if the email opens inside Gmail's browser, use `Open in Safari` and request a fresh sign-in email there before retrying.
+3. Open your newest email and click `Sign in to TORCH Live`.
+4. On the confirm screen, tap `Continue sign-in`.
+5. If the link opens in the wrong browser, return to `/login` and use `Sign in with code` with the 6-8 digit backup code shown in the same email.
+6. Confirm you land on admin pages with tabs like `Schedule`, `Announcements`, `Resources`, `Users`, `Settings`.
+7. Important on iPhone/Gmail: if the email opens inside Gmail's browser, use `Open in Safari` and request a fresh sign-in email there before retrying.
 
 ## 3) Your 5 Core Jobs
 

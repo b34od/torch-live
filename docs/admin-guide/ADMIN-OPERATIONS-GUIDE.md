@@ -89,7 +89,7 @@ Readiness center covering:
 
 ### Auth Flow
 1. User requests magic link in `/login`.
-2. `/auth/confirm` page extracts auth params from either query string or URL fragment and forwards to `/auth/callback`.
+2. `/auth/confirm` page extracts auth params from either query string or URL fragment and waits for explicit user tap (`Continue sign-in`) before forwarding to `/auth/callback`.
 3. `/auth/callback` completes auth via `verifyOtp(token_hash,type)`, `exchangeCodeForSession(code)`, or fallback `setSession(access_token,refresh_token)`.
 4. If magic-link browser handoff fails, user can submit email + 6-8 digit code in `/login` (`verifyOtp(email,token,type=email)`).
 5. Role + active profile checks drive final route.

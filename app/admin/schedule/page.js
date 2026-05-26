@@ -592,7 +592,7 @@ export default async function AdminSchedulePage({ searchParams }) {
             <ScheduleTimeline
               items={sortedItems}
               track={track}
-              showNowMarker
+              showNowMarker={false}
               showConflicts
               dayNumber={day}
               programYear={selectedYear}

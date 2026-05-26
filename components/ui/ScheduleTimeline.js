@@ -15,9 +15,9 @@ const COLOR_PALETTE = [
   { bg: "rgba(113, 60, 151, 0.18)", border: "rgba(90, 48, 121, 0.62)" },
   { bg: "rgba(173, 174, 215, 0.24)", border: "rgba(91, 95, 146, 0.62)" },
 ];
-const MIN_BLOCK_HEIGHT_PX = 12;
-const BLOCK_GAP_PX = 3;
-const MIN_CLIPPED_HEIGHT_PX = 7;
+const MIN_BLOCK_HEIGHT_PX = 16;
+const BLOCK_GAP_PX = 5;
+const MIN_CLIPPED_HEIGHT_PX = 10;
 
 function colorForLocation(location) {
   const text = String(location || "TBD");
@@ -167,11 +167,19 @@ export default function ScheduleTimeline({
   const programNow = getProgramNowSnapshot(track);
   const nowMinutes = Number.isFinite(programNow.minutes) ? programNow.minutes : 0;
   const currentDay = programNow.dayNumber;
-  const isProgramYearMatch =
-    programYear === null || programYear === undefined || Number(programYear) === programNow.year;
-  const isSelectedDayCurrent =
-    dayNumber === null || dayNumber === undefined ? true : Number(dayNumber) === currentDay;
-  const shouldRenderNowMarker = showNowMarker && isProgramYearMatch && isSelectedDayCurrent;
+  const normalizedYear = Number(programYear);
+  const normalizedDay = Number(dayNumber);
+  const hasProgramYear = Number.isFinite(normalizedYear);
+  const hasSelectedDay = Number.isFinite(normalizedDay);
+  const isProgramYearMatch = hasProgramYear && normalizedYear === programNow.year;
+  const isSelectedDayCurrent = hasSelectedDay && normalizedDay === currentDay;
+  const shouldRenderNowMarker =
+    showNowMarker &&
+    Number.isFinite(currentDay) &&
+    hasProgramYear &&
+    hasSelectedDay &&
+    isProgramYearMatch &&
+    isSelectedDayCurrent;
   const showNow = shouldRenderNowMarker && nowMinutes >= scaleStart && nowMinutes <= scaleEnd;
   const nowTop = (nowMinutes - scaleStart) * pxPerMinute;
 
@@ -252,13 +260,13 @@ export default function ScheduleTimeline({
           {sorted.map((item) => {
             const startMinutes = timeToMinutes(item.start_time) || scaleStart;
             const durationMinutes = Number(item.duration_minutes || 0);
-            const top = Math.round((startMinutes - scaleStart) * pxPerMinute);
-            const rawHeight = Math.max(Math.floor(durationMinutes * pxPerMinute), MIN_BLOCK_HEIGHT_PX);
+            const top = (startMinutes - scaleStart) * pxPerMinute;
+            const rawHeight = Math.max(durationMinutes * pxPerMinute, MIN_BLOCK_HEIGHT_PX);
             const nextLaneStart = nextStartByItemId.get(item.id);
             const laneGapHeight =
               Number.isFinite(nextLaneStart) && nextLaneStart > startMinutes
                 ? Math.max(
-                    Math.floor((nextLaneStart - startMinutes) * pxPerMinute) - BLOCK_GAP_PX,
+                    (nextLaneStart - startMinutes) * pxPerMinute - BLOCK_GAP_PX,
                     MIN_CLIPPED_HEIGHT_PX,
                   )
                 : null;
@@ -278,10 +286,12 @@ export default function ScheduleTimeline({
             const hasOverlap = Boolean(layout?.hasOverlap);
             const isTiny = height < 42;
             const isCompact = height < 66;
-            const showTime = height >= 56;
-            const showStaffMeta = track === "staff" && height >= 130;
+            const laneIsCrowded = laneCount > 2;
+            const showTime = height >= 52 && !laneIsCrowded;
+            const showStaffMeta = track === "staff" && height >= 130 && laneCount === 1;
             const densityClass = isTiny ? " timeline-block-tiny" : isCompact ? " timeline-block-compact" : "";
             const timeClass = showTime ? "" : " timeline-block-no-time";
+            const titleClass = showTime && !laneIsCrowded ? "" : " timeline-block-title-single";
             const stateClass =
               item.id === currentId
                 ? " timeline-block-current"
@@ -307,7 +317,7 @@ export default function ScheduleTimeline({
                   borderColor: color.border,
                 }}
               >
-                <p className="timeline-block-title">{blockTitle}</p>
+                <p className={`timeline-block-title${titleClass}`}>{blockTitle}</p>
                 {showTime ? (
                   <p className="timeline-block-time">{blockTime}</p>
                 ) : null}

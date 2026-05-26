@@ -56,7 +56,7 @@ export default async function StudentSchedulePage({ searchParams }) {
             Calendar-style view so you can quickly see what happens next and how long each block runs.
           </p>
           <ScheduleTimeline
-            items={items}
+            items={sortedItems}
             track="student"
             dayNumber={day}
             programYear={profile.program_year}
