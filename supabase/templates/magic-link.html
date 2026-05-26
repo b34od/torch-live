@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your TORCH Live sign-in link</title>
+  </head>
+  <body style="margin:0; padding:0; background-color:#f1f1f1;">
+    <div style="display:none; max-height:0; overflow:hidden; opacity:0; mso-hide:all; color:transparent;">
+      Your secure sign-in link for TORCH Live.
+    </div>
+
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f1f1f1;">
+      <tr>
+        <td align="center" style="padding:24px 12px;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:620px;">
+            <tr>
+              <td>
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                  <tr>
+                    <td width="25%" style="height:8px; background-color:#ed6767;"></td>
+                    <td width="25%" style="height:8px; background-color:#eeb75f;"></td>
+                    <td width="25%" style="height:8px; background-color:#eceb67;"></td>
+                    <td width="25%" style="height:8px; background-color:#713c97;"></td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="background-color:#ffffff; border:1px solid #d3d3d3; border-top:0; border-radius:0 0 18px 18px; padding:28px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                  <tr>
+                    <td align="left" style="padding-bottom:16px;">
+                      <img
+                        src="https://live.torchleadershipacademy.org/logos/torch-main.png"
+                        width="180"
+                        alt="Torch Leadership Academy"
+                        style="display:block; border:0; outline:none; text-decoration:none; width:180px; max-width:100%; height:auto;"
+                      />
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-family:'Poppins', Arial, Helvetica, sans-serif; font-size:30px; line-height:1.2; font-weight:800; color:#2c2c2c; padding-bottom:14px;">
+                      TORCH Live Sign-In
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-family:'Poppins', Arial, Helvetica, sans-serif; font-size:16px; line-height:1.55; color:#2c2c2c; padding-bottom:14px;">
+                      Hi {{ .Email }},<br /><br />
+                      You requested a secure sign-in link for TORCH Live, the official program app of
+                      Torch Leadership Academy.
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding:4px 0 22px 0;">
+                      <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                        <tr>
+                          <td style="background-color:#713c97; border-radius:999px;">
+                            <a
+                              href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email"
+                              style="display:inline-block; font-family:'Poppins', Arial, Helvetica, sans-serif; font-size:16px; font-weight:700; line-height:1; color:#ffffff; text-decoration:none; padding:14px 22px;"
+                            >
+                              Sign in to TORCH Live
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-family:'Poppins', Arial, Helvetica, sans-serif; font-size:14px; line-height:1.55; color:#7f8080; padding-bottom:18px;">
+                      This link expires shortly and can only be used once. If you did not request this, you can safely ignore this email.
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding:0 0 18px 0;">
+                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border:1px solid #d3d3d3; border-radius:12px; background-color:#f7f7f7;">
+                        <tr>
+                          <td style="padding:12px 14px; font-family:'Poppins', Arial, Helvetica, sans-serif;">
+                            <p style="margin:0 0 8px 0; font-size:13px; line-height:1.45; color:#5f6060; font-weight:700;">
+                              Backup sign-in code
+                            </p>
+                            <p style="margin:0; font-size:28px; letter-spacing:0.22em; line-height:1; color:#2c2c2c; font-weight:800;">
+                              {{ .Token }}
+                            </p>
+                            <p style="margin:10px 0 0 0; font-size:12px; line-height:1.45; color:#7f8080;">
+                              If the sign-in button opens in the wrong browser, return to TORCH Live and choose <strong>Sign in with code</strong>.
+                            </p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-family:'Poppins', Arial, Helvetica, sans-serif; font-size:13px; line-height:1.5; color:#7f8080; padding-bottom:8px;">
+                      Having trouble with the button? Copy and paste this link into your browser:
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:1.5; color:#7f8080; word-break:break-all; padding-bottom:24px;">
+                      <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email" style="color:#713c97; text-decoration:underline;">{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=email</a>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="border-top:1px solid #d3d3d3; padding-top:16px; font-family:'Poppins', Arial, Helvetica, sans-serif; font-size:13px; line-height:1.5; color:#7f8080;">
+                      Need help? Contact TORCH staff at
+                      <a href="mailto:info@torchleadershipacademy.org" style="color:#713c97; text-decoration:underline;">info@torchleadershipacademy.org</a>.
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
