@@ -545,6 +545,32 @@ img {
   gap: 0.45rem;
 }
 
+.schedule-jump-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.schedule-jump-link {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(44, 44, 44, 0.12);
+  padding: 0.35rem 0.72rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #5a5b5b;
+  background: rgba(255, 255, 255, 0.92);
+  transition: all 120ms ease;
+}
+
+.schedule-jump-link:hover {
+  border-color: rgba(113, 60, 151, 0.34);
+  color: var(--torch-purple);
+}
+
 .day-tab {
   min-height: 44px;
   display: inline-flex;
@@ -901,7 +927,7 @@ img {
 
 .inline-check {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.4rem;
 }
 
@@ -1020,12 +1046,89 @@ img {
 }
 
 @media (max-width: 540px) {
+  .app-shell {
+    padding: 0.75rem 0.75rem calc(7rem + env(safe-area-inset-bottom));
+  }
+
+  .topbar {
+    position: relative;
+    top: 0;
+    padding: 0.75rem;
+  }
+
+  .topbar::before {
+    height: 6px;
+  }
+
+  .topbar-row {
+    margin-top: 0.08rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.62rem;
+  }
+
+  .topbar-brand {
+    gap: 0.65rem;
+    align-items: flex-start;
+  }
+
+  .topbar-logo {
+    width: 126px;
+  }
+
+  .topbar-title {
+    font-size: 0.7rem;
+  }
+
+  .topbar-name {
+    font-size: 1rem;
+    line-height: 1.2;
+    max-width: 100%;
+  }
+
   .topbar-actions {
-    justify-items: start;
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.48rem;
+    align-items: center;
+    justify-items: stretch;
+  }
+
+  .topbar-actions .pill {
+    justify-self: start;
+  }
+
+  .topbar-actions .button {
+    width: 100%;
   }
 
   .topbar-name {
     max-width: 100%;
+  }
+
+  .card {
+    padding: 0.9rem;
+  }
+
+  .card h2 {
+    font-size: clamp(1.25rem, 7vw, 1.5rem);
+  }
+
+  .schedule-jump-link {
+    flex: 1 1 auto;
+    min-width: 112px;
+  }
+
+  .bottom-nav {
+    padding-top: 0.45rem;
+  }
+
+  .bottom-nav-link {
+    min-width: 66px;
+    padding: 0.38rem 0.24rem;
+    font-size: 0.76rem;
+    line-height: 1.15;
   }
 
   .app-footer {
@@ -1062,6 +1165,14 @@ img {
 }
 
 @media (max-width: 760px) {
+  .nav-row {
+    display: none;
+  }
+
+  .card[id] {
+    scroll-margin-top: 0.75rem;
+  }
+
   .mobile-only {
     display: block;
   }

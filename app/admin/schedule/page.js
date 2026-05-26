@@ -8,8 +8,10 @@ import ScheduleTimeFields from "../../../components/ui/ScheduleTimeFields";
 import { requireUser } from "../../../lib/auth";
 import { getStaffScheduleByDay, getStudentScheduleByDay } from "../../../lib/data";
 import {
+  addMinutesToTime,
   dayLabel,
   dayNumbersForTrack,
+  formatTimeLabel,
   formatTimeRange,
   normalizeDayForTrack,
   timeToMinutes,
@@ -484,10 +486,19 @@ export default async function AdminSchedulePage({ searchParams }) {
   const error = scheduleResponse.error;
   const editingId = String(params?.edit || "").trim();
   const editingItem = items.find((item) => item.id === editingId) || null;
+  const sortedItems = [...items].sort((a, b) => {
+    const aStart = timeToMinutes(a.start_time) || 0;
+    const bStart = timeToMinutes(b.start_time) || 0;
+    if (aStart !== bStart) return aStart - bStart;
+    return Number(a.sort_order || 0) - Number(b.sort_order || 0);
+  });
+  const firstItem = sortedItems[0] || null;
+  const lastItem = sortedItems[sortedItems.length - 1] || null;
+  const lastEndTime = lastItem ? addMinutesToTime(lastItem.start_time, lastItem.duration_minutes) : "";
 
   return (
     <>
-      <section className="card">
+      <section className="card" id="schedule-controls">
         <h2>Schedule Management</h2>
         <p className="muted">
           Manage student and staff schedules by day, with start/end time visibility and timeline
@@ -541,9 +552,49 @@ export default async function AdminSchedulePage({ searchParams }) {
             days={dayOptions}
           />
         </div>
+
+        <nav className="schedule-jump-nav mt-md" aria-label="Schedule editor sections">
+          <a href="#schedule-overview" className="schedule-jump-link">
+            Timeline
+          </a>
+          <a href="#schedule-add" className="schedule-jump-link">
+            Add Item
+          </a>
+          <a href="#schedule-year-tools" className="schedule-jump-link">
+            Year Tools
+          </a>
+          <a href="#schedule-items" className="schedule-jump-link">
+            Items
+          </a>
+          {editingItem ? (
+            <a href="#schedule-edit" className="schedule-jump-link">
+              Edit Item
+            </a>
+          ) : null}
+        </nav>
       </section>
 
-      <section className="card">
+      <section className="card" id="schedule-overview">
+        <h2>
+          {track === "staff" ? "Staff" : "Student"} Snapshot · {dayLabel(day)} · {selectedYear}
+        </h2>
+        {error ? (
+          <p className="alert alert-error mt-md">{error.message}</p>
+        ) : items.length === 0 ? (
+          <p className="empty mt-md">No entries yet for {dayLabel(day)}. Add your first item below.</p>
+        ) : (
+          <>
+            <p className="muted">
+              {items.length} item{items.length === 1 ? "" : "s"} · starts at{" "}
+              <strong>{formatTimeLabel(firstItem.start_time)}</strong> · ends at{" "}
+              <strong>{formatTimeLabel(lastEndTime)}</strong>
+            </p>
+            <ScheduleTimeline items={items} track={track} showNowMarker showConflicts />
+          </>
+        )}
+      </section>
+
+      <section className="card" id="schedule-add">
         <h2>Add Schedule Item</h2>
         <form action={addScheduleItem} className="stack mt-md">
           <input type="hidden" name="track" value={track} />
@@ -617,7 +668,7 @@ export default async function AdminSchedulePage({ searchParams }) {
         </form>
       </section>
 
-      <section className="card">
+      <section className="card" id="schedule-year-tools">
         <h2>Year Tools</h2>
         <p className="muted">Copy schedule blocks from one year to another after annual updates.</p>
         <form action={cloneScheduleYear} className="grid-two mt-md">
@@ -687,7 +738,7 @@ export default async function AdminSchedulePage({ searchParams }) {
       </section>
 
       {editingItem ? (
-        <section className="card">
+        <section className="card" id="schedule-edit">
           <h2>Edit Schedule Item</h2>
           <form action={updateScheduleItem} className="stack mt-md">
             <input type="hidden" name="id" value={editingItem.id} />
@@ -796,7 +847,7 @@ export default async function AdminSchedulePage({ searchParams }) {
         </section>
       ) : null}
 
-      <section className="card">
+      <section className="card" id="schedule-items">
         <h2>
           {track === "staff" ? "Staff" : "Student"} Schedule · {dayLabel(day)} · {selectedYear}
         </h2>
@@ -908,12 +959,6 @@ export default async function AdminSchedulePage({ searchParams }) {
               </table>
             </div>
 
-            <h3 className="mt-md">Timeline View</h3>
-            <p className="muted">
-              Blocks scale with duration and are color-coded by location so dependencies are easier
-              to see while planning.
-            </p>
-            <ScheduleTimeline items={items} track={track} showNowMarker showConflicts />
           </>
         )}
       </section>
