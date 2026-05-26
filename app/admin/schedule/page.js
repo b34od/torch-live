@@ -108,7 +108,7 @@ function scheduleSwitcher(track, day, year) {
   const staffDay = parseDay(day, "staff");
 
   return (
-    <div className="day-tabs" role="tablist" aria-label="Schedule type">
+    <div className="day-tabs" aria-label="Schedule type">
       <Link
         href={schedulePageUrl("student", studentDay, year)}
         className={`day-tab ${track === "student" ? "day-tab-active" : ""}`}
@@ -590,7 +590,7 @@ export default async function AdminSchedulePage({ searchParams }) {
               <strong>{formatTimeLabel(lastEndTime)}</strong>
             </p>
             <ScheduleTimeline
-              items={items}
+              items={sortedItems}
               track={track}
               showNowMarker
               showConflicts
@@ -866,7 +866,7 @@ export default async function AdminSchedulePage({ searchParams }) {
         ) : (
           <>
             <div className="schedule-card-list mobile-only mt-md">
-              {items.map((item) => (
+              {sortedItems.map((item) => (
                 <article key={item.id} className="schedule-card">
                   <div className="schedule-card-header">
                     <span className="schedule-time">{formatTimeRange(item.start_time, item.duration_minutes)}</span>
@@ -877,30 +877,26 @@ export default async function AdminSchedulePage({ searchParams }) {
                     <span className="schedule-label">Location:</span> {item.location || "TBD"}
                   </p>
                   {track === "staff" ? (
-                    <>
-                      <p className="schedule-detail">
-                        <span className="schedule-label">Rain:</span> {item.rain_location || "N/A"}
-                      </p>
-                      <p className="schedule-detail">
-                        <span className="schedule-label">Point:</span> {item.point_person || "TBD"}
-                      </p>
-                    </>
+                    <p className="schedule-detail">
+                      <span className="schedule-label">Rain:</span> {item.rain_location || "N/A"} ·{" "}
+                      <span className="schedule-label">Point:</span> {item.point_person || "TBD"}
+                    </p>
                   ) : null}
-                  <div className="stack-sm mt-sm">
+                  <div className="schedule-card-actions mt-sm">
                     <Link
                       href={schedulePageUrl(track, day, selectedYear, { edit: item.id })}
-                      className="day-tab"
+                      className="schedule-card-action schedule-card-action-edit"
                     >
                       Edit
                     </Link>
-                    <form action={removeScheduleItem}>
+                    <form action={removeScheduleItem} className="schedule-card-action-form">
                       <input type="hidden" name="id" value={item.id} />
                       <input type="hidden" name="track" value={track} />
                       <input type="hidden" name="day" value={day} />
                       <input type="hidden" name="program_year" value={selectedYear} />
                       <ConfirmSubmitButton
                         label="Remove"
-                        className="button button-secondary"
+                        className="schedule-card-action schedule-card-action-remove"
                         confirmMessage="Remove this schedule item?"
                       />
                     </form>
@@ -927,7 +923,7 @@ export default async function AdminSchedulePage({ searchParams }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((item) => (
+                  {sortedItems.map((item) => (
                     <tr key={item.id}>
                       <td>{formatTimeRange(item.start_time, item.duration_minutes)}</td>
                       <td>{item.duration_minutes}m</td>
@@ -940,21 +936,21 @@ export default async function AdminSchedulePage({ searchParams }) {
                         </>
                       ) : null}
                       <td>
-                        <div className="stack-sm">
+                        <div className="schedule-table-actions">
                           <Link
                             href={schedulePageUrl(track, day, selectedYear, { edit: item.id })}
-                            className="day-tab"
+                            className="schedule-table-action schedule-table-action-edit"
                           >
                             Edit
                           </Link>
-                          <form action={removeScheduleItem}>
+                          <form action={removeScheduleItem} className="schedule-table-action-form">
                             <input type="hidden" name="id" value={item.id} />
                             <input type="hidden" name="track" value={track} />
                             <input type="hidden" name="day" value={day} />
                             <input type="hidden" name="program_year" value={selectedYear} />
                             <ConfirmSubmitButton
                               label="Remove"
-                              className="button button-secondary"
+                              className="schedule-table-action schedule-table-action-remove"
                               confirmMessage="Remove this schedule item?"
                             />
                           </form>

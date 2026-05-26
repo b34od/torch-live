@@ -76,6 +76,7 @@ If any of these fail, stop and contact Bryan.
 3. Publish known updates in `Announcements`.
 4. Unpin outdated urgent announcements at end of day.
 5. Remove outdated or duplicate resources.
+6. Open `Settings` and confirm launch-readiness checks are green, especially magic-link template checks.
 
 ## 5) Guardrails
 

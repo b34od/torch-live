@@ -29,7 +29,7 @@ This guide covers technical operations that should not be handled by frontline p
 1. `lib/auth.js`, `middleware.js`
 2. `lib/supabase/server.js`, `lib/supabase/client.js`, `lib/supabase/admin.js`
 3. `lib/supabase/env.js`
-4. `app/auth/confirm/route.js`, `app/auth/callback/route.js`, `app/auth/signout/route.js`
+4. `app/auth/confirm/page.js`, `app/auth/callback/route.js`, `app/auth/signout/route.js`
 
 ## 3) Role and Access Model
 
@@ -83,6 +83,7 @@ Readiness center covering:
 2. Schedule overlap scanning
 3. Schedule day-coverage checks (staff Friday-Tuesday, student Saturday-Tuesday)
 4. Active roster-role coverage checks (admin, staff, student)
+5. Magic-link template quality checks (repo and optional live Supabase config parity)
 
 ## 5) Auth and User Lifecycle Boundaries
 
@@ -135,6 +136,7 @@ Optional one-time bootstrap:
 2. Redirect URLs must include both `.../auth/confirm` and `.../auth/callback` for production and approved preview domains.
 3. Magic Link template should point users to `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email` (SSR-safe token-hash flow).
 4. Template should include `{{ .Token }}` backup code so users can use `/login` -> `Sign in with code` when link handoff fails.
+5. If enabled, `/admin/settings` will compare repo template baseline with live Supabase template content and flag drift before launch.
 
 ### SMTP
 1. Custom SMTP must be enabled.

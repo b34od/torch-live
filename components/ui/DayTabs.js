@@ -11,7 +11,7 @@ export default function DayTabs({
   const baseParams = new URLSearchParams(queryString || "");
 
   return (
-    <div className="day-tabs" role="tablist" aria-label="Program day">
+    <nav className="day-tabs" aria-label="Program day">
       {days.map((day) => {
         const active = day === selectedDay;
         const params = new URLSearchParams(baseParams.toString());
@@ -23,13 +23,12 @@ export default function DayTabs({
             key={day}
             href={href}
             className={`day-tab ${active ? "day-tab-active" : ""}`}
-            aria-selected={active}
-            role="tab"
+            aria-current={active ? "page" : undefined}
           >
             {labelFormatter(day)}
           </Link>
         );
       })}
-    </div>
+    </nav>
   );
 }

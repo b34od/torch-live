@@ -15,6 +15,9 @@ const COLOR_PALETTE = [
   { bg: "rgba(113, 60, 151, 0.18)", border: "rgba(90, 48, 121, 0.62)" },
   { bg: "rgba(173, 174, 215, 0.24)", border: "rgba(91, 95, 146, 0.62)" },
 ];
+const MIN_BLOCK_HEIGHT_PX = 12;
+const BLOCK_GAP_PX = 3;
+const MIN_CLIPPED_HEIGHT_PX = 7;
 
 function colorForLocation(location) {
   const text = String(location || "TBD");
@@ -147,6 +150,19 @@ export default function ScheduleTimeline({
   const hasMultipleLocations = legendItems.length > 1;
   const singleLocationLabel = hasMultipleLocations ? "" : legendItems[0]?.[0] || "TBD";
   const layoutById = buildLayout(sorted);
+  const nextStartByItemId = new Map();
+  const nextStartByLane = new Map();
+
+  for (let index = sorted.length - 1; index >= 0; index -= 1) {
+    const item = sorted[index];
+    const start = timeToMinutes(item.start_time) || 0;
+    const lane = layoutById.get(item.id)?.lane || 0;
+    const nextStart = nextStartByLane.get(lane);
+    if (Number.isFinite(nextStart)) {
+      nextStartByItemId.set(item.id, nextStart);
+    }
+    nextStartByLane.set(lane, start);
+  }
 
   const programNow = getProgramNowSnapshot(track);
   const nowMinutes = Number.isFinite(programNow.minutes) ? programNow.minutes : 0;
@@ -161,17 +177,19 @@ export default function ScheduleTimeline({
 
   let currentId = null;
   let nextId = null;
-  for (let index = 0; index < sorted.length; index += 1) {
-    const item = sorted[index];
-    const { start, end } = timeBounds(item);
-    if (nowMinutes >= start && nowMinutes < end) {
-      currentId = item.id;
-      nextId = sorted[index + 1]?.id || null;
-      break;
-    }
-    if (nowMinutes < start) {
-      nextId = item.id;
-      break;
+  if (shouldRenderNowMarker) {
+    for (let index = 0; index < sorted.length; index += 1) {
+      const item = sorted[index];
+      const { start, end } = timeBounds(item);
+      if (nowMinutes >= start && nowMinutes < end) {
+        currentId = item.id;
+        nextId = sorted[index + 1]?.id || null;
+        break;
+      }
+      if (nowMinutes < start) {
+        nextId = item.id;
+        break;
+      }
     }
   }
 
@@ -223,6 +241,7 @@ export default function ScheduleTimeline({
           Location: <strong>{singleLocationLabel}</strong>
         </p>
       )}
+      <p className="timeline-timezone">All schedule times are shown in Eastern Time (ET).</p>
       <div className="timeline-grid" style={{ height: `${timelineHeight}px` }}>
         <div className="timeline-lane">
           {showNow ? (
@@ -233,8 +252,20 @@ export default function ScheduleTimeline({
           {sorted.map((item) => {
             const startMinutes = timeToMinutes(item.start_time) || scaleStart;
             const durationMinutes = Number(item.duration_minutes || 0);
-            const top = (startMinutes - scaleStart) * pxPerMinute;
-            const height = Math.max(durationMinutes * pxPerMinute, 18);
+            const top = Math.round((startMinutes - scaleStart) * pxPerMinute);
+            const rawHeight = Math.max(Math.floor(durationMinutes * pxPerMinute), MIN_BLOCK_HEIGHT_PX);
+            const nextLaneStart = nextStartByItemId.get(item.id);
+            const laneGapHeight =
+              Number.isFinite(nextLaneStart) && nextLaneStart > startMinutes
+                ? Math.max(
+                    Math.floor((nextLaneStart - startMinutes) * pxPerMinute) - BLOCK_GAP_PX,
+                    MIN_CLIPPED_HEIGHT_PX,
+                  )
+                : null;
+            const height =
+              laneGapHeight === null
+                ? rawHeight
+                : Math.max(Math.min(rawHeight, laneGapHeight), MIN_CLIPPED_HEIGHT_PX);
             const locationLabel = item.location || "TBD";
             const color = colorForLocation(locationLabel);
             const layout = layoutById.get(item.id);
@@ -245,10 +276,12 @@ export default function ScheduleTimeline({
             const width = `calc(${laneWidthPercent}% - ${((laneCount + 1) * laneGapPx) / laneCount}px)`;
             const left = `calc(${laneWidthPercent * lane}% + ${(lane + 1) * laneGapPx}px)`;
             const hasOverlap = Boolean(layout?.hasOverlap);
-            const isTiny = height < 46;
-            const isCompact = height < 70;
+            const isTiny = height < 42;
+            const isCompact = height < 66;
+            const showTime = height >= 56;
             const showStaffMeta = track === "staff" && height >= 130;
             const densityClass = isTiny ? " timeline-block-tiny" : isCompact ? " timeline-block-compact" : "";
+            const timeClass = showTime ? "" : " timeline-block-no-time";
             const stateClass =
               item.id === currentId
                 ? " timeline-block-current"
@@ -262,7 +295,7 @@ export default function ScheduleTimeline({
             return (
               <article
                 key={item.id}
-                className={`timeline-block${hasOverlap ? " timeline-block-overlap" : ""}${densityClass}${stateClass}`}
+                className={`timeline-block${hasOverlap ? " timeline-block-overlap" : ""}${densityClass}${timeClass}${stateClass}`}
                 title={blockDescription}
                 aria-label={blockDescription}
                 style={{
@@ -275,7 +308,7 @@ export default function ScheduleTimeline({
                 }}
               >
                 <p className="timeline-block-title">{blockTitle}</p>
-                {!isTiny ? (
+                {showTime ? (
                   <p className="timeline-block-time">{blockTime}</p>
                 ) : null}
                 {showStaffMeta ? (

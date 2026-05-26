@@ -51,7 +51,10 @@ function normalizeOtpType(type) {
   const normalized = String(type || "")
     .trim()
     .toLowerCase();
-  const allowedTypes = new Set(["email", "signup", "invite", "recovery", "email_change", "magiclink"]);
+  if (normalized === "magiclink" || normalized === "signup") {
+    return "email";
+  }
+  const allowedTypes = new Set(["email", "invite", "recovery", "email_change"]);
   return allowedTypes.has(normalized) ? normalized : "email";
 }
 

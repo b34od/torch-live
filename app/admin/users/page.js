@@ -8,6 +8,7 @@ const ROLES = ["student", "staff", "admin"];
 const MIN_YEAR = 2020;
 const MAX_YEAR = 2100;
 const BULK_LIMIT = 500;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function countByRole(profiles, role) {
   return profiles.filter((profile) => profile.role === role && profile.is_active).length;
@@ -23,6 +24,10 @@ function normalizeEmail(value) {
   return String(value || "")
     .trim()
     .toLowerCase();
+}
+
+function isValidEmail(email) {
+  return EMAIL_PATTERN.test(String(email || ""));
 }
 
 function parseProgramYear(value, fallback) {
@@ -251,6 +256,10 @@ async function createProgramUser(formData) {
     redirect(usersPageUrl(selectedYear, { error: "Name, email, and role are required." }));
   }
 
+  if (!isValidEmail(email)) {
+    redirect(usersPageUrl(selectedYear, { error: "Enter a valid email address." }));
+  }
+
   if (!ROLES.includes(role)) {
     redirect(usersPageUrl(selectedYear, { error: "Invalid role." }));
   }
@@ -346,6 +355,11 @@ async function bulkImportUsers(formData) {
         continue;
       }
 
+      if (!isValidEmail(row.email)) {
+        skippedCount += 1;
+        continue;
+      }
+
       try {
         const authUser = await createOrFetchAuthUser(
           adminClient,
@@ -423,6 +437,10 @@ async function updateProgramUser(formData) {
 
   if (!userId || !fullName || !email || !role) {
     redirect(usersPageUrl(selectedYear, { error: "All edit fields are required." }));
+  }
+
+  if (!isValidEmail(email)) {
+    redirect(usersPageUrl(selectedYear, { error: "Enter a valid email address." }));
   }
 
   if (!ROLES.includes(role)) {

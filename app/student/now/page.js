@@ -31,7 +31,10 @@ export default async function StudentNowPage({ searchParams }) {
     profile.program_year,
     3,
   );
-  const { current, next } = getCurrentAndNextItem(scheduleItems);
+  const { current, next } = getCurrentAndNextItem(scheduleItems, {
+    track: "student",
+    selectedDay: day,
+  });
 
   return (
     <>

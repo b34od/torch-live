@@ -88,13 +88,14 @@ export default async function StaffSchedulePage({ searchParams }) {
                   <span className="schedule-label">Location:</span> {item.location || "TBD"}
                 </p>
                 <p className="schedule-detail">
+                  <span className="schedule-label">Point:</span> {item.point_person || "TBD"} ·{" "}
                   <span className="schedule-label">Rain:</span> {item.rain_location || "N/A"}
-                </p>
-                <p className="schedule-detail">
-                  <span className="schedule-label">Point:</span> {item.point_person || "TBD"}
-                </p>
-                <p className="schedule-detail">
-                  <span className="schedule-label">Secondary:</span> {item.secondary_person || "N/A"}
+                  {item.secondary_person ? (
+                    <>
+                      {" "}· <span className="schedule-label">Secondary:</span>{" "}
+                      {item.secondary_person}
+                    </>
+                  ) : null}
                 </p>
                 {item.notes ? (
                   <p className="schedule-detail">

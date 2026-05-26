@@ -32,7 +32,10 @@ export default async function StaffNowPage({ searchParams }) {
     profile.program_year,
     4,
   );
-  const { current, next } = getCurrentAndNextItem(scheduleItems);
+  const { current, next } = getCurrentAndNextItem(scheduleItems, {
+    track: "staff",
+    selectedDay: day,
+  });
 
   return (
     <>

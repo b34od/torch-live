@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { requireUser } from "../../../lib/auth";
 import { dayLabel, timeToMinutes } from "../../../lib/schedule";
 
@@ -85,6 +87,206 @@ function activeRoleCounts(rows) {
   return counts;
 }
 
+function analyzeMagicLinkTemplate(content) {
+  const normalized = String(content || "");
+  return {
+    containsOtpToken: normalized.includes("{{ .Token }}"),
+    containsTokenHashRoute:
+      normalized.includes("/auth/confirm?token_hash={{ .TokenHash }}") ||
+      normalized.includes("token_hash={{ .TokenHash }}"),
+    usesDirectConfirmationUrl: normalized.includes("{{ .ConfirmationURL }}"),
+  };
+}
+
+function normalizeTemplateForCompare(content) {
+  return String(content || "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function deriveSupabaseProjectRef() {
+  const explicit =
+    String(
+      process.env.SUPABASE_PROJECT_REF || process.env.NEXT_PUBLIC_SUPABASE_PROJECT_REF || "",
+    ).trim();
+  if (explicit) return explicit;
+
+  const supabaseUrl = String(process.env.NEXT_PUBLIC_SUPABASE_URL || "").trim();
+  const match = supabaseUrl.match(/^https?:\/\/([a-z0-9-]+)\.supabase\./i);
+  return match?.[1] || "";
+}
+
+function toUrlList(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => String(item || "").trim())
+      .filter(Boolean);
+  }
+
+  const text = String(value || "").trim();
+  if (!text) return [];
+
+  if (text.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed)) {
+        return parsed.map((item) => String(item || "").trim()).filter(Boolean);
+      }
+    } catch {
+      return [];
+    }
+  }
+
+  return text
+    .split(/[,\n]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function normalizeUrl(value) {
+  return String(value || "").trim().replace(/\/+$/, "");
+}
+
+function auditAuthRedirectConfig(config, expectedSiteUrl) {
+  const siteUrl = String(config?.site_url || "").trim();
+  const allowList = toUrlList(config?.additional_redirect_urls);
+  const allRedirects = [siteUrl, ...allowList].filter(Boolean);
+  const hasConfirmRoute = allRedirects.some((url) => url.includes("/auth/confirm"));
+  const hasCallbackRoute = allRedirects.some((url) => url.includes("/auth/callback"));
+  const normalizedExpected = normalizeUrl(expectedSiteUrl);
+  const siteUrlMatchesExpected =
+    !normalizedExpected || normalizeUrl(siteUrl) === normalizedExpected;
+
+  return {
+    siteUrl,
+    allowList,
+    hasConfirmRoute,
+    hasCallbackRoute,
+    siteUrlMatchesExpected,
+  };
+}
+
+async function auditMagicLinkTemplate() {
+  const templatePath = path.join(process.cwd(), "supabase/templates/magic-link.html");
+
+  try {
+    const template = await readFile(templatePath, "utf8");
+    const checks = analyzeMagicLinkTemplate(template);
+    return {
+      loaded: true,
+      template,
+      normalizedTemplate: normalizeTemplateForCompare(template),
+      ...checks,
+    };
+  } catch (error) {
+    return {
+      loaded: false,
+      errorMessage: String(error?.message || "Unable to read template file."),
+      containsOtpToken: false,
+      containsTokenHashRoute: false,
+      usesDirectConfirmationUrl: false,
+    };
+  }
+}
+
+async function auditLiveMagicLinkTemplate() {
+  if (process.env.NEXT_PHASE === "phase-production-build") {
+    return {
+      available: false,
+      configured: false,
+      reason: "Skipped during production build; live template checks run at request time in admin settings.",
+    };
+  }
+
+  const accessToken = String(
+    process.env.SUPABASE_ACCESS_TOKEN || process.env.SUPABASE_MANAGEMENT_ACCESS_TOKEN || "",
+  ).trim();
+  const projectRef = deriveSupabaseProjectRef();
+
+  if (!accessToken) {
+    return {
+      available: false,
+      configured: false,
+      reason:
+        "Set SUPABASE_ACCESS_TOKEN or SUPABASE_MANAGEMENT_ACCESS_TOKEN to verify the live dashboard template.",
+    };
+  }
+
+  if (!projectRef) {
+    return {
+      available: false,
+      configured: false,
+      reason:
+        "Set SUPABASE_PROJECT_REF (or NEXT_PUBLIC_SUPABASE_PROJECT_REF) to verify the live dashboard template.",
+    };
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    let response;
+    try {
+      response = await fetch(`https://api.supabase.com/v1/projects/${projectRef}/config/auth`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        cache: "no-store",
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (!response.ok) {
+      const text = (await response.text()).slice(0, 160);
+      return {
+        available: true,
+        configured: true,
+        loaded: false,
+        errorMessage: `Live config request failed (${response.status}). ${text || ""}`.trim(),
+        projectRef,
+      };
+    }
+
+    const config = await response.json();
+    const template = String(config?.mailer_templates_magic_link_content || "");
+    if (!template.trim()) {
+      return {
+        available: true,
+        configured: true,
+        loaded: false,
+        errorMessage: "Live Magic Link template is empty in Supabase project config.",
+        projectRef,
+      };
+    }
+
+    const checks = analyzeMagicLinkTemplate(template);
+    const redirectAudit = auditAuthRedirectConfig(config, process.env.NEXT_PUBLIC_SITE_URL);
+    return {
+      available: true,
+      configured: true,
+      loaded: true,
+      template,
+      normalizedTemplate: normalizeTemplateForCompare(template),
+      projectRef,
+      authConfig: config,
+      redirectAudit,
+      ...checks,
+    };
+  } catch (error) {
+    return {
+      available: true,
+      configured: true,
+      loaded: false,
+      errorMessage: String(error?.message || "Unable to read live Supabase template config."),
+      projectRef,
+    };
+  }
+}
+
 export const metadata = {
   title: "Admin Settings",
 };
@@ -112,6 +314,19 @@ export default async function AdminSettingsPage() {
       .select("id, role, is_active")
       .eq("program_year", profile.program_year),
   ]);
+  const [templateAudit, liveTemplateAudit] = await Promise.all([
+    auditMagicLinkTemplate(),
+    auditLiveMagicLinkTemplate(),
+  ]);
+  const liveTemplateParity =
+    templateAudit.loaded &&
+    liveTemplateAudit.loaded &&
+    templateAudit.normalizedTemplate === liveTemplateAudit.normalizedTemplate;
+  const redirectAudit = liveTemplateAudit.redirectAudit || null;
+  const liveRedirectRoutesReady = Boolean(
+    liveTemplateAudit.loaded && redirectAudit?.hasConfirmRoute && redirectAudit?.hasCallbackRoute,
+  );
+  const liveSiteUrlAligned = Boolean(liveTemplateAudit.loaded && redirectAudit?.siteUrlMatchesExpected);
 
   const studentRows = studentRowsResponse.data || [];
   const staffRows = staffRowsResponse.data || [];
@@ -157,6 +372,96 @@ export default async function AdminSettingsPage() {
       detail: "Enabled at /auth/confirm to reduce cross-browser mobile login failures.",
     },
     {
+      label: "Magic-Link Template (Repo) Has OTP Code",
+      ready: templateAudit.loaded && templateAudit.containsOtpToken,
+      detail: !templateAudit.loaded
+        ? `Unable to audit supabase/templates/magic-link.html: ${templateAudit.errorMessage}`
+        : templateAudit.containsOtpToken
+          ? "Template includes {{ .Token }} so users can sign in by code when links fail in mobile inbox browsers."
+          : "Template is missing {{ .Token }}. Add backup code support before launch.",
+    },
+    {
+      label: "Magic-Link Template (Repo) Uses Token-Hash Confirm Link",
+      ready: templateAudit.loaded && templateAudit.containsTokenHashRoute,
+      detail: !templateAudit.loaded
+        ? "Template audit unavailable."
+        : templateAudit.containsTokenHashRoute
+          ? "Template routes sign-in through /auth/confirm with token_hash."
+          : "Template should route through /auth/confirm?token_hash={{ .TokenHash }} for SSR-safe verification.",
+    },
+    {
+      label: "Magic-Link Template (Repo) Avoids Direct ConfirmationURL",
+      ready: templateAudit.loaded && !templateAudit.usesDirectConfirmationUrl,
+      detail: !templateAudit.loaded
+        ? "Template audit unavailable."
+        : templateAudit.usesDirectConfirmationUrl
+          ? "Template still uses {{ .ConfirmationURL }} directly; this is more fragile with email prefetch/scanners."
+          : "Template avoids direct {{ .ConfirmationURL }} link usage.",
+    },
+    {
+      label: "Live Magic-Link Template Access",
+      ready: liveTemplateAudit.available && liveTemplateAudit.configured && liveTemplateAudit.loaded,
+      required: false,
+      detail: !liveTemplateAudit.available
+        ? liveTemplateAudit.reason
+        : !liveTemplateAudit.loaded
+          ? liveTemplateAudit.errorMessage || "Live template audit unavailable."
+          : `Live template loaded from project ${liveTemplateAudit.projectRef}.`,
+    },
+    {
+      label: "Live Magic-Link Template Has OTP Code",
+      ready: liveTemplateAudit.loaded && liveTemplateAudit.containsOtpToken,
+      required: false,
+      detail: !liveTemplateAudit.loaded
+        ? "Live template audit unavailable."
+        : liveTemplateAudit.containsOtpToken
+          ? "Live template includes {{ .Token }} backup code."
+          : "Live template is missing {{ .Token }} backup code.",
+    },
+    {
+      label: "Live Magic-Link Template Uses Token-Hash Confirm Link",
+      ready: liveTemplateAudit.loaded && liveTemplateAudit.containsTokenHashRoute,
+      required: false,
+      detail: !liveTemplateAudit.loaded
+        ? "Live template audit unavailable."
+        : liveTemplateAudit.containsTokenHashRoute
+          ? "Live template routes through /auth/confirm?token_hash=..."
+          : "Live template should route through /auth/confirm?token_hash={{ .TokenHash }}.",
+    },
+    {
+      label: "Repo vs Live Magic-Link Template Parity",
+      ready: liveTemplateParity,
+      required: false,
+      detail:
+        !templateAudit.loaded || !liveTemplateAudit.loaded
+          ? "Parity check unavailable until both repo and live templates can be read."
+          : liveTemplateParity
+            ? "Live dashboard template matches repo template baseline."
+            : "Live dashboard template differs from repo baseline. Re-paste template before launch.",
+    },
+    {
+      label: "Live Auth Redirect URLs Include Confirm + Callback",
+      ready: liveRedirectRoutesReady,
+      required: false,
+      detail:
+        !liveTemplateAudit.loaded
+          ? "Live auth redirect audit unavailable."
+          : liveRedirectRoutesReady
+            ? "Live auth redirect configuration includes both /auth/confirm and /auth/callback."
+            : "Add both /auth/confirm and /auth/callback to Supabase Auth URL configuration.",
+    },
+    {
+      label: "Live Site URL Matches Deployment Site URL",
+      ready: liveSiteUrlAligned,
+      required: false,
+      detail:
+        !liveTemplateAudit.loaded
+          ? "Live site URL audit unavailable."
+          : liveSiteUrlAligned
+            ? "Live auth Site URL matches NEXT_PUBLIC_SITE_URL."
+            : `Live Site URL (${redirectAudit?.siteUrl || "missing"}) differs from NEXT_PUBLIC_SITE_URL.`,
+    },
+    {
       label: "Student Day Coverage",
       ready: studentDayCoverageReady,
       detail: studentRowsResponse.error
@@ -200,15 +505,19 @@ export default async function AdminSettingsPage() {
           : `${staffConflictCount} overlap conflict(s) found. Review /admin/schedule.`,
     },
   ];
-  const readyCount = readinessItems.filter((item) => item.ready).length;
-  const allReady = readyCount === readinessItems.length;
+  const requiredItems = readinessItems.filter((item) => item.required !== false);
+  const optionalItems = readinessItems.filter((item) => item.required === false);
+  const requiredReadyCount = requiredItems.filter((item) => item.ready).length;
+  const optionalReadyCount = optionalItems.filter((item) => item.ready).length;
+  const allRequiredReady = requiredReadyCount === requiredItems.length;
 
   return (
     <>
       <section className="card">
         <h2>Launch Readiness Snapshot</h2>
         <p className="muted">
-          {readyCount}/{readinessItems.length} critical technical checks are ready.
+          {requiredReadyCount}/{requiredItems.length} required checks ready ·{" "}
+          {optionalReadyCount}/{optionalItems.length} advisory checks ready
         </p>
         <div className="status-grid mt-md">
           {readinessItems.map((item) => (
@@ -217,14 +526,18 @@ export default async function AdminSettingsPage() {
                 <strong>{item.label}</strong>
                 <p className="muted">{item.detail}</p>
               </div>
-              <span className={`status-pill ${item.ready ? "status-pill-good" : "status-pill-warn"}`}>
-                {item.ready ? "Ready" : "Action Needed"}
+              <span
+                className={`status-pill ${
+                  item.ready ? "status-pill-good" : item.required === false ? "status-pill-note" : "status-pill-warn"
+                }`}
+              >
+                {item.ready ? "Ready" : item.required === false ? "Advisory" : "Action Needed"}
               </span>
             </article>
           ))}
         </div>
         <div className="mt-md">
-          {allReady ? (
+          {allRequiredReady ? (
             <p className="alert alert-success">Environment checks look launch-ready from app config.</p>
           ) : (
             <p className="alert alert-error">
@@ -400,7 +713,11 @@ export default async function AdminSettingsPage() {
         <h2>Launch Checklist</h2>
         <ol className="launch-checklist">
           <li>Confirm Supabase redirect URLs include `/auth/confirm` and `/auth/callback`.</li>
-          <li>Confirm Magic Link template uses token-hash confirm link from `supabase/templates/magic-link.html`.</li>
+          <li>
+            Confirm Supabase Magic Link template includes both `{"{{ .Token }}"}` and
+            token-hash confirm route from `supabase/templates/magic-link.html`.
+          </li>
+          <li>Disable email-link tracking or Safe-Link rewriting in your email provider.</li>
           <li>Run one admin, one staff, and one student login test on real mobile devices.</li>
           <li>Verify schedule edits and announcements publish successfully from mobile.</li>
         </ol>

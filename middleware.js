@@ -16,12 +16,27 @@ const PUBLIC_PATHS = new Set([
   "/robots.txt",
   "/sitemap.xml",
 ]);
+const SECURITY_HEADERS = new Map([
+  ["x-content-type-options", "nosniff"],
+  ["x-frame-options", "DENY"],
+  ["referrer-policy", "strict-origin-when-cross-origin"],
+  ["permissions-policy", "camera=(), microphone=(), geolocation=()"],
+  ["cross-origin-opener-policy", "same-origin"],
+  ["cross-origin-resource-policy", "same-site"],
+]);
+
+function applySecurityHeaders(response) {
+  SECURITY_HEADERS.forEach((value, key) => {
+    response.headers.set(key, value);
+  });
+  return response;
+}
 
 function withCopiedCookies(from, to) {
   from.cookies.getAll().forEach(({ name, value, ...options }) => {
     to.cookies.set(name, value, options);
   });
-  return to;
+  return applySecurityHeaders(to);
 }
 
 function redirectWithCookies(request, response, pathname, query = null) {
@@ -54,7 +69,7 @@ export async function middleware(request) {
 
   if (!user) {
     if (isPublicPath(pathname)) {
-      return response;
+      return applySecurityHeaders(response);
     }
 
     return redirectWithCookies(request, response, "/login", {
@@ -88,7 +103,7 @@ export async function middleware(request) {
     return redirectWithCookies(request, response, homeForRole(profile.role));
   }
 
-  return response;
+  return applySecurityHeaders(response);
 }
 
 export const config = {
