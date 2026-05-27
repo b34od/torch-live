@@ -65,7 +65,7 @@ function normalizeAuthError(message) {
     return "Your account is not active yet. Contact TORCH staff for access.";
   }
 
-  return raw;
+  return fallback;
 }
 
 function alertFromParams(params) {
@@ -462,14 +462,17 @@ export default async function LoginPage({ searchParams }) {
                 className="input"
                 placeholder="123456 or 12345678"
                 minLength={OTP_MIN_LENGTH}
-                maxLength={OTP_MAX_LENGTH}
-                pattern="[0-9]{6,8}"
-                title="Enter the 6-8 digit backup code from your newest TORCH sign-in email."
+                maxLength={24}
+                pattern="[0-9\\s-]{6,24}"
+                title="Enter the backup code from your newest TORCH sign-in email. Spaces or dashes are okay."
                 required
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 autoFocus={useCodeFallback}
               />
+              <p className="muted mt-sm">
+                Tip: If your email app copies code like <strong>123 456 78</strong>, paste it as-is.
+              </p>
             </div>
             <FormSubmitButton
               className="button button-secondary"

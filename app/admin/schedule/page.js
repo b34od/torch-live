@@ -865,44 +865,52 @@ export default async function AdminSchedulePage({ searchParams }) {
           <p className="empty mt-md">No entries yet for {dayLabel(day)}.</p>
         ) : (
           <>
-            <div className="schedule-card-list mobile-only mt-md">
-              {sortedItems.map((item) => (
-                <article key={item.id} className="schedule-card">
-                  <div className="schedule-card-header">
-                    <span className="schedule-time">{formatTimeRange(item.start_time, item.duration_minutes)}</span>
-                    <span className="schedule-duration">{item.duration_minutes}m</span>
-                  </div>
-                  <p className="schedule-activity">{item.activity_name}</p>
-                  <p className="schedule-detail">
-                    <span className="schedule-label">Location:</span> {item.location || "TBD"}
-                  </p>
-                  {track === "staff" ? (
-                    <p className="schedule-detail">
-                      <span className="schedule-label">Rain:</span> {item.rain_location || "N/A"} ·{" "}
-                      <span className="schedule-label">Point:</span> {item.point_person || "TBD"}
-                    </p>
-                  ) : null}
-                  <div className="schedule-card-actions mt-sm">
-                    <Link
-                      href={schedulePageUrl(track, day, selectedYear, { edit: item.id })}
-                      className="schedule-card-action schedule-card-action-edit"
-                    >
-                      Edit
-                    </Link>
-                    <form action={removeScheduleItem} className="schedule-card-action-form">
-                      <input type="hidden" name="id" value={item.id} />
-                      <input type="hidden" name="track" value={track} />
-                      <input type="hidden" name="day" value={day} />
-                      <input type="hidden" name="program_year" value={selectedYear} />
-                      <ConfirmSubmitButton
-                        label="Remove"
-                        className="schedule-card-action schedule-card-action-remove"
-                        confirmMessage="Remove this schedule item?"
-                      />
-                    </form>
-                  </div>
-                </article>
-              ))}
+            <div className="mobile-only mt-md">
+              <details className="schedule-item-editor-panel" open={Boolean(editingItem)}>
+                <summary>
+                  Edit Items ({sortedItems.length})
+                </summary>
+                <div className="schedule-card-list mt-sm">
+                  {sortedItems.map((item) => (
+                    <article key={item.id} className="schedule-card">
+                      <div className="schedule-card-header">
+                        <span className="schedule-time">
+                          {formatTimeRange(item.start_time, item.duration_minutes)}
+                        </span>
+                        <div className="schedule-card-inline-actions">
+                          <Link
+                            href={schedulePageUrl(track, day, selectedYear, { edit: item.id })}
+                            className="schedule-card-action schedule-card-action-edit"
+                          >
+                            Edit
+                          </Link>
+                          <form action={removeScheduleItem} className="schedule-card-action-form">
+                            <input type="hidden" name="id" value={item.id} />
+                            <input type="hidden" name="track" value={track} />
+                            <input type="hidden" name="day" value={day} />
+                            <input type="hidden" name="program_year" value={selectedYear} />
+                            <ConfirmSubmitButton
+                              label="Remove"
+                              className="schedule-card-action schedule-card-action-remove"
+                              confirmMessage="Remove this schedule item?"
+                            />
+                          </form>
+                        </div>
+                      </div>
+                      <p className="schedule-activity">{item.activity_name}</p>
+                      <p className="schedule-detail">
+                        <span className="schedule-label">Location:</span> {item.location || "TBD"}
+                      </p>
+                      {track === "staff" ? (
+                        <p className="schedule-detail">
+                          <span className="schedule-label">Rain:</span> {item.rain_location || "N/A"} ·{" "}
+                          <span className="schedule-label">Point:</span> {item.point_person || "TBD"}
+                        </p>
+                      ) : null}
+                    </article>
+                  ))}
+                </div>
+              </details>
             </div>
 
             <div className="table-wrap mt-md desktop-only">

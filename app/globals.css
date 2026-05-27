@@ -647,11 +647,11 @@ img {
 
 .schedule-card-header {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.45rem;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.22rem;
 }
 
 .schedule-time {
@@ -687,6 +687,13 @@ img {
   justify-content: flex-end;
   gap: 0.3rem;
   flex-wrap: nowrap;
+}
+
+.schedule-card-inline-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex: 0 0 auto;
 }
 
 .schedule-card-action-form {
@@ -784,6 +791,43 @@ img {
 .schedule-table-action-remove:hover {
   background: rgba(237, 103, 103, 0.2);
   border-color: rgba(237, 103, 103, 0.46);
+}
+
+.schedule-item-editor-panel {
+  border: 1px solid rgba(44, 44, 44, 0.1);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.95);
+  padding: 0.45rem 0.5rem;
+}
+
+.schedule-item-editor-panel summary {
+  list-style: none;
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 0.86rem;
+  color: #4f5050;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.schedule-item-editor-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.schedule-item-editor-panel summary:focus-visible {
+  outline: 2px solid rgba(113, 60, 151, 0.46);
+  outline-offset: 2px;
+}
+
+.schedule-item-editor-panel summary::before {
+  content: "▸";
+  color: #666767;
+  transition: transform 120ms ease;
+}
+
+.schedule-item-editor-panel[open] summary::before {
+  transform: rotate(90deg);
 }
 
 .time-preview {
@@ -942,7 +986,7 @@ img {
 .timeline-block-title {
   margin: 0;
   font-weight: 800;
-  font-size: 0.84rem;
+  font-size: 0.82rem;
   line-height: 1.2;
   display: block;
   overflow: hidden;
@@ -963,7 +1007,7 @@ img {
 }
 
 .timeline-block-no-time .timeline-block-title {
-  max-height: 3.45em;
+  max-height: 2.45em;
 }
 
 .timeline-block-tiny .timeline-block-title {
@@ -976,7 +1020,7 @@ img {
 }
 
 .timeline-block-time {
-  margin: 0.18rem 0 0;
+  margin: 0.14rem 0 0;
   font-size: 0.76rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -1422,6 +1466,20 @@ img {
     white-space: normal;
     line-height: 1.1;
     padding: 0.36rem 0.2rem;
+  }
+
+  .bottom-nav-admin {
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    justify-content: flex-start;
+  }
+
+  .bottom-nav-admin .bottom-nav-link {
+    flex: 0 0 auto;
+    min-width: 88px;
+    white-space: nowrap;
+    line-height: 1.05;
+    padding: 0.36rem 0.34rem;
   }
 
   .timeline-legend {

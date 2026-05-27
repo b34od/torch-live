@@ -131,7 +131,7 @@ export default function AppShell({ role, profile, children }) {
         </section>
       ) : null}
       <section className="content-area">{children}</section>
-      <nav className="bottom-nav" aria-label="Primary mobile navigation">
+      <nav className={`bottom-nav bottom-nav-${role}`} aria-label="Primary mobile navigation">
         {navItems.map((item) => {
           const active = pathname === item.href || (pathname.startsWith(item.href) && item.href !== "/");
           const mobileLabel = item.mobileLabel || item.label;

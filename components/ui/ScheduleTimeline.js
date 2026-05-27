@@ -16,7 +16,7 @@ const COLOR_PALETTE = [
   { bg: "rgba(173, 174, 215, 0.24)", border: "rgba(91, 95, 146, 0.62)" },
 ];
 const MIN_BLOCK_HEIGHT_PX = 16;
-const BLOCK_GAP_PX = 5;
+const BLOCK_GAP_PX = 8;
 const MIN_CLIPPED_HEIGHT_PX = 10;
 
 function colorForLocation(location) {
@@ -287,8 +287,8 @@ export default function ScheduleTimeline({
             const isTiny = height < 42;
             const isCompact = height < 66;
             const laneIsCrowded = laneCount > 2;
-            const showTime = height >= 52 && !laneIsCrowded;
-            const showStaffMeta = track === "staff" && height >= 130 && laneCount === 1;
+            const showTime = height >= 54 && !laneIsCrowded;
+            const showStaffMeta = track === "staff" && height >= 150 && laneCount === 1;
             const densityClass = isTiny ? " timeline-block-tiny" : isCompact ? " timeline-block-compact" : "";
             const timeClass = showTime ? "" : " timeline-block-no-time";
             const titleClass = showTime && !laneIsCrowded ? "" : " timeline-block-title-single";

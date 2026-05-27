@@ -16,6 +16,10 @@ const PUBLIC_PATHS = new Set([
   "/robots.txt",
   "/sitemap.xml",
 ]);
+const SUPABASE_HOST = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).host
+  : "*.supabase.co";
+
 const SECURITY_HEADERS = new Map([
   ["x-content-type-options", "nosniff"],
   ["x-frame-options", "DENY"],
@@ -23,6 +27,18 @@ const SECURITY_HEADERS = new Map([
   ["permissions-policy", "camera=(), microphone=(), geolocation=()"],
   ["cross-origin-opener-policy", "same-origin"],
   ["cross-origin-resource-policy", "same-site"],
+  [
+    "content-security-policy",
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline'",
+      `connect-src 'self' https://${SUPABASE_HOST} wss://${SUPABASE_HOST}`,
+      "img-src 'self' data: blob:",
+      "font-src 'self'",
+      "frame-ancestors 'none'",
+    ].join("; "),
+  ],
 ]);
 
 function applySecurityHeaders(response) {

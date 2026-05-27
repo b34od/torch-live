@@ -39,7 +39,7 @@ function normalizeAuthError(message) {
     return "Too many sign-in attempts. Please wait one minute, then try again.";
   }
 
-  return raw;
+  return fallback;
 }
 
 function shouldUseCodeFallback(message) {
