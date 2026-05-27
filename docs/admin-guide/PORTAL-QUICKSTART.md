@@ -49,6 +49,7 @@ If any of these fail, stop and contact Bryan.
 10. Verify the update in both table and timeline view.
 11. If a red conflict warning appears above the timeline, adjust times so blocks no longer overlap.
 12. If overlap is truly required, use `Allow overlap for this item` when saving that item.
+13. Use `Now` tabs (`/student/now`, `/staff/now`) for live in-the-moment operations. Schedule pages are day-planning views and do not show a live `Now` line.
 
 ### Job C: Add or Update Users
 
@@ -106,7 +107,7 @@ Wait 60 seconds and retry once. If still blocked, escalate.
 Account is missing or not active. Escalate.
 
 ### "PKCE code verifier not found in storage"
-Request a fresh magic link and open it in the same browser where you requested it. On iPhone Gmail, open in Safari first, then retry.
+Use the `Sign in with code` section on `/login` first. If needed, request a fresh magic link and open it in the same browser where you requested it. On iPhone Gmail, open in Safari first, then retry.
 
 ### "code challenge does not match previously saved code verifier"
 This is the same browser-context issue. Return to `/login` and use `Sign in with code` from the newest email, or open in Safari and request a fresh sign-in email.

@@ -15,9 +15,7 @@ const COLOR_PALETTE = [
   { bg: "rgba(113, 60, 151, 0.18)", border: "rgba(90, 48, 121, 0.62)" },
   { bg: "rgba(173, 174, 215, 0.24)", border: "rgba(91, 95, 146, 0.62)" },
 ];
-const MIN_BLOCK_HEIGHT_PX = 16;
-const BLOCK_GAP_PX = 8;
-const MIN_CLIPPED_HEIGHT_PX = 10;
+const MIN_BLOCK_HEIGHT_PX = 24;
 
 function colorForLocation(location) {
   const text = String(location || "TBD");
@@ -36,6 +34,23 @@ function floorToHour(minutes) {
 
 function ceilToHour(minutes) {
   return Math.ceil(minutes / 60) * 60;
+}
+
+function compactTimeLabel(time) {
+  if (!time) return "";
+  const [hourRaw = "0", minuteRaw = "0"] = String(time).split(":");
+  const hour = Number.parseInt(hourRaw, 10);
+  const minute = Number.parseInt(minuteRaw, 10);
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return "";
+  const suffix = hour >= 12 ? "p" : "a";
+  const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${hour12}:${String(minute).padStart(2, "0")}${suffix}`;
+}
+
+function formatCompactTimeRange(startTime, durationMinutes) {
+  const endTime = addMinutesToTime(startTime, durationMinutes);
+  if (!startTime || !endTime) return "";
+  return `${compactTimeLabel(startTime)}-${compactTimeLabel(endTime)}`;
 }
 
 function timeBounds(item) {
@@ -150,19 +165,6 @@ export default function ScheduleTimeline({
   const hasMultipleLocations = legendItems.length > 1;
   const singleLocationLabel = hasMultipleLocations ? "" : legendItems[0]?.[0] || "TBD";
   const layoutById = buildLayout(sorted);
-  const nextStartByItemId = new Map();
-  const nextStartByLane = new Map();
-
-  for (let index = sorted.length - 1; index >= 0; index -= 1) {
-    const item = sorted[index];
-    const start = timeToMinutes(item.start_time) || 0;
-    const lane = layoutById.get(item.id)?.lane || 0;
-    const nextStart = nextStartByLane.get(lane);
-    if (Number.isFinite(nextStart)) {
-      nextStartByItemId.set(item.id, nextStart);
-    }
-    nextStartByLane.set(lane, start);
-  }
 
   const programNow = getProgramNowSnapshot(track);
   const nowMinutes = Number.isFinite(programNow.minutes) ? programNow.minutes : 0;
@@ -261,19 +263,7 @@ export default function ScheduleTimeline({
             const startMinutes = timeToMinutes(item.start_time) || scaleStart;
             const durationMinutes = Number(item.duration_minutes || 0);
             const top = (startMinutes - scaleStart) * pxPerMinute;
-            const rawHeight = Math.max(durationMinutes * pxPerMinute, MIN_BLOCK_HEIGHT_PX);
-            const nextLaneStart = nextStartByItemId.get(item.id);
-            const laneGapHeight =
-              Number.isFinite(nextLaneStart) && nextLaneStart > startMinutes
-                ? Math.max(
-                    (nextLaneStart - startMinutes) * pxPerMinute - BLOCK_GAP_PX,
-                    MIN_CLIPPED_HEIGHT_PX,
-                  )
-                : null;
-            const height =
-              laneGapHeight === null
-                ? rawHeight
-                : Math.max(Math.min(rawHeight, laneGapHeight), MIN_CLIPPED_HEIGHT_PX);
+            const height = Math.max(durationMinutes * pxPerMinute, MIN_BLOCK_HEIGHT_PX);
             const locationLabel = item.location || "TBD";
             const color = colorForLocation(locationLabel);
             const layout = layoutById.get(item.id);
@@ -287,11 +277,10 @@ export default function ScheduleTimeline({
             const isTiny = height < 42;
             const isCompact = height < 66;
             const laneIsCrowded = laneCount > 2;
-            const showTime = height >= 54 && !laneIsCrowded;
-            const showStaffMeta = track === "staff" && height >= 150 && laneCount === 1;
+            const showTime = height >= 48 && !laneIsCrowded;
+            const showStaffMeta = track === "staff" && height >= 168 && laneCount === 1;
             const densityClass = isTiny ? " timeline-block-tiny" : isCompact ? " timeline-block-compact" : "";
             const timeClass = showTime ? "" : " timeline-block-no-time";
-            const titleClass = showTime && !laneIsCrowded ? "" : " timeline-block-title-single";
             const stateClass =
               item.id === currentId
                 ? " timeline-block-current"
@@ -299,8 +288,11 @@ export default function ScheduleTimeline({
                   ? " timeline-block-next"
                   : "";
             const blockTitle = String(item.activity_name || "").trim() || "Untitled";
-            const blockTime = formatTimeRange(item.start_time, item.duration_minutes);
-            const blockDescription = [blockTitle, blockTime, locationLabel].filter(Boolean).join(" · ");
+            const blockTimeFull = formatTimeRange(item.start_time, item.duration_minutes);
+            const blockTimeCompact = formatCompactTimeRange(item.start_time, item.duration_minutes);
+            const visibleTime = showTime ? blockTimeFull : blockTimeCompact || blockTimeFull;
+            const visibleTitle = showTime ? blockTitle : `${visibleTime} · ${blockTitle}`;
+            const blockDescription = [blockTitle, blockTimeFull, locationLabel].filter(Boolean).join(" · ");
 
             return (
               <article
@@ -317,9 +309,9 @@ export default function ScheduleTimeline({
                   borderColor: color.border,
                 }}
               >
-                <p className={`timeline-block-title${titleClass}`}>{blockTitle}</p>
+                <p className="timeline-block-title">{visibleTitle}</p>
                 {showTime ? (
-                  <p className="timeline-block-time">{blockTime}</p>
+                  <p className="timeline-block-time">{blockTimeFull}</p>
                 ) : null}
                 {showStaffMeta ? (
                   <p className="timeline-block-meta">

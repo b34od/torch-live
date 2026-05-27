@@ -6,7 +6,13 @@ import {
   getCurrentAndNextItem,
   getStudentScheduleByDay,
 } from "../../../lib/data";
-import { resolveDayForTrack } from "../../../lib/schedule";
+import {
+  dayLabel,
+  formatTimeLabel,
+  getProgramNowSnapshot,
+  minutesToTime,
+  resolveDayForTrack,
+} from "../../../lib/schedule";
 
 function eventLabel(item) {
   if (!item) return "No scheduled block";
@@ -20,6 +26,13 @@ export const metadata = {
 export default async function StudentNowPage({ searchParams }) {
   const params = searchParams instanceof Promise ? await searchParams : searchParams;
   const day = resolveDayForTrack(params?.day, "student");
+  const programNow = getProgramNowSnapshot("student");
+  const currentDayNumber = Number.isFinite(programNow.dayNumber) ? programNow.dayNumber : null;
+  const currentDayLabel = currentDayNumber === null ? "Outside program days" : dayLabel(currentDayNumber);
+  const currentTimeLabel = Number.isFinite(programNow.minutes)
+    ? formatTimeLabel(minutesToTime(programNow.minutes))
+    : "Unknown time";
+  const showingCurrentProgramDay = currentDayNumber !== null && day === currentDayNumber;
   const { supabase, profile } = await requireUser(["student"]);
   const { data: scheduleItems, error: scheduleError } = await getStudentScheduleByDay(
     supabase,
@@ -40,6 +53,14 @@ export default async function StudentNowPage({ searchParams }) {
     <>
       <section className="card">
         <h2>What&apos;s Happening Now</h2>
+        <p className="muted">
+          Program time: <strong>{currentDayLabel}</strong> · <strong>{currentTimeLabel} ET</strong>
+        </p>
+        {!showingCurrentProgramDay ? (
+          <p className="alert alert-warn mt-sm">
+            Viewing {dayLabel(day)} schedule while current program day is {currentDayLabel}.
+          </p>
+        ) : null}
         {scheduleError ? (
           <p className="alert alert-error">{scheduleError.message}</p>
         ) : (

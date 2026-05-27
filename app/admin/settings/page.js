@@ -555,8 +555,8 @@ export default async function AdminSettingsPage() {
             <p>{profile.program_year}</p>
           </article>
           <article className="surface surface-pad">
-            <strong>Rain Plan Toggle</strong>
-            <p className="muted">Data model is ready; UI toggle wiring is next.</p>
+            <strong>Program Time Zone</strong>
+            <p className="muted">All schedules and now snapshots are fixed to Eastern Time (ET).</p>
           </article>
         </div>
       </section>

@@ -395,6 +395,8 @@ export default async function LoginPage({ searchParams }) {
   const lastEmail = cookieStore.get(LAST_LOGIN_EMAIL_COOKIE)?.value || "";
   const defaultEmail = params?.email || lastEmail;
   const useCodeFallback = params?.use_code === "1";
+  const rawError = String(params?.error || "").toLowerCase();
+  const preferCodeFirst = useCodeFallback || isPkceBrowserMismatch(rawError);
   const alert = alertFromParams(params || {});
   const session = await getSessionContext();
 
@@ -425,8 +427,11 @@ export default async function LoginPage({ searchParams }) {
             newest TORCH email.
           </p>
         ) : null}
-        <EmailSignInForm action={sendMagicLink} defaultEmail={defaultEmail} />
-        <div className={`surface surface-pad-sm mt-md${useCodeFallback ? " code-focus" : ""}`}>
+        {preferCodeFirst ? null : <EmailSignInForm action={sendMagicLink} defaultEmail={defaultEmail} />}
+        <div
+          id="code-sign-in"
+          className={`surface surface-pad-sm mt-md${preferCodeFirst ? " code-focus" : ""}`}
+        >
           <h3 className="card-subtitle">Use Email Code Instead</h3>
           <p className="muted">
             If the link does not open correctly, enter the code from your latest TORCH
@@ -468,7 +473,7 @@ export default async function LoginPage({ searchParams }) {
                 required
                 inputMode="numeric"
                 autoComplete="one-time-code"
-                autoFocus={useCodeFallback}
+                autoFocus={preferCodeFirst}
               />
               <p className="muted mt-sm">
                 Tip: If your email app copies code like <strong>123 456 78</strong>, paste it as-is.
@@ -511,6 +516,15 @@ export default async function LoginPage({ searchParams }) {
             />
           </form>
         </div>
+        {preferCodeFirst ? (
+          <div className="surface surface-pad-sm mt-md">
+            <h3 className="card-subtitle">Need a New Sign-In Email?</h3>
+            <p className="muted">
+              Request a fresh sign-in email if the code or pasted link from your newest email does not work.
+            </p>
+            <EmailSignInForm action={sendMagicLink} defaultEmail={defaultEmail} />
+          </div>
+        ) : null}
         <p className="muted mt-md">
           Check spam/junk if you do not see the email. Use the same email used for program
           registration.

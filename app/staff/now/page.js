@@ -41,6 +41,7 @@ export default async function StaffNowPage({ searchParams }) {
     <>
       <section className="card">
         <h2>Staff Ops Snapshot</h2>
+        <p className="muted">Program time is Eastern Time (ET).</p>
         {scheduleError ? (
           <p className="alert alert-error">{scheduleError.message}</p>
         ) : (

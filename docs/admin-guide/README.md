@@ -1,6 +1,6 @@
 # TORCH Live Admin Docs Index
 
-Last updated: May 26, 2026
+Last updated: May 27, 2026
 
 ## Choose Your Guide by Role
 
@@ -8,7 +8,7 @@ Last updated: May 26, 2026
 Use this path if your job is to run the admin portal only (examples: Chris, Danesd, Sarah).
 
 1. `PORTAL-QUICKSTART.md` - 10-minute start guide
-2. `SOP-RUNBOOKS.md` - step-by-step operating procedures
+2. `SOP-RUNBOOKS.md` - step-by-step operating procedures + weekly rollout pilot checklist
 
 ### Technical Owners (Backend + Deploy + Risk)
 Use this path if you manage infrastructure, auth, deployments, policies, or legal/risk controls (Bryan now, Ben/Nat later).

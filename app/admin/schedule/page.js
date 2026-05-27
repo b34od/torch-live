@@ -738,7 +738,7 @@ export default async function AdminSchedulePage({ searchParams }) {
             <p className="muted">
               {items.length} item{items.length === 1 ? "" : "s"} · starts at{" "}
               <strong>{formatTimeLabel(firstItem.start_time)}</strong> · ends at{" "}
-              <strong>{formatTimeLabel(lastEndTime)}</strong>
+              <strong>{formatTimeLabel(lastEndTime)}</strong> · Eastern Time (ET)
             </p>
             <ScheduleTimeline
               items={sortedItems}
@@ -1125,10 +1125,35 @@ export default async function AdminSchedulePage({ searchParams }) {
                   {sortedItems.map((item) => (
                     <article key={item.id} className="schedule-card">
                       <div className="schedule-card-header">
-                        <span className="schedule-time">
-                          {formatTimeRange(item.start_time, item.duration_minutes)}
-                        </span>
-                        <span className="schedule-duration">{item.duration_minutes}m</span>
+                        <div className="schedule-card-time-group">
+                          <span className="schedule-time">
+                            {formatTimeRange(item.start_time, item.duration_minutes)}
+                          </span>
+                          <span className="schedule-duration">{item.duration_minutes}m</span>
+                        </div>
+                        <div className="schedule-card-inline-actions">
+                          <Link
+                            href={schedulePageUrl(track, day, selectedYear, {
+                              edit: item.id,
+                              source: selectedDraftSource,
+                            })}
+                            className="schedule-card-action schedule-card-action-edit"
+                          >
+                            Edit
+                          </Link>
+                          <form action={removeScheduleItem} className="schedule-card-action-form">
+                            <input type="hidden" name="id" value={item.id} />
+                            <input type="hidden" name="track" value={track} />
+                            <input type="hidden" name="day" value={day} />
+                            <input type="hidden" name="program_year" value={selectedYear} />
+                            <input type="hidden" name="source" value={selectedDraftSource} />
+                            <ConfirmSubmitButton
+                              label="Remove"
+                              className="schedule-card-action schedule-card-action-remove"
+                              confirmMessage="Remove this schedule item?"
+                            />
+                          </form>
+                        </div>
                       </div>
                       <p className="schedule-activity">{item.activity_name}</p>
                       <p className="schedule-detail">
@@ -1140,29 +1165,6 @@ export default async function AdminSchedulePage({ searchParams }) {
                           <span className="schedule-label">Point:</span> {item.point_person || "TBD"}
                         </p>
                       ) : null}
-                      <div className="schedule-card-actions">
-                        <Link
-                          href={schedulePageUrl(track, day, selectedYear, {
-                            edit: item.id,
-                            source: selectedDraftSource,
-                          })}
-                          className="schedule-card-action schedule-card-action-edit"
-                        >
-                          Edit
-                        </Link>
-                        <form action={removeScheduleItem} className="schedule-card-action-form">
-                          <input type="hidden" name="id" value={item.id} />
-                          <input type="hidden" name="track" value={track} />
-                          <input type="hidden" name="day" value={day} />
-                          <input type="hidden" name="program_year" value={selectedYear} />
-                          <input type="hidden" name="source" value={selectedDraftSource} />
-                          <ConfirmSubmitButton
-                            label="Remove"
-                            className="schedule-card-action schedule-card-action-remove"
-                            confirmMessage="Remove this schedule item?"
-                          />
-                        </form>
-                      </div>
                     </article>
                   ))}
                 </div>

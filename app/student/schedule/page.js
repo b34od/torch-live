@@ -6,6 +6,7 @@ import {
   addMinutesToTime,
   dayLabel,
   formatTimeLabel,
+  formatTimeRange,
   resolveDayForTrack,
   STUDENT_DAY_NUMBERS,
   timeToMinutes,
@@ -49,7 +50,7 @@ export default async function StudentSchedulePage({ searchParams }) {
           <p className="muted mt-sm">
             {items.length} item{items.length === 1 ? "" : "s"} · starts at{" "}
             <strong>{formatTimeLabel(firstItem.start_time)}</strong> · ends at{" "}
-            <strong>{formatTimeLabel(endTime)}</strong>
+            <strong>{formatTimeLabel(endTime)}</strong> · Eastern Time (ET)
           </p>
           <h3 id="student-timeline" className="section-anchor mt-md">Agenda Timeline</h3>
           <p className="muted">
@@ -58,9 +59,28 @@ export default async function StudentSchedulePage({ searchParams }) {
           <ScheduleTimeline
             items={sortedItems}
             track="student"
+            showNowMarker={false}
             dayNumber={day}
             programYear={profile.program_year}
           />
+          <div className="mobile-only">
+            <h3 className="section-anchor mt-md">Agenda Details</h3>
+            <p className="muted">Quick list view for readability on dense program days.</p>
+            <div className="schedule-card-list schedule-card-list-student mt-md">
+              {sortedItems.map((item) => (
+                <article key={item.id} className="schedule-card">
+                  <div className="schedule-card-header">
+                    <span className="schedule-time">{formatTimeRange(item.start_time, item.duration_minutes)}</span>
+                    <span className="schedule-duration">{item.duration_minutes}m</span>
+                  </div>
+                  <p className="schedule-activity">{item.activity_name}</p>
+                  <p className="schedule-detail">
+                    <span className="schedule-label">Location:</span> {item.location || "TBD"}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </div>
         </>
       )}
     </section>

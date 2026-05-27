@@ -1,11 +1,19 @@
 # TORCH Live SOP Runbooks
 
-Last updated: May 26, 2026
+Last updated: May 27, 2026
 
 ## Audience Split
 
 1. `Portal Operator SOPs` are for non-technical admins who only use `/admin/*`.
 2. `Technical Owner SOPs` are for infrastructure, backend, legal/risk, and deployment tasks.
+
+## Shared Rollout Cadence (Next 8 Weeks)
+
+1. `Weeks 1-2`: admin core team dry run (`Schedule`, `Users`, `Announcements`, `Resources`, `Settings`) using non-critical program-year data.
+2. `Weeks 3-4`: staff pilot with real mobile devices and account activation checks.
+3. `Weeks 5-6`: student-facing pilot for schedule/updates/resources readability and login reliability.
+4. `Weeks 7-8`: launch hardening, final smoke tests, and go-live signoff.
+5. Run this cadence in ET (`America/New_York`) and keep one owner accountable per week.
 
 ---
 
@@ -108,7 +116,49 @@ Leave the portal clean for the next shift.
 3. Remove stale resource entries in `/admin/resources` (or edit them if they should stay).
 4. Log any unresolved issues for Bryan.
 
+## Portal Operator SOP 7: Weekly Rollout Pilot Checklist
+
+### Objective
+Confirm each role can use the app on mobile without blockers before full launch.
+
+### Steps
+1. Complete one admin sign-in and one staff/student sign-in on a phone.
+2. Confirm schedule day labels are correct (`Friday` through `Tuesday`) and ET context is visible.
+3. Confirm one schedule edit save from mobile and verify timeline + list views update.
+4. Publish and unpublish one announcement to verify content flow.
+5. Record any issue with screenshot, device type, and exact time.
+
+### Success Check
+1. No sign-in dead ends.
+2. No unreadable schedule blocks.
+3. No blocked save/publish actions.
+
 ---
+
+## Technical Owner SOP 0: Rollout Phase Gates
+
+### Objective
+Move from pilot to production launch with explicit gates, not assumptions.
+
+### Gate A: Admin Pilot Exit
+1. At least 3 admin users complete mobile sign-in + schedule edit successfully.
+2. Launch readiness required checks in `/admin/settings` are green.
+3. No unresolved P0/P1 auth or schedule issues.
+
+### Gate B: Staff Pilot Exit
+1. At least 5 staff users complete login and consume `/staff/now` + `/staff/schedule`.
+2. Staff day coverage (`Friday` to `Tuesday`) is complete.
+3. No timezone confusion reports after ET labeling updates.
+
+### Gate C: Student Pilot Exit
+1. At least 10 student users complete login and consume `/student/now` + `/student/schedule`.
+2. Student schedule readability is acceptable on iPhone and Android.
+3. Announcement and resource views are readable and usable on small screens.
+
+### Gate D: Launch Approval
+1. Production deploy smoke checks pass (`/login`, `/admin/schedule`, `/staff/schedule`, `/student/schedule`).
+2. One live rollback path is documented in release notes.
+3. Bryan signs off on launch after reviewing unresolved-risk list.
 
 ## Technical Owner SOP 1: Pre-Program Technical Readiness
 

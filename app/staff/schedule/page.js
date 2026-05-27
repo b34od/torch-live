@@ -50,7 +50,7 @@ export default async function StaffSchedulePage({ searchParams }) {
           <p className="muted mt-sm">
             {items.length} item{items.length === 1 ? "" : "s"} · starts at{" "}
             <strong>{formatTimeLabel(firstItem.start_time)}</strong> · ends at{" "}
-            <strong>{formatTimeLabel(endTime)}</strong>
+            <strong>{formatTimeLabel(endTime)}</strong> · Eastern Time (ET)
           </p>
           <nav className="schedule-jump-nav mt-sm" aria-label="Staff schedule sections">
             <a href="#staff-timeline" className="schedule-jump-link">
@@ -68,7 +68,7 @@ export default async function StaffSchedulePage({ searchParams }) {
           <ScheduleTimeline
             items={sortedItems}
             track="staff"
-            showNowMarker
+            showNowMarker={false}
             dayNumber={day}
             programYear={profile.program_year}
           />
