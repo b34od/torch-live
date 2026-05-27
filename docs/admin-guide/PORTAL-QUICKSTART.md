@@ -1,6 +1,6 @@
 # TORCH Live Portal Quickstart
 
-Last updated: May 26, 2026
+Last updated: May 27, 2026
 Audience: non-technical admins using only `https://live.torchleadershipacademy.org`
 
 ## 1) What You Need Before You Start
@@ -41,11 +41,14 @@ If any of these fail, stop and contact Bryan.
 2. Set `Track`, `Program Year`, and day label (`Friday` through `Tuesday`).
 3. Note: `Friday` is staff-only move-in day.
 4. Click `Load Schedule`.
-5. Add or edit item details with start time, duration, and preconfigured locations.
-6. Confirm the auto-calculated end time before saving.
-7. Verify the update in both table and timeline view.
-8. If a red conflict warning appears above the timeline, adjust times so blocks no longer overlap.
-9. If overlap is truly required, use `Allow overlap for this item` when saving that item.
+5. Optional (new program setup): under `Year Tools`, use `Load 2026 Draft Baseline`, choose a `Draft Source` (`2026 Draft` or `2025 Baseline`), choose `Current Track Only` or `Both Staff + Student Tracks`, then type `LOAD <year>` or `LOAD BOTH <year>`.
+6. Confirm the displayed draft row counts and per-day preview times, then submit once to preload the selected draft scope.
+7. Review the loaded draft in timeline + item list before making edits.
+8. Add or edit item details with start time, duration, and preconfigured locations.
+9. Confirm the auto-calculated end time before saving.
+10. Verify the update in both table and timeline view.
+11. If a red conflict warning appears above the timeline, adjust times so blocks no longer overlap.
+12. If overlap is truly required, use `Allow overlap for this item` when saving that item.
 
 ### Job C: Add or Update Users
 

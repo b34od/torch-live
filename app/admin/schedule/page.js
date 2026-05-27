@@ -8,6 +8,14 @@ import ScheduleTimeFields from "../../../components/ui/ScheduleTimeFields";
 import { requireUser } from "../../../lib/auth";
 import { getStaffScheduleByDay, getStudentScheduleByDay } from "../../../lib/data";
 import {
+  getScheduleDraftCounts,
+  getScheduleDraftDaySummaries,
+  getScheduleDraftRows,
+  getScheduleDraftSourceLabel,
+  getScheduleDraftSourceOptions,
+  normalizeScheduleDraftSource,
+} from "../../../lib/schedule-drafts";
+import {
   addMinutesToTime,
   dayLabel,
   dayNumbersForTrack,
@@ -26,6 +34,10 @@ function parseDay(value, track) {
 
 function parseTrack(value) {
   return value === "staff" ? "staff" : "student";
+}
+
+function parseDraftSource(value) {
+  return normalizeScheduleDraftSource(value);
 }
 
 function parseProgramYear(value, fallback) {
@@ -80,6 +92,19 @@ function alertFromParams(params) {
     return { className: "alert alert-success", text: "Schedule item removed." };
   }
 
+  if (params?.draft_loaded === "1") {
+    const count = Number(params?.count || 0);
+    const scope = String(params?.scope || "track");
+    const sourceLabel = getScheduleDraftSourceLabel(params?.source);
+    return {
+      className: "alert alert-success",
+      text:
+        scope === "both"
+          ? `Loaded ${count} draft schedule item${count === 1 ? "" : "s"} for both staff and student tracks in this year from ${sourceLabel}.`
+          : `Loaded ${count} draft schedule item${count === 1 ? "" : "s"} for this track/year from ${sourceLabel}.`,
+    };
+  }
+
   if (params?.cloned === "1") {
     const count = Number(params?.count || 0);
     return {
@@ -103,20 +128,20 @@ function alertFromParams(params) {
   return null;
 }
 
-function scheduleSwitcher(track, day, year) {
+function scheduleSwitcher(track, day, year, source) {
   const studentDay = parseDay(day, "student");
   const staffDay = parseDay(day, "staff");
 
   return (
     <div className="day-tabs" aria-label="Schedule type">
       <Link
-        href={schedulePageUrl("student", studentDay, year)}
+        href={schedulePageUrl("student", studentDay, year, { source })}
         className={`day-tab ${track === "student" ? "day-tab-active" : ""}`}
       >
         Student Schedule
       </Link>
       <Link
-        href={schedulePageUrl("staff", staffDay, year)}
+        href={schedulePageUrl("staff", staffDay, year, { source })}
         className={`day-tab ${track === "staff" ? "day-tab-active" : ""}`}
       >
         Staff Schedule
@@ -174,14 +199,17 @@ async function addScheduleItem(formData) {
   const track = parseTrack(formData.get("track"));
   const day = parseDay(formData.get("day"), track);
   const year = parseProgramYear(formData.get("program_year"), profile.program_year);
+  const source = parseDraftSource(formData.get("source"));
   const table = scheduleTableForTrack(track);
+  const pageUrl = (params = {}, pageYear = year) =>
+    schedulePageUrl(track, day, pageYear, { source, ...params });
   const startTime = String(formData.get("start_time") || "").trim();
   const duration = parseDuration(formData.get("duration_minutes"));
   const activityName = String(formData.get("activity_name") || "").trim();
   const allowTimeOverlap = allowOverlap(formData);
 
   if (!startTime || !duration || !activityName) {
-    redirect(schedulePageUrl(track, day, year, { error: "Time, duration, and activity are required." }));
+    redirect(pageUrl({ error: "Time, duration, and activity are required." }));
   }
 
   const { data: existingRows, error: existingError } = await supabase
@@ -192,13 +220,13 @@ async function addScheduleItem(formData) {
     .order("start_time", { ascending: true });
 
   if (existingError) {
-    redirect(schedulePageUrl(track, day, year, { error: existingError.message }));
+    redirect(pageUrl({ error: existingError.message }));
   }
 
   const conflict = firstOverlap(existingRows, startTime, duration);
   if (conflict && !allowTimeOverlap) {
     redirect(
-      schedulePageUrl(track, day, year, {
+      pageUrl({
         error: `Overlap with ${conflict.activity_name} (${formatTimeRange(conflict.start_time, conflict.duration_minutes)}). Adjust time or check Allow overlap.`,
       }),
     );
@@ -236,10 +264,10 @@ async function addScheduleItem(formData) {
   const { error } = await supabase.from(table).insert(payload);
 
   if (error) {
-    redirect(schedulePageUrl(track, day, year, { error: error.message }));
+    redirect(pageUrl({ error: error.message }));
   }
 
-  redirect(schedulePageUrl(track, day, year, { added: "1" }));
+  redirect(pageUrl({ added: "1" }));
 }
 
 async function updateScheduleItem(formData) {
@@ -250,10 +278,13 @@ async function updateScheduleItem(formData) {
   const track = parseTrack(formData.get("track"));
   const day = parseDay(formData.get("day"), track);
   const year = parseProgramYear(formData.get("program_year"), profile.program_year);
+  const source = parseDraftSource(formData.get("source"));
   const table = scheduleTableForTrack(track);
+  const pageUrl = (params = {}, pageYear = year) =>
+    schedulePageUrl(track, day, pageYear, { source, ...params });
 
   if (!id) {
-    redirect(schedulePageUrl(track, day, year, { error: "Missing schedule item id." }));
+    redirect(pageUrl({ error: "Missing schedule item id." }));
   }
 
   const startTime = String(formData.get("start_time") || "").trim();
@@ -262,7 +293,7 @@ async function updateScheduleItem(formData) {
   const allowTimeOverlap = allowOverlap(formData);
 
   if (!startTime || !duration || !activityName) {
-    redirect(schedulePageUrl(track, day, year, { error: "Time, duration, and activity are required." }));
+    redirect(pageUrl({ error: "Time, duration, and activity are required." }));
   }
 
   const { data: existingRows, error: existingError } = await supabase
@@ -273,13 +304,13 @@ async function updateScheduleItem(formData) {
     .order("start_time", { ascending: true });
 
   if (existingError) {
-    redirect(schedulePageUrl(track, day, year, { error: existingError.message }));
+    redirect(pageUrl({ error: existingError.message }));
   }
 
   const conflict = firstOverlap(existingRows, startTime, duration, id);
   if (conflict && !allowTimeOverlap) {
     redirect(
-      schedulePageUrl(track, day, year, {
+      pageUrl({
         error: `Overlap with ${conflict.activity_name} (${formatTimeRange(conflict.start_time, conflict.duration_minutes)}). Adjust time or check Allow overlap.`,
       }),
     );
@@ -306,10 +337,10 @@ async function updateScheduleItem(formData) {
   const { error } = await supabase.from(table).update(payload).eq("id", id);
 
   if (error) {
-    redirect(schedulePageUrl(track, day, year, { error: error.message }));
+    redirect(pageUrl({ error: error.message }));
   }
 
-  redirect(schedulePageUrl(track, day, year, { saved: "1" }));
+  redirect(pageUrl({ saved: "1" }));
 }
 
 async function removeScheduleItem(formData) {
@@ -320,19 +351,22 @@ async function removeScheduleItem(formData) {
   const track = parseTrack(formData.get("track"));
   const day = parseDay(formData.get("day"), track);
   const year = parseProgramYear(formData.get("program_year"), profile.program_year);
+  const source = parseDraftSource(formData.get("source"));
   const table = scheduleTableForTrack(track);
+  const pageUrl = (params = {}, pageYear = year) =>
+    schedulePageUrl(track, day, pageYear, { source, ...params });
 
   if (!id) {
-    redirect(schedulePageUrl(track, day, year, { error: "Missing schedule item id." }));
+    redirect(pageUrl({ error: "Missing schedule item id." }));
   }
 
   const { error } = await supabase.from(table).delete().eq("id", id);
 
   if (error) {
-    redirect(schedulePageUrl(track, day, year, { error: error.message }));
+    redirect(pageUrl({ error: error.message }));
   }
 
-  redirect(schedulePageUrl(track, day, year, { removed: "1" }));
+  redirect(pageUrl({ removed: "1" }));
 }
 
 async function cloneScheduleYear(formData) {
@@ -342,16 +376,19 @@ async function cloneScheduleYear(formData) {
   const track = parseTrack(formData.get("track"));
   const day = parseDay(formData.get("day"), track);
   const year = parseProgramYear(formData.get("program_year"), profile.program_year);
+  const source = parseDraftSource(formData.get("source"));
   const sourceYear = parseProgramYear(formData.get("source_year"), profile.program_year);
   const targetYear = parseProgramYear(formData.get("target_year"), profile.program_year);
   const table = scheduleTableForTrack(track);
+  const pageUrl = (params = {}, pageYear = year) =>
+    schedulePageUrl(track, day, pageYear, { source, ...params });
   const columns =
     track === "staff"
       ? "day_number, start_time, duration_minutes, activity_name, location, rain_location, point_person, secondary_person, notes, av_needs, sort_order"
       : "day_number, start_time, duration_minutes, activity_name, location, sort_order";
 
   if (sourceYear === targetYear) {
-    redirect(schedulePageUrl(track, day, year, { error: "Source year and target year must be different." }));
+    redirect(pageUrl({ error: "Source year and target year must be different." }));
   }
 
   const { data: existingTargetRows, error: targetCheckError } = await supabase
@@ -361,12 +398,12 @@ async function cloneScheduleYear(formData) {
     .limit(1);
 
   if (targetCheckError) {
-    redirect(schedulePageUrl(track, day, year, { error: targetCheckError.message }));
+    redirect(pageUrl({ error: targetCheckError.message }));
   }
 
   if ((existingTargetRows || []).length > 0) {
     redirect(
-      schedulePageUrl(track, day, year, {
+      pageUrl({
         error: `Target year ${targetYear} already has schedule data. Clear it first.`,
       }),
     );
@@ -381,11 +418,11 @@ async function cloneScheduleYear(formData) {
     .order("sort_order", { ascending: true });
 
   if (sourceError) {
-    redirect(schedulePageUrl(track, day, year, { error: sourceError.message }));
+    redirect(pageUrl({ error: sourceError.message }));
   }
 
   if (!sourceRows?.length) {
-    redirect(schedulePageUrl(track, day, year, { error: `No rows found for ${sourceYear}.` }));
+    redirect(pageUrl({ error: `No rows found for ${sourceYear}.` }));
   }
 
   const insertRows = sourceRows.map((row) => {
@@ -417,10 +454,10 @@ async function cloneScheduleYear(formData) {
   const { error: insertError } = await supabase.from(table).insert(insertRows);
 
   if (insertError) {
-    redirect(schedulePageUrl(track, day, year, { error: insertError.message }));
+    redirect(pageUrl({ error: insertError.message }));
   }
 
-  redirect(schedulePageUrl(track, day, targetYear, { cloned: "1", count: insertRows.length }));
+  redirect(pageUrl({ cloned: "1", count: insertRows.length }, targetYear));
 }
 
 async function clearScheduleYear(formData) {
@@ -430,13 +467,16 @@ async function clearScheduleYear(formData) {
   const track = parseTrack(formData.get("track"));
   const day = parseDay(formData.get("day"), track);
   const year = parseProgramYear(formData.get("program_year"), profile.program_year);
+  const source = parseDraftSource(formData.get("source"));
   const clearYear = parseProgramYear(formData.get("clear_year"), profile.program_year);
   const confirm = String(formData.get("confirm_text") || "").trim();
   const table = scheduleTableForTrack(track);
+  const pageUrl = (params = {}, pageYear = year) =>
+    schedulePageUrl(track, day, pageYear, { source, ...params });
 
   if (confirm !== String(clearYear)) {
     redirect(
-      schedulePageUrl(track, day, year, {
+      pageUrl({
         error: `Type ${clearYear} exactly in the confirmation box before clearing.`,
       }),
     );
@@ -449,10 +489,107 @@ async function clearScheduleYear(formData) {
     .select("id");
 
   if (error) {
-    redirect(schedulePageUrl(track, day, year, { error: error.message }));
+    redirect(pageUrl({ error: error.message }));
   }
 
-  redirect(schedulePageUrl(track, day, year, { cleared: "1", count: data?.length || 0 }));
+  redirect(pageUrl({ cleared: "1", count: data?.length || 0 }));
+}
+
+async function loadScheduleDraft(formData) {
+  "use server";
+
+  const { profile, user, supabase } = await requireUser(["admin"]);
+  const track = parseTrack(formData.get("track"));
+  const day = parseDay(formData.get("day"), track);
+  const year = parseProgramYear(formData.get("program_year"), profile.program_year);
+  const source = parseDraftSource(formData.get("load_source") || formData.get("source"));
+  const scope = String(formData.get("load_scope") || "track").trim().toLowerCase();
+  const isBothScope = scope === "both";
+  const table = scheduleTableForTrack(track);
+  const pageUrl = (params = {}, pageYear = year) =>
+    schedulePageUrl(track, day, pageYear, { source, ...params });
+  const confirmText = String(formData.get("load_confirm") || "")
+    .trim()
+    .toUpperCase();
+  const requiredConfirmText = isBothScope ? `LOAD BOTH ${year}` : `LOAD ${year}`;
+
+  if (confirmText !== requiredConfirmText) {
+    redirect(
+      pageUrl({
+        error: `Type ${requiredConfirmText} exactly before loading the draft.`,
+      }),
+    );
+  }
+
+  if (isBothScope) {
+    const studentRows = getScheduleDraftRows("student", year, user.id, source);
+    const staffRows = getScheduleDraftRows("staff", year, user.id, source);
+    if (!studentRows.length && !staffRows.length) {
+      redirect(pageUrl({ error: "No draft rows available for this year." }));
+    }
+
+    const { error: clearStudentError } = await supabase
+      .from("student_schedule_items")
+      .delete()
+      .eq("program_year", year);
+    if (clearStudentError) {
+      redirect(pageUrl({ error: clearStudentError.message }));
+    }
+
+    const { error: clearStaffError } = await supabase
+      .from("staff_schedule_items")
+      .delete()
+      .eq("program_year", year);
+    if (clearStaffError) {
+      redirect(pageUrl({ error: clearStaffError.message }));
+    }
+
+    if (studentRows.length > 0) {
+      const { error: insertStudentError } = await supabase.from("student_schedule_items").insert(studentRows);
+      if (insertStudentError) {
+        redirect(pageUrl({ error: insertStudentError.message }));
+      }
+    }
+
+    if (staffRows.length > 0) {
+      const { error: insertStaffError } = await supabase.from("staff_schedule_items").insert(staffRows);
+      if (insertStaffError) {
+        redirect(pageUrl({ error: insertStaffError.message }));
+      }
+    }
+
+    const total = studentRows.length + staffRows.length;
+    redirect(
+      pageUrl({
+        draft_loaded: "1",
+        count: total,
+        scope: "both",
+      }),
+    );
+  }
+
+  const draftRows = getScheduleDraftRows(track, year, user.id, source);
+  if (!draftRows.length) {
+    redirect(pageUrl({ error: "No draft rows available for this track." }));
+  }
+
+  const { error: clearError } = await supabase.from(table).delete().eq("program_year", year);
+  if (clearError) {
+    redirect(pageUrl({ error: clearError.message }));
+  }
+
+  const { error: insertError } = await supabase.from(table).insert(draftRows);
+  if (insertError) {
+    redirect(pageUrl({ error: insertError.message }));
+  }
+
+  redirect(
+    pageUrl({
+      draft_loaded: "1",
+      count: draftRows.length,
+      scope: "track",
+    }),
+  );
 }
 
 export const metadata = {
@@ -495,6 +632,19 @@ export default async function AdminSchedulePage({ searchParams }) {
   const firstItem = sortedItems[0] || null;
   const lastItem = sortedItems[sortedItems.length - 1] || null;
   const lastEndTime = lastItem ? addMinutesToTime(lastItem.start_time, lastItem.duration_minutes) : "";
+  const selectedDraftSource = parseDraftSource(params?.source);
+  const draftCounts = getScheduleDraftCounts(selectedYear, selectedDraftSource);
+  const draftSourceOptions = getScheduleDraftSourceOptions();
+  const draftPreviewCurrentTrack = getScheduleDraftDaySummaries(
+    track,
+    selectedYear,
+    selectedDraftSource,
+  );
+  const draftPreviewOtherTrack = getScheduleDraftDaySummaries(
+    track === "staff" ? "student" : "staff",
+    selectedYear,
+    selectedDraftSource,
+  );
 
   return (
     <>
@@ -506,6 +656,7 @@ export default async function AdminSchedulePage({ searchParams }) {
         </p>
         {alert ? <p className={alert.className}>{alert.text}</p> : null}
         <form method="get" className="grid-two mt-md">
+          <input type="hidden" name="source" value={selectedDraftSource} />
           <div className="field">
             <label className="label" htmlFor="track_picker">
               Track
@@ -544,10 +695,10 @@ export default async function AdminSchedulePage({ searchParams }) {
           </button>
         </form>
 
-        <div className="mt-md">{scheduleSwitcher(track, day, selectedYear)}</div>
+        <div className="mt-md">{scheduleSwitcher(track, day, selectedYear, selectedDraftSource)}</div>
         <div className="mt-sm">
           <DayTabs
-            basePath={`/admin/schedule?track=${track}&year=${selectedYear}`}
+            basePath={`/admin/schedule?track=${track}&year=${selectedYear}&source=${encodeURIComponent(selectedDraftSource)}`}
             selectedDay={day}
             days={dayOptions}
           />
@@ -607,6 +758,7 @@ export default async function AdminSchedulePage({ searchParams }) {
           <input type="hidden" name="track" value={track} />
           <input type="hidden" name="day" value={day} />
           <input type="hidden" name="program_year" value={selectedYear} />
+          <input type="hidden" name="source" value={selectedDraftSource} />
           <ScheduleTimeFields idPrefix="add" defaultDuration={45} />
 
           <div className="field">
@@ -678,10 +830,105 @@ export default async function AdminSchedulePage({ searchParams }) {
       <section className="card" id="schedule-year-tools">
         <h2>Year Tools</h2>
         <p className="muted">Copy schedule blocks from one year to another after annual updates.</p>
+
+        <div className="surface surface-pad-sm mt-md">
+          <h3 className="card-subtitle">Load 2026 Draft Baseline</h3>
+          <p className="muted">
+            Replaces existing {track} schedule entries for {selectedYear} with a draft baseline
+            from the attached TORCH schedule references (student view + staff day zero prep).
+          </p>
+          <p className="muted">
+            Draft rows: <strong>{draftCounts.student}</strong> student ·{" "}
+            <strong>{draftCounts.staff}</strong> staff · <strong>{draftCounts.total}</strong> total
+          </p>
+          <div className="grid-two mt-sm">
+            <div className="surface surface-pad-sm">
+              <p className="schedule-label">
+                {track === "staff" ? "Staff" : "Student"} draft preview
+              </p>
+              <div className="stack-sm">
+                {draftPreviewCurrentTrack.map((entry) => (
+                  <p className="muted" key={`preview-current-${entry.dayNumber}`}>
+                    {dayLabel(entry.dayNumber)}: {entry.count} items · {entry.firstStartLabel} to{" "}
+                    {entry.lastEndLabel}
+                  </p>
+                ))}
+              </div>
+            </div>
+            <div className="surface surface-pad-sm">
+              <p className="schedule-label">
+                {track === "staff" ? "Student" : "Staff"} draft preview
+              </p>
+              <div className="stack-sm">
+                {draftPreviewOtherTrack.map((entry) => (
+                  <p className="muted" key={`preview-other-${entry.dayNumber}`}>
+                    {dayLabel(entry.dayNumber)}: {entry.count} items · {entry.firstStartLabel} to{" "}
+                    {entry.lastEndLabel}
+                  </p>
+                ))}
+              </div>
+            </div>
+          </div>
+          <form action={loadScheduleDraft} className="stack mt-sm">
+            <input type="hidden" name="track" value={track} />
+            <input type="hidden" name="day" value={day} />
+            <input type="hidden" name="program_year" value={selectedYear} />
+            <input type="hidden" name="source" value={selectedDraftSource} />
+            <div className="grid-two">
+              <div className="field">
+                <label className="label" htmlFor="load_source">
+                  Draft Source
+                </label>
+                <select
+                  id="load_source"
+                  name="load_source"
+                  className="select"
+                  defaultValue={selectedDraftSource}
+                >
+                  {draftSourceOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="field">
+                <label className="label" htmlFor="load_scope">
+                  Scope
+                </label>
+                <select id="load_scope" name="load_scope" className="select" defaultValue="track">
+                  <option value="track">
+                    Current Track Only ({track === "staff" ? "Staff" : "Student"})
+                  </option>
+                  <option value="both">Both Staff + Student Tracks</option>
+                </select>
+              </div>
+              <div className="field">
+                <label className="label" htmlFor="load_confirm">
+                  Confirm Reload
+                </label>
+                <input
+                  id="load_confirm"
+                  name="load_confirm"
+                  className="input"
+                  placeholder={`LOAD ${selectedYear} or LOAD BOTH ${selectedYear}`}
+                  required
+                />
+              </div>
+            </div>
+            <div className="field align-end">
+              <button type="submit" className="button button-secondary">
+                Load {selectedYear} Draft Baseline
+              </button>
+            </div>
+          </form>
+        </div>
+
         <form action={cloneScheduleYear} className="grid-two mt-md">
           <input type="hidden" name="track" value={track} />
           <input type="hidden" name="day" value={day} />
           <input type="hidden" name="program_year" value={selectedYear} />
+          <input type="hidden" name="source" value={selectedDraftSource} />
           <div className="field">
             <label className="label" htmlFor="source_year">
               Source Year
@@ -718,6 +965,7 @@ export default async function AdminSchedulePage({ searchParams }) {
           <input type="hidden" name="track" value={track} />
           <input type="hidden" name="day" value={day} />
           <input type="hidden" name="program_year" value={selectedYear} />
+          <input type="hidden" name="source" value={selectedDraftSource} />
           <div className="grid-two">
             <div className="field">
               <label className="label" htmlFor="clear_year">
@@ -752,6 +1000,7 @@ export default async function AdminSchedulePage({ searchParams }) {
             <input type="hidden" name="track" value={track} />
             <input type="hidden" name="day" value={day} />
             <input type="hidden" name="program_year" value={selectedYear} />
+            <input type="hidden" name="source" value={selectedDraftSource} />
             <ScheduleTimeFields
               idPrefix="edit"
               defaultStartTime={editingItem.start_time?.slice(0, 5)}
@@ -849,7 +1098,9 @@ export default async function AdminSchedulePage({ searchParams }) {
             </button>
           </form>
           <p className="muted mt-sm">
-            <Link href={schedulePageUrl(track, day, selectedYear)}>Done editing</Link>
+            <Link href={schedulePageUrl(track, day, selectedYear, { source: selectedDraftSource })}>
+              Done editing
+            </Link>
           </p>
         </section>
       ) : null}
@@ -877,25 +1128,7 @@ export default async function AdminSchedulePage({ searchParams }) {
                         <span className="schedule-time">
                           {formatTimeRange(item.start_time, item.duration_minutes)}
                         </span>
-                        <div className="schedule-card-inline-actions">
-                          <Link
-                            href={schedulePageUrl(track, day, selectedYear, { edit: item.id })}
-                            className="schedule-card-action schedule-card-action-edit"
-                          >
-                            Edit
-                          </Link>
-                          <form action={removeScheduleItem} className="schedule-card-action-form">
-                            <input type="hidden" name="id" value={item.id} />
-                            <input type="hidden" name="track" value={track} />
-                            <input type="hidden" name="day" value={day} />
-                            <input type="hidden" name="program_year" value={selectedYear} />
-                            <ConfirmSubmitButton
-                              label="Remove"
-                              className="schedule-card-action schedule-card-action-remove"
-                              confirmMessage="Remove this schedule item?"
-                            />
-                          </form>
-                        </div>
+                        <span className="schedule-duration">{item.duration_minutes}m</span>
                       </div>
                       <p className="schedule-activity">{item.activity_name}</p>
                       <p className="schedule-detail">
@@ -907,6 +1140,29 @@ export default async function AdminSchedulePage({ searchParams }) {
                           <span className="schedule-label">Point:</span> {item.point_person || "TBD"}
                         </p>
                       ) : null}
+                      <div className="schedule-card-actions">
+                        <Link
+                          href={schedulePageUrl(track, day, selectedYear, {
+                            edit: item.id,
+                            source: selectedDraftSource,
+                          })}
+                          className="schedule-card-action schedule-card-action-edit"
+                        >
+                          Edit
+                        </Link>
+                        <form action={removeScheduleItem} className="schedule-card-action-form">
+                          <input type="hidden" name="id" value={item.id} />
+                          <input type="hidden" name="track" value={track} />
+                          <input type="hidden" name="day" value={day} />
+                          <input type="hidden" name="program_year" value={selectedYear} />
+                          <input type="hidden" name="source" value={selectedDraftSource} />
+                          <ConfirmSubmitButton
+                            label="Remove"
+                            className="schedule-card-action schedule-card-action-remove"
+                            confirmMessage="Remove this schedule item?"
+                          />
+                        </form>
+                      </div>
                     </article>
                   ))}
                 </div>
@@ -946,7 +1202,10 @@ export default async function AdminSchedulePage({ searchParams }) {
                       <td>
                         <div className="schedule-table-actions">
                           <Link
-                            href={schedulePageUrl(track, day, selectedYear, { edit: item.id })}
+                            href={schedulePageUrl(track, day, selectedYear, {
+                              edit: item.id,
+                              source: selectedDraftSource,
+                            })}
                             className="schedule-table-action schedule-table-action-edit"
                           >
                             Edit
@@ -956,6 +1215,7 @@ export default async function AdminSchedulePage({ searchParams }) {
                             <input type="hidden" name="track" value={track} />
                             <input type="hidden" name="day" value={day} />
                             <input type="hidden" name="program_year" value={selectedYear} />
+                            <input type="hidden" name="source" value={selectedDraftSource} />
                             <ConfirmSubmitButton
                               label="Remove"
                               className="schedule-table-action schedule-table-action-remove"

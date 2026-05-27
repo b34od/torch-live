@@ -655,7 +655,8 @@ img {
 }
 
 .schedule-time {
-  font-weight: 800;
+  font-weight: 500;
+  font-size: 0.85rem;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
 }
@@ -666,19 +667,21 @@ img {
 }
 
 .schedule-activity {
-  margin: 0.06rem 0 0.28rem;
-  font-weight: 700;
+  margin: 0.06rem 0 0.22rem;
+  font-weight: 600;
+  font-size: 0.89rem;
+  line-height: 1.25;
 }
 
 .schedule-detail {
   margin: 0.16rem 0;
   color: #555656;
-  font-size: 0.92rem;
+  font-size: 0.89rem;
 }
 
 .schedule-label {
-  font-weight: 700;
-  color: #4a4b4b;
+  font-weight: 500;
+  color: #5f6060;
 }
 
 .schedule-card-actions {
@@ -687,6 +690,9 @@ img {
   justify-content: flex-end;
   gap: 0.3rem;
   flex-wrap: nowrap;
+  border-top: 1px solid rgba(44, 44, 44, 0.06);
+  padding-top: 0.4rem;
+  margin-top: 0.4rem;
 }
 
 .schedule-card-inline-actions {
@@ -703,10 +709,10 @@ img {
 
 .schedule-card-action {
   min-height: 30px;
-  border-radius: 999px;
-  padding: 0.18rem 0.58rem;
-  font-size: 0.74rem;
-  font-weight: 700;
+  border-radius: 9px;
+  padding: 0.2rem 0.54rem;
+  font-size: 0.72rem;
+  font-weight: 500;
   border: 1px solid;
   background: var(--torch-white);
   color: #4f5050;
@@ -720,14 +726,15 @@ img {
 }
 
 .schedule-card-action-edit {
-  flex: 1 1 auto;
-  min-width: 0;
-  border-color: var(--torch-neutral-300);
+  flex: 0 0 auto;
+  border-color: rgba(113, 60, 151, 0.26);
+  background: rgba(113, 60, 151, 0.08);
+  color: #5a3b76;
 }
 
 .schedule-card-action-edit:hover {
-  border-color: rgba(113, 60, 151, 0.34);
-  color: var(--torch-purple);
+  border-color: rgba(113, 60, 151, 0.44);
+  color: #4a2e63;
 }
 
 .schedule-card-action-remove {
@@ -756,11 +763,11 @@ img {
 }
 
 .schedule-table-action {
-  min-height: 32px;
-  border-radius: 999px;
-  padding: 0.2rem 0.55rem;
-  font-size: 0.78rem;
-  font-weight: 700;
+  min-height: 28px;
+  border-radius: 9px;
+  padding: 0.18rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 500;
   border: 1px solid;
   background: var(--torch-white);
   color: #4f5050;
@@ -774,12 +781,14 @@ img {
 }
 
 .schedule-table-action-edit {
-  border-color: var(--torch-neutral-300);
+  border-color: rgba(113, 60, 151, 0.26);
+  background: rgba(113, 60, 151, 0.08);
+  color: #5a3b76;
 }
 
 .schedule-table-action-edit:hover {
-  border-color: rgba(113, 60, 151, 0.34);
-  color: var(--torch-purple);
+  border-color: rgba(113, 60, 151, 0.44);
+  color: #4a2e63;
 }
 
 .schedule-table-action-remove {
@@ -803,7 +812,7 @@ img {
 .schedule-item-editor-panel summary {
   list-style: none;
   cursor: pointer;
-  font-weight: 800;
+  font-weight: 700;
   font-size: 0.86rem;
   color: #4f5050;
   display: inline-flex;
@@ -892,7 +901,7 @@ img {
   align-items: center;
   gap: 0.35rem;
   font-size: 0.76rem;
-  font-weight: 700;
+  font-weight: 600;
   color: #555656;
   padding: 0.18rem 0.44rem;
   border-radius: 999px;
@@ -985,9 +994,9 @@ img {
 
 .timeline-block-title {
   margin: 0;
-  font-weight: 800;
-  font-size: 0.82rem;
-  line-height: 1.2;
+  font-weight: 600;
+  font-size: 0.77rem;
+  line-height: 1.24;
   display: block;
   overflow: hidden;
   max-height: 2.4em;
@@ -1001,7 +1010,7 @@ img {
 }
 
 .timeline-block-compact .timeline-block-title {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   line-height: 1.15;
   max-height: 2.3em;
 }
@@ -1011,7 +1020,7 @@ img {
 }
 
 .timeline-block-tiny .timeline-block-title {
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   line-height: 1.1;
   max-height: none;
   white-space: nowrap;
@@ -1021,8 +1030,8 @@ img {
 
 .timeline-block-time {
   margin: 0.14rem 0 0;
-  font-size: 0.76rem;
-  font-weight: 700;
+  font-size: 0.71rem;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
   color: #4a4b4b;
@@ -1031,7 +1040,7 @@ img {
 
 .timeline-block-meta {
   margin: 0.14rem 0 0;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: #5d5e5e;
   display: flex;
   flex-wrap: wrap;
@@ -1071,8 +1080,8 @@ img {
   display: inline-block;
   margin-left: 0.5rem;
   padding: 0.08rem 0.25rem;
-  font-size: 0.74rem;
-  font-weight: 700;
+  font-size: 0.72rem;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
   color: #636464;
@@ -1437,9 +1446,9 @@ img {
   }
 
   .schedule-card-action {
-    min-height: 28px;
-    padding: 0.16rem 0.5rem;
-    font-size: 0.72rem;
+    min-height: 30px;
+    padding: 0.14rem 0.44rem;
+    font-size: 0.69rem;
   }
 
   .timeline-scale-tick span {
