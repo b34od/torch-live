@@ -63,10 +63,10 @@ export default async function StudentSchedulePage({ searchParams }) {
             dayNumber={day}
             programYear={profile.program_year}
           />
-          <div className="mobile-only">
-            <h3 className="section-anchor mt-md">Agenda Details</h3>
-            <p className="muted">Quick list view for readability on dense program days.</p>
-            <div className="schedule-card-list schedule-card-list-student mt-md">
+          <details className="schedule-mobile-details mobile-only mt-md">
+            <summary>Need larger text? Open list view ({sortedItems.length} items)</summary>
+            <p className="muted mt-sm">Quick list view for readability on dense program days.</p>
+            <div className="schedule-card-list schedule-card-list-student mt-sm">
               {sortedItems.map((item) => (
                 <article key={item.id} className="schedule-card">
                   <div className="schedule-card-header">
@@ -80,7 +80,7 @@ export default async function StudentSchedulePage({ searchParams }) {
                 </article>
               ))}
             </div>
-          </div>
+          </details>
         </>
       )}
     </section>

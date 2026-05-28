@@ -74,37 +74,40 @@ export default async function StaffSchedulePage({ searchParams }) {
           />
 
           <h3 id="staff-details" className="section-anchor mt-md">Ops Details</h3>
-          <div className="schedule-card-list mobile-only mt-md">
-            {sortedItems.map((item) => (
-              <article key={item.id} className="schedule-card">
-                <div className="schedule-card-header">
-                  <span className="schedule-time">{formatTimeRange(item.start_time, item.duration_minutes)}</span>
-                  <span className="schedule-duration">{item.duration_minutes}m</span>
-                </div>
-                <p className="schedule-activity">
-                  {item.activity_name}
-                </p>
-                <p className="schedule-detail">
-                  <span className="schedule-label">Location:</span> {item.location || "TBD"}
-                </p>
-                <p className="schedule-detail">
-                  <span className="schedule-label">Point:</span> {item.point_person || "TBD"} ·{" "}
-                  <span className="schedule-label">Rain:</span> {item.rain_location || "N/A"}
-                  {item.secondary_person ? (
-                    <>
-                      {" "}· <span className="schedule-label">Secondary:</span>{" "}
-                      {item.secondary_person}
-                    </>
-                  ) : null}
-                </p>
-                {item.notes ? (
-                  <p className="schedule-detail">
-                    <span className="schedule-label">Notes:</span> {item.notes}
+          <details className="schedule-mobile-details mobile-only mt-sm">
+            <summary>Need larger text? Open details list ({sortedItems.length} items)</summary>
+            <div className="schedule-card-list mt-sm">
+              {sortedItems.map((item) => (
+                <article key={item.id} className="schedule-card">
+                  <div className="schedule-card-header">
+                    <span className="schedule-time">{formatTimeRange(item.start_time, item.duration_minutes)}</span>
+                    <span className="schedule-duration">{item.duration_minutes}m</span>
+                  </div>
+                  <p className="schedule-activity">
+                    {item.activity_name}
                   </p>
-                ) : null}
-              </article>
-            ))}
-          </div>
+                  <p className="schedule-detail">
+                    <span className="schedule-label">Location:</span> {item.location || "TBD"}
+                  </p>
+                  <p className="schedule-detail">
+                    <span className="schedule-label">Point:</span> {item.point_person || "TBD"} ·{" "}
+                    <span className="schedule-label">Rain:</span> {item.rain_location || "N/A"}
+                    {item.secondary_person ? (
+                      <>
+                        {" "}· <span className="schedule-label">Secondary:</span>{" "}
+                        {item.secondary_person}
+                      </>
+                    ) : null}
+                  </p>
+                  {item.notes ? (
+                    <p className="schedule-detail">
+                      <span className="schedule-label">Notes:</span> {item.notes}
+                    </p>
+                  ) : null}
+                </article>
+              ))}
+            </div>
+          </details>
 
           <div className="table-wrap mt-md desktop-only">
             <table className="schedule-table">
