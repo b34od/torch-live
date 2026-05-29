@@ -64,8 +64,25 @@ function schedulePageUrl(track, day, year, params = {}) {
   return `/admin/schedule?${search.toString()}`;
 }
 
-function scheduleTableForTrack(track) {
-  return track === "staff" ? "staff_schedule_items" : "student_schedule_items";
+const SCHEDULE_TABLE = "schedule_items";
+
+function visibilityOptionsForTrackDay(track, day) {
+  if (track === "student") return ["students", "both"];
+  return day === 0 ? ["staff"] : ["staff", "both"];
+}
+
+function defaultVisibilityForTrackDay(track, day) {
+  if (track === "student") return "both";
+  return day === 0 ? "staff" : "staff";
+}
+
+function canEditItemFromTrack(track, item) {
+  if (!item) return false;
+  if (track === "student") {
+    return item.visibility !== "staff";
+  }
+  if (Number(item.day_number) === 0) return item.visibility === "staff";
+  return item.visibility === "staff";
 }
 
 function getYearOptions(years, selectedYear, fallbackYear) {
@@ -85,11 +102,26 @@ function alertFromParams(params) {
   }
 
   if (params?.saved === "1") {
+    const shiftedCount = Number(params?.shifted_count || 0);
+    if (shiftedCount > 0) {
+      return {
+        className: "alert alert-success",
+        text: `Schedule item updated. Shifted ${shiftedCount} dependent item${shiftedCount === 1 ? "" : "s"}.`,
+      };
+    }
     return { className: "alert alert-success", text: "Schedule item updated." };
   }
 
   if (params?.removed === "1") {
     return { className: "alert alert-success", text: "Schedule item removed." };
+  }
+
+  if (params?.dependency_added === "1") {
+    return { className: "alert alert-success", text: "Dependency saved for this schedule item." };
+  }
+
+  if (params?.dependency_removed === "1") {
+    return { className: "alert alert-success", text: "Dependency removed." };
   }
 
   if (params?.draft_loaded === "1") {
@@ -167,6 +199,10 @@ function allowOverlap(formData) {
   return String(formData.get("allow_overlap") || "") === "1";
 }
 
+function shouldShiftDependencies(formData) {
+  return String(formData.get("shift_dependencies") || "") === "1";
+}
+
 function timeWindow(startTime, durationMinutes) {
   const start = timeToMinutes(startTime);
   if (start === null) return null;
@@ -192,6 +228,102 @@ function firstOverlap(rows, startTime, durationMinutes, excludeId = null) {
   return null;
 }
 
+async function listEditableRowsForTrackDay(supabase, year, track, day) {
+  let query = supabase
+    .from(SCHEDULE_TABLE)
+    .select("id, day_number, start_time, duration_minutes, activity_name, visibility, sort_order")
+    .eq("program_year", year)
+    .eq("day_number", day)
+    .order("start_time", { ascending: true })
+    .order("sort_order", { ascending: true });
+
+  query = query.in("visibility", visibilityOptionsForTrackDay(track, day));
+  return query;
+}
+
+async function listDependentsForSource(supabase, sourceItemId) {
+  const { data: links, error: linksError } = await supabase
+    .from("schedule_dependencies")
+    .select("id, dependent_item_id, offset_minutes, relation_type")
+    .eq("source_item_id", sourceItemId)
+    .order("created_at", { ascending: true });
+
+  if (linksError) {
+    return { data: [], error: linksError };
+  }
+
+  const dependentIds = [...new Set((links || []).map((entry) => entry.dependent_item_id).filter(Boolean))];
+  if (!dependentIds.length) {
+    return { data: [], error: null };
+  }
+
+  const { data: dependentItems, error: dependentError } = await supabase
+    .from(SCHEDULE_TABLE)
+    .select("id, day_number, start_time, duration_minutes, activity_name, visibility")
+    .in("id", dependentIds);
+
+  if (dependentError) {
+    return { data: [], error: dependentError };
+  }
+
+  const dependentById = new Map((dependentItems || []).map((entry) => [entry.id, entry]));
+  const merged = (links || [])
+    .map((link) => {
+      const dependent = dependentById.get(link.dependent_item_id);
+      if (!dependent) return null;
+      return {
+        ...link,
+        dependent,
+      };
+    })
+    .filter(Boolean);
+
+  return { data: merged, error: null };
+}
+
+async function applyDependencyShift(supabase, sourceItem, userId) {
+  const { data: links, error: linksError } = await listDependentsForSource(supabase, sourceItem.id);
+  if (linksError) {
+    return { shiftedCount: 0, error: linksError };
+  }
+
+  if (!links.length) {
+    return { shiftedCount: 0, error: null };
+  }
+
+  if (!Number.isFinite(timeToMinutes(sourceItem.start_time))) {
+    return { shiftedCount: 0, error: null };
+  }
+
+  const updates = links
+    .map((entry) => {
+      if (!Number.isFinite(timeToMinutes(entry.dependent.start_time))) return null;
+      const nextStart = addMinutesToTime(sourceItem.start_time, Number(entry.offset_minutes || 0));
+      if (!nextStart) return null;
+      return {
+        id: entry.dependent.id,
+        start_time: nextStart,
+      };
+    })
+    .filter(Boolean);
+
+  if (!updates.length) {
+    return { shiftedCount: 0, error: null };
+  }
+
+  for (const entry of updates) {
+    const { error } = await supabase
+      .from(SCHEDULE_TABLE)
+      .update({ start_time: entry.start_time, updated_by: userId })
+      .eq("id", entry.id);
+    if (error) {
+      return { shiftedCount: 0, error };
+    }
+  }
+
+  return { shiftedCount: updates.length, error: null };
+}
+
 async function addScheduleItem(formData) {
   "use server";
 
@@ -200,24 +332,24 @@ async function addScheduleItem(formData) {
   const day = parseDay(formData.get("day"), track);
   const year = parseProgramYear(formData.get("program_year"), profile.program_year);
   const source = parseDraftSource(formData.get("source"));
-  const table = scheduleTableForTrack(track);
   const pageUrl = (params = {}, pageYear = year) =>
     schedulePageUrl(track, day, pageYear, { source, ...params });
   const startTime = String(formData.get("start_time") || "").trim();
   const duration = parseDuration(formData.get("duration_minutes"));
   const activityName = String(formData.get("activity_name") || "").trim();
   const allowTimeOverlap = allowOverlap(formData);
+  const visibility = defaultVisibilityForTrackDay(track, day);
 
   if (!startTime || !duration || !activityName) {
     redirect(pageUrl({ error: "Time, duration, and activity are required." }));
   }
 
-  const { data: existingRows, error: existingError } = await supabase
-    .from(table)
-    .select("id, start_time, duration_minutes, activity_name")
-    .eq("program_year", year)
-    .eq("day_number", day)
-    .order("start_time", { ascending: true });
+  const { data: existingRows, error: existingError } = await listEditableRowsForTrackDay(
+    supabase,
+    year,
+    track,
+    day,
+  );
 
   if (existingError) {
     redirect(pageUrl({ error: existingError.message }));
@@ -233,10 +365,11 @@ async function addScheduleItem(formData) {
   }
 
   const { data: lastRows } = await supabase
-    .from(table)
+    .from(SCHEDULE_TABLE)
     .select("sort_order")
     .eq("program_year", year)
     .eq("day_number", day)
+    .eq("visibility", visibility)
     .order("sort_order", { ascending: false })
     .limit(1);
 
@@ -249,6 +382,7 @@ async function addScheduleItem(formData) {
     duration_minutes: duration,
     activity_name: activityName,
     location: normalizeText(formData.get("location")),
+    visibility,
     sort_order: nextSort,
     updated_by: user.id,
   };
@@ -261,7 +395,7 @@ async function addScheduleItem(formData) {
     payload.av_needs = normalizeText(formData.get("av_needs"));
   }
 
-  const { error } = await supabase.from(table).insert(payload);
+  const { error } = await supabase.from(SCHEDULE_TABLE).insert(payload);
 
   if (error) {
     redirect(pageUrl({ error: error.message }));
@@ -279,9 +413,9 @@ async function updateScheduleItem(formData) {
   const day = parseDay(formData.get("day"), track);
   const year = parseProgramYear(formData.get("program_year"), profile.program_year);
   const source = parseDraftSource(formData.get("source"));
-  const table = scheduleTableForTrack(track);
   const pageUrl = (params = {}, pageYear = year) =>
     schedulePageUrl(track, day, pageYear, { source, ...params });
+  const shiftDependencies = shouldShiftDependencies(formData);
 
   if (!id) {
     redirect(pageUrl({ error: "Missing schedule item id." }));
@@ -296,12 +430,38 @@ async function updateScheduleItem(formData) {
     redirect(pageUrl({ error: "Time, duration, and activity are required." }));
   }
 
-  const { data: existingRows, error: existingError } = await supabase
-    .from(table)
-    .select("id, start_time, duration_minutes, activity_name")
+  const { data: existingItem, error: existingItemError } = await supabase
+    .from(SCHEDULE_TABLE)
+    .select("id, day_number, visibility, start_time")
+    .eq("id", id)
     .eq("program_year", year)
-    .eq("day_number", day)
-    .order("start_time", { ascending: true });
+    .maybeSingle();
+
+  if (existingItemError) {
+    redirect(pageUrl({ error: existingItemError.message }));
+  }
+
+  if (!existingItem) {
+    redirect(pageUrl({ error: "Schedule item was not found for this year." }));
+  }
+
+  if (!canEditItemFromTrack(track, existingItem)) {
+    redirect(
+      pageUrl({
+        error:
+          track === "staff"
+            ? "Edit shared schedule items from the Student track. Staff track is for staff-only operations."
+            : "This item can only be edited from the Staff track.",
+      }),
+    );
+  }
+
+  const { data: existingRows, error: existingError } = await listEditableRowsForTrackDay(
+    supabase,
+    year,
+    track,
+    day,
+  );
 
   if (existingError) {
     redirect(pageUrl({ error: existingError.message }));
@@ -323,6 +483,7 @@ async function updateScheduleItem(formData) {
     duration_minutes: duration,
     activity_name: activityName,
     location: normalizeText(formData.get("location")),
+    visibility: track === "student" ? existingItem.visibility || "both" : "staff",
     updated_by: user.id,
   };
 
@@ -334,13 +495,25 @@ async function updateScheduleItem(formData) {
     payload.av_needs = normalizeText(formData.get("av_needs"));
   }
 
-  const { error } = await supabase.from(table).update(payload).eq("id", id);
+  const { error } = await supabase.from(SCHEDULE_TABLE).update(payload).eq("id", id);
 
   if (error) {
     redirect(pageUrl({ error: error.message }));
   }
 
-  redirect(pageUrl({ saved: "1" }));
+  let shiftedCount = 0;
+  if (shiftDependencies) {
+    const { shiftedCount: shifted, error: dependencyShiftError } = await applyDependencyShift(supabase, {
+      id,
+      start_time: startTime,
+    }, user.id);
+    if (dependencyShiftError) {
+      redirect(pageUrl({ error: dependencyShiftError.message }));
+    }
+    shiftedCount = shifted;
+  }
+
+  redirect(pageUrl({ saved: "1", shifted_count: shiftedCount }));
 }
 
 async function removeScheduleItem(formData) {
@@ -352,7 +525,6 @@ async function removeScheduleItem(formData) {
   const day = parseDay(formData.get("day"), track);
   const year = parseProgramYear(formData.get("program_year"), profile.program_year);
   const source = parseDraftSource(formData.get("source"));
-  const table = scheduleTableForTrack(track);
   const pageUrl = (params = {}, pageYear = year) =>
     schedulePageUrl(track, day, pageYear, { source, ...params });
 
@@ -360,7 +532,33 @@ async function removeScheduleItem(formData) {
     redirect(pageUrl({ error: "Missing schedule item id." }));
   }
 
-  const { error } = await supabase.from(table).delete().eq("id", id);
+  const { data: targetItem, error: targetItemError } = await supabase
+    .from(SCHEDULE_TABLE)
+    .select("id, day_number, visibility")
+    .eq("id", id)
+    .eq("program_year", year)
+    .maybeSingle();
+
+  if (targetItemError) {
+    redirect(pageUrl({ error: targetItemError.message }));
+  }
+
+  if (!targetItem) {
+    redirect(pageUrl({ error: "Schedule item not found." }));
+  }
+
+  if (!canEditItemFromTrack(track, targetItem)) {
+    redirect(
+      pageUrl({
+        error:
+          track === "staff"
+            ? "Remove shared schedule items from the Student track."
+            : "This item can only be removed from the Staff track.",
+      }),
+    );
+  }
+
+  const { error } = await supabase.from(SCHEDULE_TABLE).delete().eq("id", id);
 
   if (error) {
     redirect(pageUrl({ error: error.message }));
@@ -379,22 +577,21 @@ async function cloneScheduleYear(formData) {
   const source = parseDraftSource(formData.get("source"));
   const sourceYear = parseProgramYear(formData.get("source_year"), profile.program_year);
   const targetYear = parseProgramYear(formData.get("target_year"), profile.program_year);
-  const table = scheduleTableForTrack(track);
+  const visibilityOptions = track === "staff" ? ["staff"] : ["students", "both"];
   const pageUrl = (params = {}, pageYear = year) =>
     schedulePageUrl(track, day, pageYear, { source, ...params });
   const columns =
-    track === "staff"
-      ? "day_number, start_time, duration_minutes, activity_name, location, rain_location, point_person, secondary_person, notes, av_needs, sort_order"
-      : "day_number, start_time, duration_minutes, activity_name, location, sort_order";
+    "day_number, start_time, duration_minutes, activity_name, location, visibility, rain_location, point_person, secondary_person, notes, av_needs, sort_order";
 
   if (sourceYear === targetYear) {
     redirect(pageUrl({ error: "Source year and target year must be different." }));
   }
 
   const { data: existingTargetRows, error: targetCheckError } = await supabase
-    .from(table)
+    .from(SCHEDULE_TABLE)
     .select("id")
     .eq("program_year", targetYear)
+    .in("visibility", visibilityOptions)
     .limit(1);
 
   if (targetCheckError) {
@@ -410,9 +607,10 @@ async function cloneScheduleYear(formData) {
   }
 
   const { data: sourceRows, error: sourceError } = await supabase
-    .from(table)
+    .from(SCHEDULE_TABLE)
     .select(columns)
     .eq("program_year", sourceYear)
+    .in("visibility", visibilityOptions)
     .order("day_number", { ascending: true })
     .order("start_time", { ascending: true })
     .order("sort_order", { ascending: true });
@@ -433,25 +631,19 @@ async function cloneScheduleYear(formData) {
       duration_minutes: row.duration_minutes,
       activity_name: row.activity_name,
       location: row.location,
+      visibility: row.visibility,
       sort_order: row.sort_order,
       updated_by: user.id,
+      rain_location: row.rain_location,
+      point_person: row.point_person,
+      secondary_person: row.secondary_person,
+      notes: row.notes,
+      av_needs: row.av_needs,
     };
-
-    if (track === "staff") {
-      return {
-        ...base,
-        rain_location: row.rain_location,
-        point_person: row.point_person,
-        secondary_person: row.secondary_person,
-        notes: row.notes,
-        av_needs: row.av_needs,
-      };
-    }
-
     return base;
   });
 
-  const { error: insertError } = await supabase.from(table).insert(insertRows);
+  const { error: insertError } = await supabase.from(SCHEDULE_TABLE).insert(insertRows);
 
   if (insertError) {
     redirect(pageUrl({ error: insertError.message }));
@@ -470,7 +662,7 @@ async function clearScheduleYear(formData) {
   const source = parseDraftSource(formData.get("source"));
   const clearYear = parseProgramYear(formData.get("clear_year"), profile.program_year);
   const confirm = String(formData.get("confirm_text") || "").trim();
-  const table = scheduleTableForTrack(track);
+  const visibilityOptions = track === "staff" ? ["staff"] : ["students", "both"];
   const pageUrl = (params = {}, pageYear = year) =>
     schedulePageUrl(track, day, pageYear, { source, ...params });
 
@@ -483,9 +675,10 @@ async function clearScheduleYear(formData) {
   }
 
   const { data, error } = await supabase
-    .from(table)
+    .from(SCHEDULE_TABLE)
     .delete()
     .eq("program_year", clearYear)
+    .in("visibility", visibilityOptions)
     .select("id");
 
   if (error) {
@@ -505,7 +698,7 @@ async function loadScheduleDraft(formData) {
   const source = parseDraftSource(formData.get("load_source") || formData.get("source"));
   const scope = String(formData.get("load_scope") || "track").trim().toLowerCase();
   const isBothScope = scope === "both";
-  const table = scheduleTableForTrack(track);
+  const visibilityOptions = track === "staff" ? ["staff"] : ["students", "both"];
   const pageUrl = (params = {}, pageYear = year) =>
     schedulePageUrl(track, day, pageYear, { source, ...params });
   const confirmText = String(formData.get("load_confirm") || "")
@@ -529,30 +722,32 @@ async function loadScheduleDraft(formData) {
     }
 
     const { error: clearStudentError } = await supabase
-      .from("student_schedule_items")
+      .from(SCHEDULE_TABLE)
       .delete()
-      .eq("program_year", year);
+      .eq("program_year", year)
+      .in("visibility", ["students", "both"]);
     if (clearStudentError) {
       redirect(pageUrl({ error: clearStudentError.message }));
     }
 
     const { error: clearStaffError } = await supabase
-      .from("staff_schedule_items")
+      .from(SCHEDULE_TABLE)
       .delete()
-      .eq("program_year", year);
+      .eq("program_year", year)
+      .eq("visibility", "staff");
     if (clearStaffError) {
       redirect(pageUrl({ error: clearStaffError.message }));
     }
 
     if (studentRows.length > 0) {
-      const { error: insertStudentError } = await supabase.from("student_schedule_items").insert(studentRows);
+      const { error: insertStudentError } = await supabase.from(SCHEDULE_TABLE).insert(studentRows);
       if (insertStudentError) {
         redirect(pageUrl({ error: insertStudentError.message }));
       }
     }
 
     if (staffRows.length > 0) {
-      const { error: insertStaffError } = await supabase.from("staff_schedule_items").insert(staffRows);
+      const { error: insertStaffError } = await supabase.from(SCHEDULE_TABLE).insert(staffRows);
       if (insertStaffError) {
         redirect(pageUrl({ error: insertStaffError.message }));
       }
@@ -573,12 +768,16 @@ async function loadScheduleDraft(formData) {
     redirect(pageUrl({ error: "No draft rows available for this track." }));
   }
 
-  const { error: clearError } = await supabase.from(table).delete().eq("program_year", year);
+  const { error: clearError } = await supabase
+    .from(SCHEDULE_TABLE)
+    .delete()
+    .eq("program_year", year)
+    .in("visibility", visibilityOptions);
   if (clearError) {
     redirect(pageUrl({ error: clearError.message }));
   }
 
-  const { error: insertError } = await supabase.from(table).insert(draftRows);
+  const { error: insertError } = await supabase.from(SCHEDULE_TABLE).insert(draftRows);
   if (insertError) {
     redirect(pageUrl({ error: insertError.message }));
   }
@@ -590,6 +789,106 @@ async function loadScheduleDraft(formData) {
       scope: "track",
     }),
   );
+}
+
+async function addScheduleDependency(formData) {
+  "use server";
+
+  const { profile, user, supabase } = await requireUser(["admin"]);
+  const sourceItemId = String(formData.get("source_item_id") || "").trim();
+  const dependentItemId = String(formData.get("dependent_item_id") || "").trim();
+  const track = parseTrack(formData.get("track"));
+  const day = parseDay(formData.get("day"), track);
+  const year = parseProgramYear(formData.get("program_year"), profile.program_year);
+  const source = parseDraftSource(formData.get("source"));
+  const pageUrl = (params = {}, pageYear = year) =>
+    schedulePageUrl(track, day, pageYear, { source, ...params });
+
+  if (!sourceItemId || !dependentItemId) {
+    redirect(pageUrl({ error: "Choose a source item and dependent item.", edit: sourceItemId || "" }));
+  }
+
+  if (sourceItemId === dependentItemId) {
+    redirect(pageUrl({ error: "A schedule item cannot depend on itself.", edit: sourceItemId }));
+  }
+
+  const { data: sourceItem, error: sourceError } = await supabase
+    .from(SCHEDULE_TABLE)
+    .select("id, day_number, start_time, visibility")
+    .eq("id", sourceItemId)
+    .eq("program_year", year)
+    .maybeSingle();
+  if (sourceError) {
+    redirect(pageUrl({ error: sourceError.message, edit: sourceItemId }));
+  }
+  if (!sourceItem) {
+    redirect(pageUrl({ error: "Source schedule item not found.", edit: sourceItemId }));
+  }
+  if (!canEditItemFromTrack(track, sourceItem)) {
+    redirect(pageUrl({ error: "Source item is not editable in this track.", edit: sourceItemId }));
+  }
+
+  const { data: dependentItem, error: dependentError } = await supabase
+    .from(SCHEDULE_TABLE)
+    .select("id, start_time")
+    .eq("id", dependentItemId)
+    .eq("program_year", year)
+    .maybeSingle();
+  if (dependentError) {
+    redirect(pageUrl({ error: dependentError.message, edit: sourceItemId }));
+  }
+  if (!dependentItem) {
+    redirect(pageUrl({ error: "Dependent schedule item not found.", edit: sourceItemId }));
+  }
+
+  const sourceStart = timeToMinutes(sourceItem.start_time);
+  const dependentStart = timeToMinutes(dependentItem.start_time);
+  if (!Number.isFinite(sourceStart) || !Number.isFinite(dependentStart)) {
+    redirect(pageUrl({ error: "Could not calculate dependency offset from the selected times.", edit: sourceItemId }));
+  }
+
+  const offsetMinutes = dependentStart - sourceStart;
+  const { error } = await supabase.from("schedule_dependencies").upsert(
+    {
+      source_item_id: sourceItemId,
+      dependent_item_id: dependentItemId,
+      relation_type: "shift_with",
+      offset_minutes: offsetMinutes,
+      updated_by: user.id,
+    },
+    { onConflict: "source_item_id,dependent_item_id,relation_type" },
+  );
+
+  if (error) {
+    redirect(pageUrl({ error: error.message, edit: sourceItemId }));
+  }
+
+  redirect(pageUrl({ dependency_added: "1", edit: sourceItemId }));
+}
+
+async function removeScheduleDependency(formData) {
+  "use server";
+
+  const { profile, supabase } = await requireUser(["admin"]);
+  const id = String(formData.get("id") || "").trim();
+  const sourceItemId = String(formData.get("source_item_id") || "").trim();
+  const track = parseTrack(formData.get("track"));
+  const day = parseDay(formData.get("day"), track);
+  const year = parseProgramYear(formData.get("program_year"), profile.program_year);
+  const source = parseDraftSource(formData.get("source"));
+  const pageUrl = (params = {}, pageYear = year) =>
+    schedulePageUrl(track, day, pageYear, { source, ...params });
+
+  if (!id) {
+    redirect(pageUrl({ error: "Missing dependency id.", edit: sourceItemId }));
+  }
+
+  const { error } = await supabase.from("schedule_dependencies").delete().eq("id", id);
+  if (error) {
+    redirect(pageUrl({ error: error.message, edit: sourceItemId }));
+  }
+
+  redirect(pageUrl({ dependency_removed: "1", edit: sourceItemId }));
 }
 
 export const metadata = {
@@ -605,18 +904,14 @@ export default async function AdminSchedulePage({ searchParams }) {
   const alert = alertFromParams(params || {});
   const dayOptions = dayNumbersForTrack(track);
 
-  const [studentYearsResponse, staffYearsResponse, scheduleResponse] = await Promise.all([
-    supabase.from("student_schedule_items").select("program_year"),
-    supabase.from("staff_schedule_items").select("program_year"),
+  const [yearsResponse, scheduleResponse] = await Promise.all([
+    supabase.from(SCHEDULE_TABLE).select("program_year"),
     track === "staff"
       ? getStaffScheduleByDay(supabase, selectedYear, day)
       : getStudentScheduleByDay(supabase, selectedYear, day),
   ]);
 
-  const years = [
-    ...(studentYearsResponse.data || []).map((entry) => entry.program_year),
-    ...(staffYearsResponse.data || []).map((entry) => entry.program_year),
-  ];
+  const years = (yearsResponse.data || []).map((entry) => entry.program_year);
   const yearOptions = getYearOptions(years, selectedYear, profile.program_year);
 
   const items = scheduleResponse.data || [];
@@ -645,6 +940,22 @@ export default async function AdminSchedulePage({ searchParams }) {
     selectedYear,
     selectedDraftSource,
   );
+  const dependencyResponse = editingItem
+    ? await listDependentsForSource(supabase, editingItem.id)
+    : { data: [], error: null };
+  const dependencyLinks = dependencyResponse.data || [];
+  const dependencyError = dependencyResponse.error;
+  const dependencyCandidateResponse = editingItem
+    ? await listEditableRowsForTrackDay(supabase, selectedYear, track, day)
+    : { data: [], error: null };
+  const dependencyCandidates = (dependencyCandidateResponse.data || [])
+    .filter((entry) => entry.id !== editingItem?.id)
+    .sort((a, b) => {
+      const aStart = timeToMinutes(a.start_time) || 0;
+      const bStart = timeToMinutes(b.start_time) || 0;
+      if (aStart !== bStart) return aStart - bStart;
+      return Number(a.sort_order || 0) - Number(b.sort_order || 0);
+    });
 
   return (
     <>
@@ -740,6 +1051,11 @@ export default async function AdminSchedulePage({ searchParams }) {
               <strong>{formatTimeLabel(firstItem.start_time)}</strong> · ends at{" "}
               <strong>{formatTimeLabel(lastEndTime)}</strong> · Eastern Time (ET)
             </p>
+            {track === "staff" && day > 0 ? (
+              <p className="muted">
+                Shared student timeline appears here for staff alignment. Edit shared blocks on the Student track; use Staff for Friday and staff-only add-ons.
+              </p>
+            ) : null}
             <ScheduleTimeline
               items={sortedItems}
               track={track}
@@ -1033,6 +1349,24 @@ export default async function AdminSchedulePage({ searchParams }) {
               <span>Allow overlap for this item (use only when intentional).</span>
             </label>
 
+            <div className="surface surface-pad-sm">
+              <p className="schedule-label">Dependency Shift</p>
+              <p className="muted">
+                Keep linked items aligned when this time block moves. One save can shift all dependents by the same delta.
+              </p>
+              <label className="inline-check">
+                <input
+                  type="checkbox"
+                  name="shift_dependencies"
+                  value="1"
+                  defaultChecked={dependencyLinks.length > 0}
+                />
+                <span>
+                  Shift {dependencyLinks.length} dependent item{dependencyLinks.length === 1 ? "" : "s"} with this change.
+                </span>
+              </label>
+            </div>
+
             {track === "staff" ? (
               <>
                 <div className="grid-two">
@@ -1097,6 +1431,69 @@ export default async function AdminSchedulePage({ searchParams }) {
               Save Item
             </button>
           </form>
+          {dependencyError ? <p className="alert alert-error mt-md">{dependencyError.message}</p> : null}
+          <div className="surface surface-pad-sm mt-md">
+            <p className="schedule-label">Linked Dependencies</p>
+            {dependencyLinks.length === 0 ? (
+              <p className="muted">No dependencies configured for this item yet.</p>
+            ) : (
+              <div className="stack-sm">
+                {dependencyLinks.map((entry) => (
+                  <div key={entry.id} className="item-actions">
+                    <p className="muted">
+                      {formatTimeRange(entry.dependent.start_time, entry.dependent.duration_minutes)} ·{" "}
+                      {entry.dependent.activity_name} · offset {entry.offset_minutes}m
+                    </p>
+                    <form action={removeScheduleDependency}>
+                      <input type="hidden" name="id" value={entry.id} />
+                      <input type="hidden" name="source_item_id" value={editingItem.id} />
+                      <input type="hidden" name="track" value={track} />
+                      <input type="hidden" name="day" value={day} />
+                      <input type="hidden" name="program_year" value={selectedYear} />
+                      <input type="hidden" name="source" value={selectedDraftSource} />
+                      <ConfirmSubmitButton
+                        label="Remove Link"
+                        className="button button-secondary"
+                        confirmMessage="Remove this dependency?"
+                      />
+                    </form>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="surface surface-pad-sm mt-md">
+            <p className="schedule-label">Add Dependency</p>
+            <p className="muted">
+              Choose another block that should move with this item. Offset is calculated automatically.
+            </p>
+            <form action={addScheduleDependency} className="grid-two">
+              <input type="hidden" name="source_item_id" value={editingItem.id} />
+              <input type="hidden" name="track" value={track} />
+              <input type="hidden" name="day" value={day} />
+              <input type="hidden" name="program_year" value={selectedYear} />
+              <input type="hidden" name="source" value={selectedDraftSource} />
+              <div className="field">
+                <label className="label" htmlFor="dependent_item_id">
+                  Dependent Item
+                </label>
+                <select id="dependent_item_id" name="dependent_item_id" className="select" required>
+                  <option value="">Select schedule item</option>
+                  {dependencyCandidates.map((entry) => (
+                    <option key={entry.id} value={entry.id}>
+                      {formatTimeRange(entry.start_time, entry.duration_minutes)} · {entry.activity_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="field align-end">
+                <button type="submit" className="button button-secondary">
+                  Add Link
+                </button>
+              </div>
+            </form>
+          </div>
           <p className="muted mt-sm">
             <Link href={schedulePageUrl(track, day, selectedYear, { source: selectedDraftSource })}>
               Done editing
@@ -1132,27 +1529,33 @@ export default async function AdminSchedulePage({ searchParams }) {
                           <span className="schedule-duration">{item.duration_minutes}m</span>
                         </div>
                         <div className="schedule-card-inline-actions">
-                          <Link
-                            href={schedulePageUrl(track, day, selectedYear, {
-                              edit: item.id,
-                              source: selectedDraftSource,
-                            })}
-                            className="schedule-card-action schedule-card-action-edit"
-                          >
-                            Edit
-                          </Link>
-                          <form action={removeScheduleItem} className="schedule-card-action-form">
-                            <input type="hidden" name="id" value={item.id} />
-                            <input type="hidden" name="track" value={track} />
-                            <input type="hidden" name="day" value={day} />
-                            <input type="hidden" name="program_year" value={selectedYear} />
-                            <input type="hidden" name="source" value={selectedDraftSource} />
-                            <ConfirmSubmitButton
-                              label="Remove"
-                              className="schedule-card-action schedule-card-action-remove"
-                              confirmMessage="Remove this schedule item?"
-                            />
-                          </form>
+                          {canEditItemFromTrack(track, item) ? (
+                            <>
+                              <Link
+                                href={schedulePageUrl(track, day, selectedYear, {
+                                  edit: item.id,
+                                  source: selectedDraftSource,
+                                })}
+                                className="schedule-card-action schedule-card-action-edit"
+                              >
+                                Edit
+                              </Link>
+                              <form action={removeScheduleItem} className="schedule-card-action-form">
+                                <input type="hidden" name="id" value={item.id} />
+                                <input type="hidden" name="track" value={track} />
+                                <input type="hidden" name="day" value={day} />
+                                <input type="hidden" name="program_year" value={selectedYear} />
+                                <input type="hidden" name="source" value={selectedDraftSource} />
+                                <ConfirmSubmitButton
+                                  label="Remove"
+                                  className="schedule-card-action schedule-card-action-remove"
+                                  confirmMessage="Remove this schedule item?"
+                                />
+                              </form>
+                            </>
+                          ) : (
+                            <span className="muted">Edit on Student track</span>
+                          )}
                         </div>
                       </div>
                       <p className="schedule-activity">{item.activity_name}</p>
@@ -1203,27 +1606,33 @@ export default async function AdminSchedulePage({ searchParams }) {
                       ) : null}
                       <td>
                         <div className="schedule-table-actions">
-                          <Link
-                            href={schedulePageUrl(track, day, selectedYear, {
-                              edit: item.id,
-                              source: selectedDraftSource,
-                            })}
-                            className="schedule-table-action schedule-table-action-edit"
-                          >
-                            Edit
-                          </Link>
-                          <form action={removeScheduleItem} className="schedule-table-action-form">
-                            <input type="hidden" name="id" value={item.id} />
-                            <input type="hidden" name="track" value={track} />
-                            <input type="hidden" name="day" value={day} />
-                            <input type="hidden" name="program_year" value={selectedYear} />
-                            <input type="hidden" name="source" value={selectedDraftSource} />
-                            <ConfirmSubmitButton
-                              label="Remove"
-                              className="schedule-table-action schedule-table-action-remove"
-                              confirmMessage="Remove this schedule item?"
-                            />
-                          </form>
+                          {canEditItemFromTrack(track, item) ? (
+                            <>
+                              <Link
+                                href={schedulePageUrl(track, day, selectedYear, {
+                                  edit: item.id,
+                                  source: selectedDraftSource,
+                                })}
+                                className="schedule-table-action schedule-table-action-edit"
+                              >
+                                Edit
+                              </Link>
+                              <form action={removeScheduleItem} className="schedule-table-action-form">
+                                <input type="hidden" name="id" value={item.id} />
+                                <input type="hidden" name="track" value={track} />
+                                <input type="hidden" name="day" value={day} />
+                                <input type="hidden" name="program_year" value={selectedYear} />
+                                <input type="hidden" name="source" value={selectedDraftSource} />
+                                <ConfirmSubmitButton
+                                  label="Remove"
+                                  className="schedule-table-action schedule-table-action-remove"
+                                  confirmMessage="Remove this schedule item?"
+                                />
+                              </form>
+                            </>
+                          ) : (
+                            <span className="muted">Edit on Student track</span>
+                          )}
                         </div>
                       </td>
                     </tr>
