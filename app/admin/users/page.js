@@ -9,6 +9,8 @@ const MIN_YEAR = 2020;
 const MAX_YEAR = 2100;
 const BULK_LIMIT = 500;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const COHORT_KEY_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/i;
+const PHONE_E164_PATTERN = /^\+[1-9]\d{7,14}$/;
 
 function countByRole(profiles, role) {
   return profiles.filter((profile) => profile.role === role && profile.is_active).length;
@@ -28,6 +30,28 @@ function normalizeEmail(value) {
 
 function isValidEmail(email) {
   return EMAIL_PATTERN.test(String(email || ""));
+}
+
+function normalizePhoneNumber(value) {
+  const text = String(value || "").trim();
+  return text || null;
+}
+
+function normalizeCohortKey(value) {
+  const text = String(value || "")
+    .trim()
+    .toLowerCase();
+  return text || null;
+}
+
+function isValidCohortKey(value) {
+  if (value === null || value === undefined || value === "") return true;
+  return COHORT_KEY_PATTERN.test(String(value));
+}
+
+function isValidPhoneNumber(value) {
+  if (value === null || value === undefined || value === "") return true;
+  return PHONE_E164_PATTERN.test(String(value));
 }
 
 function parseProgramYear(value, fallback) {
@@ -93,6 +117,14 @@ function parseBulkRows(input, fallbackYear) {
       email: firstLineColumns.indexOf("email"),
       role: firstLineColumns.indexOf("role"),
       year: firstLineColumns.indexOf("program_year") >= 0 ? firstLineColumns.indexOf("program_year") : firstLineColumns.indexOf("year"),
+      cohort:
+        firstLineColumns.indexOf("cohort_key") >= 0
+          ? firstLineColumns.indexOf("cohort_key")
+          : firstLineColumns.indexOf("cohort"),
+      phone:
+        firstLineColumns.indexOf("phone_number") >= 0
+          ? firstLineColumns.indexOf("phone_number")
+          : firstLineColumns.indexOf("phone"),
     };
   }
 
@@ -105,6 +137,8 @@ function parseBulkRows(input, fallbackYear) {
     const email = headerMap ? columns[headerMap.email] : columns[1];
     const role = headerMap ? columns[headerMap.role] : columns[2];
     const rowYear = headerMap && headerMap.year >= 0 ? columns[headerMap.year] : columns[3];
+    const cohortValue = headerMap && headerMap.cohort >= 0 ? columns[headerMap.cohort] : columns[4];
+    const phoneValue = headerMap && headerMap.phone >= 0 ? columns[headerMap.phone] : columns[5];
 
     rows.push({
       rowNumber: lineIndex + 1,
@@ -112,6 +146,8 @@ function parseBulkRows(input, fallbackYear) {
       email: normalizeEmail(email),
       role: String(role || "").trim().toLowerCase(),
       programYear: parseProgramYear(rowYear, fallbackYear),
+      cohortKey: normalizeCohortKey(cohortValue),
+      phoneNumber: normalizePhoneNumber(phoneValue),
     });
   }
 
@@ -250,6 +286,8 @@ async function createProgramUser(formData) {
   const role = String(formData.get("role") || "")
     .trim()
     .toLowerCase();
+  const cohortKey = normalizeCohortKey(formData.get("cohort_key"));
+  const phoneNumber = normalizePhoneNumber(formData.get("phone_number"));
   const selectedYear = parseProgramYear(formData.get("program_year"), profile.program_year);
 
   if (!fullName || !email || !role) {
@@ -262,6 +300,14 @@ async function createProgramUser(formData) {
 
   if (!ROLES.includes(role)) {
     redirect(usersPageUrl(selectedYear, { error: "Invalid role." }));
+  }
+
+  if (!isValidCohortKey(cohortKey)) {
+    redirect(usersPageUrl(selectedYear, { error: "Cohort key can only use letters, numbers, underscores, and dashes." }));
+  }
+
+  if (!isValidPhoneNumber(phoneNumber)) {
+    redirect(usersPageUrl(selectedYear, { error: "Phone number must be E.164 format (for example: +16095551234)." }));
   }
 
   const adminClient = createAdminSupabaseClient();
@@ -287,6 +333,8 @@ async function createProgramUser(formData) {
         email,
         full_name: fullName,
         role,
+        cohort_key: cohortKey,
+        phone_number: phoneNumber,
         is_active: true,
         program_year: selectedYear,
       },
@@ -360,6 +408,16 @@ async function bulkImportUsers(formData) {
         continue;
       }
 
+      if (!isValidCohortKey(row.cohortKey)) {
+        skippedCount += 1;
+        continue;
+      }
+
+      if (!isValidPhoneNumber(row.phoneNumber)) {
+        skippedCount += 1;
+        continue;
+      }
+
       try {
         const authUser = await createOrFetchAuthUser(
           adminClient,
@@ -384,6 +442,8 @@ async function bulkImportUsers(formData) {
             email: row.email,
             full_name: row.fullName,
             role: row.role,
+            cohort_key: row.cohortKey,
+            phone_number: row.phoneNumber,
             is_active: true,
             program_year: row.programYear,
           },
@@ -432,6 +492,8 @@ async function updateProgramUser(formData) {
   const role = String(formData.get("role") || "")
     .trim()
     .toLowerCase();
+  const cohortKey = normalizeCohortKey(formData.get("cohort_key"));
+  const phoneNumber = normalizePhoneNumber(formData.get("phone_number"));
   const isActive = formData.get("is_active") === "on";
   const selectedYear = parseProgramYear(formData.get("program_year"), profile.program_year);
 
@@ -445,6 +507,14 @@ async function updateProgramUser(formData) {
 
   if (!ROLES.includes(role)) {
     redirect(usersPageUrl(selectedYear, { error: "Invalid role." }));
+  }
+
+  if (!isValidCohortKey(cohortKey)) {
+    redirect(usersPageUrl(selectedYear, { error: "Cohort key can only use letters, numbers, underscores, and dashes." }));
+  }
+
+  if (!isValidPhoneNumber(phoneNumber)) {
+    redirect(usersPageUrl(selectedYear, { error: "Phone number must be E.164 format (for example: +16095551234)." }));
   }
 
   const adminClient = createAdminSupabaseClient();
@@ -471,6 +541,8 @@ async function updateProgramUser(formData) {
         email,
         full_name: fullName,
         role,
+        cohort_key: cohortKey,
+        phone_number: phoneNumber,
         is_active: isActive,
         program_year: selectedYear,
       },
@@ -669,6 +741,18 @@ export default async function AdminUsersPage({ searchParams }) {
               <option value="admin">Admin</option>
             </select>
           </div>
+          <div className="field">
+            <label className="label" htmlFor="cohort_key">
+              Cohort Key (optional)
+            </label>
+            <input id="cohort_key" name="cohort_key" className="input" placeholder="blue-team" />
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="phone_number">
+              Phone Number (optional)
+            </label>
+            <input id="phone_number" name="phone_number" className="input" placeholder="+16095551234" />
+          </div>
           <button type="submit" className="button button-primary">
             Create User
           </button>
@@ -678,8 +762,8 @@ export default async function AdminUsersPage({ searchParams }) {
       <section className="card">
         <h2>Bulk Upload Users</h2>
         <p className="muted">
-          Upload CSV with columns <code>full_name,email,role,year</code> (header optional). If year is
-          blank, this page&apos;s selected year is used.
+          Upload CSV with columns <code>full_name,email,role,year,cohort_key,phone_number</code>{" "}
+          (header optional). If year is blank, this page&apos;s selected year is used.
         </p>
         <p className="muted">
           <a href="/templates/torch-live-users-template.csv" className="text-link">
@@ -696,7 +780,7 @@ export default async function AdminUsersPage({ searchParams }) {
               id="bulk_csv"
               name="bulk_csv"
               className="textarea"
-              placeholder="full_name,email,role,year\nJane Example,jane@example.com,student,2026"
+              placeholder="full_name,email,role,year,cohort_key,phone_number\nJane Example,jane@example.com,student,2026,blue-team,+16095551234"
             />
           </div>
           <div className="field">
@@ -781,6 +865,30 @@ export default async function AdminUsersPage({ searchParams }) {
                 required
               />
             </div>
+            <div className="field">
+              <label className="label" htmlFor="edit_cohort_key">
+                Cohort Key (optional)
+              </label>
+              <input
+                id="edit_cohort_key"
+                name="cohort_key"
+                className="input"
+                defaultValue={editingUser.cohort_key || ""}
+                placeholder="blue-team"
+              />
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="edit_phone_number">
+                Phone Number (optional)
+              </label>
+              <input
+                id="edit_phone_number"
+                name="phone_number"
+                className="input"
+                defaultValue={editingUser.phone_number || ""}
+                placeholder="+16095551234"
+              />
+            </div>
             <label className="inline-check muted">
               <input type="checkbox" name="is_active" defaultChecked={editingUser.is_active} />
               Active account
@@ -823,6 +931,12 @@ export default async function AdminUsersPage({ searchParams }) {
                   <p className="user-card-meta">
                     <span className="schedule-label">Year:</span> {entry.program_year}
                   </p>
+                  <p className="user-card-meta">
+                    <span className="schedule-label">Cohort:</span> {entry.cohort_key || "—"}
+                  </p>
+                  <p className="user-card-meta">
+                    <span className="schedule-label">Phone:</span> {entry.phone_number || "—"}
+                  </p>
                   <div className="stack-sm mt-sm">
                     <Link href={usersPageUrl(selectedYear, { edit: entry.id })} className="day-tab">
                       Edit
@@ -856,6 +970,8 @@ export default async function AdminUsersPage({ searchParams }) {
                     <th>Role</th>
                     <th>Status</th>
                     <th>Year</th>
+                    <th>Cohort</th>
+                    <th>Phone</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -867,6 +983,8 @@ export default async function AdminUsersPage({ searchParams }) {
                       <td>{entry.role}</td>
                       <td>{entry.is_active ? "Active" : "Inactive"}</td>
                       <td>{entry.program_year}</td>
+                      <td>{entry.cohort_key || "—"}</td>
+                      <td>{entry.phone_number || "—"}</td>
                       <td>
                         <div className="stack-sm">
                           <Link href={usersPageUrl(selectedYear, { edit: entry.id })} className="day-tab">
