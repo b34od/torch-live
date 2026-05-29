@@ -676,30 +676,31 @@ img {
 }
 
 .schedule-time {
-  font-weight: 600;
-  font-size: 0.81rem;
+  font-weight: 500;
+  font-size: 0.79rem;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
 }
 
 .schedule-duration {
   color: #5f6060;
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
 }
 
 .schedule-activity {
   margin: 0.06rem 0 0.16rem;
-  font-weight: 500;
-  font-size: 0.84rem;
-  line-height: 1.22;
+  font-weight: 400;
+  font-size: 0.82rem;
+  line-height: 1.24;
 }
 
 .schedule-detail {
   margin: 0.1rem 0;
   color: #555656;
-  font-size: 0.82rem;
+  font-size: 0.79rem;
+  line-height: 1.24;
 }
 
 .schedule-label {
@@ -720,10 +721,10 @@ img {
 }
 
 .schedule-card-action {
-  min-height: 30px;
-  border-radius: 8px;
-  padding: 0.14rem 0.5rem;
-  font-size: 0.7rem;
+  min-height: 28px;
+  border-radius: 999px;
+  padding: 0.12rem 0.46rem;
+  font-size: 0.68rem;
   font-weight: 500;
   border: 1px solid;
   background: var(--torch-white);
@@ -776,10 +777,10 @@ img {
 }
 
 .schedule-table-action {
-  min-height: 28px;
+  min-height: 27px;
   border-radius: 9px;
-  padding: 0.18rem 0.5rem;
-  font-size: 0.72rem;
+  padding: 0.16rem 0.46rem;
+  font-size: 0.7rem;
   font-weight: 500;
   border: 1px solid;
   background: var(--torch-white);
@@ -850,6 +851,43 @@ img {
 
 .schedule-item-editor-panel[open] summary::before {
   transform: rotate(90deg);
+}
+
+.schedule-mobile-details {
+  border: 1px solid rgba(44, 44, 44, 0.1);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.95);
+  padding: 0.48rem 0.52rem;
+}
+
+.schedule-mobile-details summary {
+  list-style: none;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.8rem;
+  color: #4f5050;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.schedule-mobile-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.schedule-mobile-details summary::before {
+  content: "▸";
+  color: #666767;
+  transition: transform 120ms ease;
+}
+
+.schedule-mobile-details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.schedule-mobile-details summary:focus-visible {
+  outline: 2px solid rgba(113, 60, 151, 0.46);
+  outline-offset: 2px;
 }
 
 .time-preview {
@@ -1008,8 +1046,8 @@ img {
 .timeline-block-title {
   margin: 0;
   font-weight: 500;
-  font-size: 0.73rem;
-  line-height: 1.2;
+  font-size: 0.71rem;
+  line-height: 1.18;
   letter-spacing: 0.003em;
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -1046,8 +1084,8 @@ img {
 
 .timeline-block-time {
   margin: 0.14rem 0 0;
-  font-size: 0.67rem;
-  font-weight: 600;
+  font-size: 0.65rem;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
   color: #4f5050;
@@ -1097,7 +1135,7 @@ img {
   margin-left: 0.5rem;
   padding: 0.08rem 0.25rem;
   font-size: 0.72rem;
-  font-weight: 600;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
   color: #636464;
@@ -1469,8 +1507,8 @@ img {
 
   .schedule-card-action {
     min-height: 28px;
-    padding: 0.1rem 0.44rem;
-    font-size: 0.67rem;
+    padding: 0.08rem 0.4rem;
+    font-size: 0.65rem;
   }
 
   .timeline-scale-tick span {

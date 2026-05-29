@@ -1,4 +1,4 @@
-full_name,email,role,year
-Jane Example,jane@example.com,student,2026
-John Staff,john@example.com,staff,2026
-Alex Admin,alex@example.com,admin,2026
+full_name,email,role,year,cohort_key,phone_number
+Jane Example,jane@example.com,student,2026,blue-team,+16095551234
+John Staff,john@example.com,staff,2026,,
+Alex Admin,alex@example.com,admin,2026,,

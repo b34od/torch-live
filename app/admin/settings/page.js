@@ -302,13 +302,15 @@ export default async function AdminSettingsPage() {
 
   const [studentRowsResponse, staffRowsResponse, rosterResponse] = await Promise.all([
     supabase
-      .from("student_schedule_items")
-      .select("id, day_number, start_time, duration_minutes, activity_name")
-      .eq("program_year", profile.program_year),
+      .from("schedule_items")
+      .select("id, day_number, start_time, duration_minutes, activity_name, visibility")
+      .eq("program_year", profile.program_year)
+      .in("visibility", ["students", "both"]),
     supabase
-      .from("staff_schedule_items")
-      .select("id, day_number, start_time, duration_minutes, activity_name")
-      .eq("program_year", profile.program_year),
+      .from("schedule_items")
+      .select("id, day_number, start_time, duration_minutes, activity_name, visibility")
+      .eq("program_year", profile.program_year)
+      .in("visibility", ["staff", "both"]),
     supabase
       .from("user_profiles")
       .select("id, role, is_active")

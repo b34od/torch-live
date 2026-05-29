@@ -30,6 +30,7 @@ export default async function StudentUpdatesPage() {
               <div className="announcement-meta">
                 {announcement.is_pinned ? <span className="pill pill-admin">Pinned</span> : null}
                 {announcement.is_push ? <span className="pill pill-staff">Push</span> : null}
+                {announcement.message_type ? <span className="pill pill-staff">{announcement.message_type}</span> : null}
                 <span className="muted">{formatDateTime(announcement.created_at)}</span>
               </div>
             </article>
