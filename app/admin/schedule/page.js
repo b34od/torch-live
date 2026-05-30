@@ -1016,6 +1016,9 @@ export default async function AdminSchedulePage({ searchParams }) {
         </div>
 
         <nav className="schedule-jump-nav mt-md" aria-label="Schedule editor sections">
+          <a href="#schedule-items" className="schedule-jump-link schedule-jump-primary">
+            Edit Items
+          </a>
           <a href="#schedule-overview" className="schedule-jump-link">
             Timeline
           </a>
@@ -1024,9 +1027,6 @@ export default async function AdminSchedulePage({ searchParams }) {
           </a>
           <a href="#schedule-year-tools" className="schedule-jump-link">
             Year Tools
-          </a>
-          <a href="#schedule-items" className="schedule-jump-link">
-            Items
           </a>
           {editingItem ? (
             <a href="#schedule-edit" className="schedule-jump-link">
@@ -1349,23 +1349,34 @@ export default async function AdminSchedulePage({ searchParams }) {
               <span>Allow overlap for this item (use only when intentional).</span>
             </label>
 
-            <div className="surface surface-pad-sm">
-              <p className="schedule-label">Dependency Shift</p>
-              <p className="muted">
-                Keep linked items aligned when this time block moves. One save can shift all dependents by the same delta.
-              </p>
-              <label className="inline-check">
-                <input
-                  type="checkbox"
-                  name="shift_dependencies"
-                  value="1"
-                  defaultChecked={dependencyLinks.length > 0}
-                />
-                <span>
-                  Shift {dependencyLinks.length} dependent item{dependencyLinks.length === 1 ? "" : "s"} with this change.
-                </span>
-              </label>
-            </div>
+            {dependencyLinks.length > 0 ? (
+              <div className="surface surface-pad-sm">
+                <p className="schedule-label">Dependency Shift</p>
+                <p className="muted">
+                  Keep linked items aligned when this time block moves. One save can shift all dependents by the same delta.
+                </p>
+                <label className="inline-check">
+                  <input
+                    type="checkbox"
+                    name="shift_dependencies"
+                    value="1"
+                    defaultChecked
+                  />
+                  <span>
+                    Shift {dependencyLinks.length} dependent item{dependencyLinks.length === 1 ? "" : "s"} with this change.
+                  </span>
+                </label>
+                <div className="dependency-preview mt-sm">
+                  <p className="schedule-label">Items that will shift:</p>
+                  {dependencyLinks.map((link) => (
+                    <p key={link.id} className="dependency-preview-item">
+                      <strong>{link.dependent.activity_name}</strong>
+                      {" "}— currently {formatTimeRange(link.dependent.start_time, link.dependent.duration_minutes)}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
             {track === "staff" ? (
               <>
@@ -1514,7 +1525,7 @@ export default async function AdminSchedulePage({ searchParams }) {
         ) : (
           <>
             <div className="mobile-only mt-md">
-              <details className="schedule-item-editor-panel" open={Boolean(editingItem)}>
+              <details className="schedule-item-editor-panel" open>
                 <summary>
                   Edit Items ({sortedItems.length})
                 </summary>

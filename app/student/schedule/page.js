@@ -1,5 +1,6 @@
 import DayTabs from "../../../components/ui/DayTabs";
 import ScheduleTimeline from "../../../components/ui/ScheduleTimeline";
+import ScheduleViewTabs from "../../../components/ui/ScheduleViewTabs";
 import { requireUser } from "../../../lib/auth";
 import { getStudentScheduleByDay } from "../../../lib/data";
 import {
@@ -52,20 +53,13 @@ export default async function StudentSchedulePage({ searchParams }) {
             <strong>{formatTimeLabel(firstItem.start_time)}</strong> · ends at{" "}
             <strong>{formatTimeLabel(endTime)}</strong> · Eastern Time (ET)
           </p>
-          <h3 id="student-timeline" className="section-anchor mt-md">Agenda Timeline</h3>
-          <p className="muted">
-            Calendar-style view so you can quickly see what happens next and how long each block runs.
-          </p>
-          <ScheduleTimeline
-            items={sortedItems}
-            track="student"
-            showNowMarker={false}
-            dayNumber={day}
-            programYear={profile.program_year}
-          />
-          <details className="schedule-mobile-details mobile-only mt-md">
-            <summary>Need larger text? Open list view ({sortedItems.length} items)</summary>
-            <p className="muted mt-sm">Quick list view for readability on dense program days.</p>
+          <ScheduleViewTabs />
+          <div className="schedule-view-tabs mobile-only mt-md">
+            <button className="schedule-view-tab" data-view="list" data-default="true">List</button>
+            <button className="schedule-view-tab" data-view="timeline">Timeline</button>
+          </div>
+
+          <div className="schedule-view-panel schedule-view-list mobile-only" data-view="list">
             <div className="schedule-card-list schedule-card-list-student mt-sm">
               {sortedItems.map((item) => (
                 <article key={item.id} className="schedule-card">
@@ -80,7 +74,27 @@ export default async function StudentSchedulePage({ searchParams }) {
                 </article>
               ))}
             </div>
-          </details>
+          </div>
+
+          <div className="schedule-view-panel schedule-view-timeline mobile-only" data-view="timeline" hidden>
+            <ScheduleTimeline
+              items={sortedItems}
+              track="student"
+              showNowMarker={false}
+              dayNumber={day}
+              programYear={profile.program_year}
+            />
+          </div>
+
+          <div className="desktop-only mt-md">
+            <ScheduleTimeline
+              items={sortedItems}
+              track="student"
+              showNowMarker={false}
+              dayNumber={day}
+              programYear={profile.program_year}
+            />
+          </div>
         </>
       )}
     </section>

@@ -293,6 +293,8 @@ export default function ScheduleTimeline({
             const visibleTime = showTime ? blockTimeFull : blockTimeCompact || blockTimeFull;
             const visibleTitle = showTime ? blockTitle : `${visibleTime} · ${blockTitle}`;
             const blockDescription = [blockTitle, blockTimeFull, locationLabel].filter(Boolean).join(" · ");
+            const showLocation = height >= 56 && !laneIsCrowded;
+            const locationToken = locationLabel.length > 18 ? locationLabel.split(/\s*[–—-]\s*/)[0].trim() : locationLabel;
 
             return (
               <article
@@ -312,6 +314,9 @@ export default function ScheduleTimeline({
                 <p className="timeline-block-title">{visibleTitle}</p>
                 {showTime ? (
                   <p className="timeline-block-time">{blockTimeFull}</p>
+                ) : null}
+                {showLocation ? (
+                  <p className="timeline-block-location">@{locationToken}</p>
                 ) : null}
                 {showStaffMeta ? (
                   <p className="timeline-block-meta">
