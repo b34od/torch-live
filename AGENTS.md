@@ -58,9 +58,7 @@ Applied to production (in order):
 4. `20260525233000_torch_live_fix_rls_helper_definer.sql`
 5. `20260526000500_torch_live_staff_day_zero.sql`
 6. `20260526091500_torch_live_private_rls_helpers.sql`
-
-Pending (not yet applied):
-- `20260528103000_torch_live_schedule_unification_and_urgent_messaging.sql` — requires Bryan approval before applying.
+7. `20260528103000_torch_live_schedule_unification_and_urgent_messaging.sql`
 
 ## Approval Gates
 
