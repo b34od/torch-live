@@ -90,13 +90,11 @@ export default async function StaffSchedulePage({ searchParams }) {
                     <span className="schedule-label">Location:</span> {item.location || "TBD"}
                   </p>
                   <p className="schedule-detail">
-                    <span className="schedule-label">Point:</span> {item.point_person || "TBD"} ·{" "}
-                    <span className="schedule-label">Rain:</span> {item.rain_location || "N/A"}
-                    {item.secondary_person ? (
-                      <>
-                        {" "}· <span className="schedule-label">Secondary:</span>{" "}
-                        {item.secondary_person}
-                      </>
+                    <span className="schedule-label">Point:</span>{" "}
+                    {item.point_person || "—"}
+                    {item.secondary_person ? ` / ${item.secondary_person}` : ""}
+                    {item.rain_location ? (
+                      <>{" "}· <span className="schedule-label">Rain:</span> {item.rain_location}</>
                     ) : null}
                   </p>
                   {item.notes ? (
@@ -132,9 +130,9 @@ export default async function StaffSchedulePage({ searchParams }) {
                       {item.notes ? <p className="muted">{item.notes}</p> : null}
                     </td>
                     <td>{item.location || "TBD"}</td>
-                    <td>{item.rain_location || "N/A"}</td>
-                    <td>{item.point_person || "TBD"}</td>
-                    <td>{item.secondary_person || "N/A"}</td>
+                    <td>{item.rain_location || <span className="muted">—</span>}</td>
+                    <td>{item.point_person || <span className="muted">—</span>}</td>
+                    <td>{item.secondary_person || <span className="muted">—</span>}</td>
                   </tr>
                 ))}
               </tbody>

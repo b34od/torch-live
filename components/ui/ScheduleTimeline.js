@@ -292,7 +292,7 @@ export default function ScheduleTimeline({
             const isCompact = height < 66;
             const laneIsCrowded = laneCount > 2;
             const showTime = height >= 48 && !laneIsCrowded;
-            const showStaffMeta = track === "staff" && height >= 168 && laneCount === 1;
+            const showStaffMeta = track === "staff" && height >= 52 && !laneIsCrowded && item.point_person;
             const densityClass = isTiny ? " timeline-block-tiny" : isCompact ? " timeline-block-compact" : "";
             const timeClass = showTime ? "" : " timeline-block-no-time";
             const stateClass =
@@ -334,8 +334,8 @@ export default function ScheduleTimeline({
                 ) : null}
                 {showStaffMeta ? (
                   <p className="timeline-block-meta">
-                    <span>Point: {item.point_person || "TBD"}</span>
-                    <span>Rain: {item.rain_location || "N/A"}</span>
+                    <span>{item.point_person}{item.secondary_person ? ` / ${item.secondary_person}` : ""}</span>
+                    {item.rain_location ? <span>Rain: {item.rain_location}</span> : null}
                   </p>
                 ) : null}
               </article>
