@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireUser } from "../../../lib/auth";
 import DirectoryList from "../../_components/DirectoryList";
 
@@ -14,9 +15,14 @@ export default async function StudentDirectoryPage() {
 
   return (
     <section className="card">
-      <h2>Program Directory</h2>
+      <div className="directory-header">
+        <h2>Program Directory</h2>
+        <Link href="/student/profile" className="button button-secondary button-sm">
+          Edit My Info
+        </Link>
+      </div>
       <p className="muted">
-        Contact your teammates and staff by email. Phone numbers are not shared in the app.
+        Contact your teammates and staff. Use "Edit My Info" to control what others see.
       </p>
       {error ? (
         <p className="alert alert-error">{error.message}</p>

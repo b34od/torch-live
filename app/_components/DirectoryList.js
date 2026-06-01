@@ -99,7 +99,10 @@ export default function DirectoryList({ profiles, showRoom }) {
             <div className="user-card-header">
               <div>
                 <p className="user-card-name">{p.full_name}</p>
-                <a href={`mailto:${p.email}`} className="user-card-email text-link">{p.email}</a>
+                {p.email ? (
+                  <a href={`mailto:${p.email}`} className="user-card-email text-link">{p.email}</a>
+                ) : null}
+                {p.phone_number ? <p className="muted">{p.phone_number}</p> : null}
                 {p.social_handle ? <p className="muted">{p.social_handle}</p> : null}
               </div>
               <span className={`pill ${rolePillClass(p.role)}`}>{p.role}</span>
@@ -129,6 +132,7 @@ export default function DirectoryList({ profiles, showRoom }) {
               <SortTh col="team_key" label="Team" />
               <SortTh col="guild_name" label="Guild" />
               {showRoom ? <SortTh col="room_number" label="Room" /> : null}
+              <th>Phone</th>
               <th>Social</th>
             </tr>
           </thead>
@@ -137,18 +141,21 @@ export default function DirectoryList({ profiles, showRoom }) {
               <tr key={p.id}>
                 <td>{p.full_name}</td>
                 <td>
-                  <a href={`mailto:${p.email}`} className="text-link">{p.email}</a>
+                  {p.email
+                    ? <a href={`mailto:${p.email}`} className="text-link">{p.email}</a>
+                    : <span className="muted">—</span>}
                 </td>
                 <td><span className={`pill ${rolePillClass(p.role)}`}>{p.role}</span></td>
                 <td>{p.team_key || <span className="muted">—</span>}</td>
                 <td>{p.guild_name || <span className="muted">—</span>}</td>
                 {showRoom ? <td>{p.room_number || <span className="muted">—</span>}</td> : null}
+                <td>{p.phone_number || <span className="muted">—</span>}</td>
                 <td>{p.social_handle || <span className="muted">—</span>}</td>
               </tr>
             ))}
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={showRoom ? 7 : 6} className="empty">No matches.</td>
+                <td colSpan={showRoom ? 8 : 7} className="empty">No matches.</td>
               </tr>
             ) : null}
           </tbody>

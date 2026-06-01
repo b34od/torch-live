@@ -254,7 +254,9 @@ export default function ScheduleTimeline({
           Location: <strong>{singleLocationLabel}</strong>
         </p>
       ) : null}
-      <p className="timeline-timezone">All schedule times are shown in Eastern Time (ET).</p>
+      {track !== "student" ? (
+        <p className="timeline-timezone">All schedule times are shown in Eastern Time (ET).</p>
+      ) : null}
       <div className="timeline-grid" style={{ height: `${timelineHeight}px` }}>
         <div className="timeline-scale">
           {hourlyTicks.map((minute) => {

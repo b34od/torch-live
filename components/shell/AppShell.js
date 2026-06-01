@@ -91,7 +91,7 @@ export default function AppShell({ role, profile, children }) {
           </div>
           <div className="topbar-actions">
             <span className={rolePillClass(profile.role)}>{profile.role}</span>
-            <span className="pill pill-meta">{profile.program_year} ET</span>
+            <span className="pill pill-meta">{profile.program_year}</span>
             <form action="/auth/signout" method="post" className="inline-form">
               <button type="submit" className="button button-ghost topbar-signout">
                 Sign out
