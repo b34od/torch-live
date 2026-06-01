@@ -1,0 +1,71 @@
+import { requireUser } from "../../../lib/auth";
+
+export const metadata = {
+  title: "Guilds",
+};
+
+export default async function StaffGuildsPage() {
+  const { supabase, profile } = await requireUser(["staff", "admin"]);
+
+  const [guildsResponse, profileResponse] = await Promise.all([
+    supabase
+      .from("guilds")
+      .select("id, slug, name, staff_description, sort_order")
+      .eq("program_year", profile.program_year)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("user_profiles")
+      .select("guild_id")
+      .eq("id", profile.id)
+      .single(),
+  ]);
+
+  const guilds = guildsResponse.data || [];
+  const currentGuildId = profileResponse.data?.guild_id ?? null;
+  const currentGuild = guilds.find((g) => g.id === currentGuildId) ?? null;
+
+  return (
+    <>
+      {currentGuild ? (
+        <section className="card">
+          <h2>Your Guild: {currentGuild.name}</h2>
+          <div className="surface surface-pad mt-md">
+            <p>{currentGuild.staff_description}</p>
+          </div>
+        </section>
+      ) : (
+        <section className="card">
+          <h2>Your Guild</h2>
+          <p className="muted">
+            You haven&apos;t been assigned to a guild yet. An admin will assign your guild before
+            the program starts.
+          </p>
+        </section>
+      )}
+
+      <section className="card">
+        <h2>All Guilds</h2>
+        <p className="muted">Staff descriptions for each guild — activities and your role in them.</p>
+        {guilds.length === 0 ? (
+          <p className="empty mt-md">Guild information will be available soon.</p>
+        ) : (
+          <div className="stack mt-md">
+            {guilds.map((g) => (
+              <article
+                key={g.id}
+                className={`surface surface-pad${g.id === currentGuildId ? " guild-card-active" : ""}`}
+              >
+                <h3>
+                  {g.name}
+                  {g.id === currentGuildId ? <span className="pill pill-staff ml-sm">Your Guild</span> : null}
+                </h3>
+                <p className="muted">{g.staff_description}</p>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+    </>
+  );
+}

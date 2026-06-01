@@ -1,4 +1,4 @@
-full_name,email,role,year,cohort_key,phone_number
-Jane Example,jane@example.com,student,2026,blue-team,+16095551234
-John Staff,john@example.com,staff,2026,,
-Alex Admin,alex@example.com,admin,2026,,
+full_name,email,role,year,team_key,guild_slug,room_number,phone_number
+Jane Example,jane@example.com,student,2026,team-1,reflection-connection,Kessler 214,+16095551234
+John Staff,john@example.com,staff,2026,team-1,servant-leadership,,+16095559876
+Alex Admin,alex@example.com,admin,2026,,,,

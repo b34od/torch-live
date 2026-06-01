@@ -1711,3 +1711,114 @@ img {
     scroll-behavior: auto !important;
   }
 }
+
+/* ─── Profile context strip ─────────────────────────────────── */
+
+.profile-context-strip {
+  padding-top: var(--space-sm);
+  padding-bottom: var(--space-sm);
+}
+
+.profile-context-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  align-items: center;
+}
+
+.profile-context-item {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+/* ─── Roster table ───────────────────────────────────────────── */
+
+.roster-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+
+.select-sm,
+.input-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  height: auto;
+}
+
+.roster-th-sort {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.roster-th-sort:hover {
+  background-color: var(--color-surface-hover, rgba(0,0,0,0.04));
+}
+
+.roster-row-inactive td {
+  opacity: 0.5;
+}
+
+.roster-name {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.roster-email {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.roster-row-actions {
+  display: flex;
+  gap: var(--space-xs);
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.roster-count {
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.roster-table td {
+  vertical-align: middle;
+}
+
+/* ─── Guild cards ────────────────────────────────────────────── */
+
+.guild-option {
+  display: flex;
+  gap: var(--space-md);
+  align-items: flex-start;
+  padding: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.guild-option:has(input:checked) {
+  border-color: var(--color-primary);
+  background-color: var(--color-surface-selected, rgba(var(--color-primary-rgb, 0,112,240), 0.05));
+}
+
+.guild-option input[type="radio"] {
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+}
+
+.guild-option-body {
+  flex: 1;
+}
+
+.guild-card-active {
+  border: 2px solid var(--color-primary);
+}
+
+.ml-sm {
+  margin-left: var(--space-sm);
+}

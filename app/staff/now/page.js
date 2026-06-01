@@ -35,23 +35,50 @@ export default async function StaffNowPage({ searchParams }) {
     : "Unknown time";
   const showingCurrentProgramDay = currentDayNumber !== null && day === currentDayNumber;
   const { supabase, profile } = await requireUser(["staff", "admin"]);
-  const { data: scheduleItems, error: scheduleError } = await getStaffScheduleByDay(
-    supabase,
-    profile.program_year,
-    day,
-  );
-  const { data: announcements, error: announcementError } = await getAnnouncements(
-    supabase,
-    profile.program_year,
-    4,
-  );
+  const [
+    { data: scheduleItems, error: scheduleError },
+    { data: announcements, error: announcementError },
+    { data: guildRow },
+  ] = await Promise.all([
+    getStaffScheduleByDay(supabase, profile.program_year, day),
+    getAnnouncements(supabase, profile.program_year, 4),
+    profile.guild_id
+      ? supabase.from("guilds").select("name").eq("id", profile.guild_id).single()
+      : Promise.resolve({ data: null }),
+  ]);
+  const guildName = guildRow?.name ?? null;
   const { current, next } = getCurrentAndNextItem(scheduleItems, {
     track: "staff",
     selectedDay: day,
   });
 
+  const hasProfileContext = profile.team_key || guildName || profile.room_number;
+
   return (
     <>
+      {hasProfileContext ? (
+        <section className="card profile-context-strip">
+          <div className="profile-context-items">
+            {profile.team_key ? (
+              <span className="profile-context-item">
+                <span className="schedule-label">Team</span> {profile.team_key}
+              </span>
+            ) : null}
+            {guildName ? (
+              <span className="profile-context-item">
+                <span className="schedule-label">Guild</span>{" "}
+                <a href="/staff/guilds" className="text-link">{guildName}</a>
+              </span>
+            ) : null}
+            {profile.room_number ? (
+              <span className="profile-context-item">
+                <span className="schedule-label">Room</span> {profile.room_number}
+              </span>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
       <section className="card">
         <h2>Staff Ops Snapshot</h2>
         <p className="muted">

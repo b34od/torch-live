@@ -3,13 +3,14 @@ import { redirect } from "next/navigation";
 import { requireUser } from "../../../lib/auth";
 import { getUserProfiles } from "../../../lib/data";
 import { createAdminSupabaseClient } from "../../../lib/supabase/admin";
+import RosterTable from "./RosterTable";
 
 const ROLES = ["student", "staff", "admin"];
 const MIN_YEAR = 2020;
 const MAX_YEAR = 2100;
 const BULK_LIMIT = 500;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const COHORT_KEY_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/i;
+const TEAM_KEY_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/i;
 const PHONE_E164_PATTERN = /^\+[1-9]\d{7,14}$/;
 
 function countByRole(profiles, role) {
@@ -37,16 +38,16 @@ function normalizePhoneNumber(value) {
   return text || null;
 }
 
-function normalizeCohortKey(value) {
+function normalizeTeamKey(value) {
   const text = String(value || "")
     .trim()
     .toLowerCase();
   return text || null;
 }
 
-function isValidCohortKey(value) {
+function isValidTeamKey(value) {
   if (value === null || value === undefined || value === "") return true;
-  return COHORT_KEY_PATTERN.test(String(value));
+  return TEAM_KEY_PATTERN.test(String(value));
 }
 
 function isValidPhoneNumber(value) {
@@ -113,14 +114,30 @@ function parseBulkRows(input, fallbackYear) {
 
   if (looksLikeHeader) {
     headerMap = {
-      name: firstLineColumns.indexOf("full_name") >= 0 ? firstLineColumns.indexOf("full_name") : firstLineColumns.indexOf("name"),
+      name:
+        firstLineColumns.indexOf("full_name") >= 0
+          ? firstLineColumns.indexOf("full_name")
+          : firstLineColumns.indexOf("name"),
       email: firstLineColumns.indexOf("email"),
       role: firstLineColumns.indexOf("role"),
-      year: firstLineColumns.indexOf("program_year") >= 0 ? firstLineColumns.indexOf("program_year") : firstLineColumns.indexOf("year"),
-      cohort:
-        firstLineColumns.indexOf("cohort_key") >= 0
+      year:
+        firstLineColumns.indexOf("program_year") >= 0
+          ? firstLineColumns.indexOf("program_year")
+          : firstLineColumns.indexOf("year"),
+      team:
+        firstLineColumns.indexOf("team_key") >= 0
+          ? firstLineColumns.indexOf("team_key")
+          : firstLineColumns.indexOf("cohort_key") >= 0
           ? firstLineColumns.indexOf("cohort_key")
           : firstLineColumns.indexOf("cohort"),
+      guildSlug:
+        firstLineColumns.indexOf("guild_slug") >= 0
+          ? firstLineColumns.indexOf("guild_slug")
+          : firstLineColumns.indexOf("guild"),
+      roomNumber:
+        firstLineColumns.indexOf("room_number") >= 0
+          ? firstLineColumns.indexOf("room_number")
+          : firstLineColumns.indexOf("room"),
       phone:
         firstLineColumns.indexOf("phone_number") >= 0
           ? firstLineColumns.indexOf("phone_number")
@@ -137,8 +154,10 @@ function parseBulkRows(input, fallbackYear) {
     const email = headerMap ? columns[headerMap.email] : columns[1];
     const role = headerMap ? columns[headerMap.role] : columns[2];
     const rowYear = headerMap && headerMap.year >= 0 ? columns[headerMap.year] : columns[3];
-    const cohortValue = headerMap && headerMap.cohort >= 0 ? columns[headerMap.cohort] : columns[4];
-    const phoneValue = headerMap && headerMap.phone >= 0 ? columns[headerMap.phone] : columns[5];
+    const teamValue = headerMap && headerMap.team >= 0 ? columns[headerMap.team] : columns[4];
+    const guildSlugValue = headerMap && headerMap.guildSlug >= 0 ? columns[headerMap.guildSlug] : columns[5];
+    const roomValue = headerMap && headerMap.roomNumber >= 0 ? columns[headerMap.roomNumber] : columns[6];
+    const phoneValue = headerMap && headerMap.phone >= 0 ? columns[headerMap.phone] : columns[7];
 
     rows.push({
       rowNumber: lineIndex + 1,
@@ -146,7 +165,9 @@ function parseBulkRows(input, fallbackYear) {
       email: normalizeEmail(email),
       role: String(role || "").trim().toLowerCase(),
       programYear: parseProgramYear(rowYear, fallbackYear),
-      cohortKey: normalizeCohortKey(cohortValue),
+      teamKey: normalizeTeamKey(teamValue),
+      guildSlug: String(guildSlugValue || "").trim().toLowerCase() || null,
+      roomNumber: String(roomValue || "").trim() || null,
       phoneNumber: normalizePhoneNumber(phoneValue),
     });
   }
@@ -165,7 +186,7 @@ function getYearOptions(years, selectedYear, fallbackYear) {
   return [...set].sort((a, b) => b - a);
 }
 
-function usersPageUrl(year, params = {}) {
+export function usersPageUrl(year, params = {}) {
   const search = new URLSearchParams({ year: String(year) });
   Object.entries(params).forEach(([key, value]) => {
     if (value !== null && value !== undefined && value !== "") {
@@ -286,7 +307,9 @@ async function createProgramUser(formData) {
   const role = String(formData.get("role") || "")
     .trim()
     .toLowerCase();
-  const cohortKey = normalizeCohortKey(formData.get("cohort_key"));
+  const teamKey = normalizeTeamKey(formData.get("team_key"));
+  const guildId = String(formData.get("guild_id") || "").trim() || null;
+  const roomNumber = String(formData.get("room_number") || "").trim() || null;
   const phoneNumber = normalizePhoneNumber(formData.get("phone_number"));
   const selectedYear = parseProgramYear(formData.get("program_year"), profile.program_year);
 
@@ -302,8 +325,8 @@ async function createProgramUser(formData) {
     redirect(usersPageUrl(selectedYear, { error: "Invalid role." }));
   }
 
-  if (!isValidCohortKey(cohortKey)) {
-    redirect(usersPageUrl(selectedYear, { error: "Cohort key can only use letters, numbers, underscores, and dashes." }));
+  if (!isValidTeamKey(teamKey)) {
+    redirect(usersPageUrl(selectedYear, { error: "Team key can only use letters, numbers, underscores, and dashes." }));
   }
 
   if (!isValidPhoneNumber(phoneNumber)) {
@@ -333,7 +356,9 @@ async function createProgramUser(formData) {
         email,
         full_name: fullName,
         role,
-        cohort_key: cohortKey,
+        team_key: teamKey,
+        guild_id: guildId,
+        room_number: roomNumber,
         phone_number: phoneNumber,
         is_active: true,
         program_year: selectedYear,
@@ -383,6 +408,14 @@ async function bulkImportUsers(formData) {
   }
 
   const adminClient = createAdminSupabaseClient();
+
+  // Build guild slug → id map for this year
+  const { data: guildsData } = await adminClient
+    .from("guilds")
+    .select("id, slug")
+    .eq("program_year", selectedYear);
+  const guildSlugToId = new Map((guildsData || []).map((g) => [g.slug, g.id]));
+
   let createdCount = 0;
   let linkedCount = 0;
   let skippedCount = 0;
@@ -408,7 +441,7 @@ async function bulkImportUsers(formData) {
         continue;
       }
 
-      if (!isValidCohortKey(row.cohortKey)) {
+      if (!isValidTeamKey(row.teamKey)) {
         skippedCount += 1;
         continue;
       }
@@ -417,6 +450,8 @@ async function bulkImportUsers(formData) {
         skippedCount += 1;
         continue;
       }
+
+      const guildId = row.guildSlug ? (guildSlugToId.get(row.guildSlug) ?? null) : null;
 
       try {
         const authUser = await createOrFetchAuthUser(
@@ -442,7 +477,9 @@ async function bulkImportUsers(formData) {
             email: row.email,
             full_name: row.fullName,
             role: row.role,
-            cohort_key: row.cohortKey,
+            team_key: row.teamKey,
+            guild_id: guildId,
+            room_number: row.roomNumber,
             phone_number: row.phoneNumber,
             is_active: true,
             program_year: row.programYear,
@@ -492,7 +529,9 @@ async function updateProgramUser(formData) {
   const role = String(formData.get("role") || "")
     .trim()
     .toLowerCase();
-  const cohortKey = normalizeCohortKey(formData.get("cohort_key"));
+  const teamKey = normalizeTeamKey(formData.get("team_key"));
+  const guildId = String(formData.get("guild_id") || "").trim() || null;
+  const roomNumber = String(formData.get("room_number") || "").trim() || null;
   const phoneNumber = normalizePhoneNumber(formData.get("phone_number"));
   const isActive = formData.get("is_active") === "on";
   const selectedYear = parseProgramYear(formData.get("program_year"), profile.program_year);
@@ -509,8 +548,8 @@ async function updateProgramUser(formData) {
     redirect(usersPageUrl(selectedYear, { error: "Invalid role." }));
   }
 
-  if (!isValidCohortKey(cohortKey)) {
-    redirect(usersPageUrl(selectedYear, { error: "Cohort key can only use letters, numbers, underscores, and dashes." }));
+  if (!isValidTeamKey(teamKey)) {
+    redirect(usersPageUrl(selectedYear, { error: "Team key can only use letters, numbers, underscores, and dashes." }));
   }
 
   if (!isValidPhoneNumber(phoneNumber)) {
@@ -541,7 +580,9 @@ async function updateProgramUser(formData) {
         email,
         full_name: fullName,
         role,
-        cohort_key: cohortKey,
+        team_key: teamKey,
+        guild_id: guildId,
+        room_number: roomNumber,
         phone_number: phoneNumber,
         is_active: isActive,
         program_year: selectedYear,
@@ -649,18 +690,32 @@ export default async function AdminUsersPage({ searchParams }) {
   const selectedYear = parseProgramYear(params?.year, profile.program_year);
   const alert = alertFromParams(params || {});
 
-  const [profilesResponse, yearsResponse] = await Promise.all([
+  const [profilesResponse, yearsResponse, guildsResponse] = await Promise.all([
     getUserProfiles(supabase, selectedYear),
     supabase
       .from("user_profiles")
       .select("program_year")
       .order("program_year", { ascending: false }),
+    supabase
+      .from("guilds")
+      .select("id, slug, name, sort_order")
+      .eq("program_year", selectedYear)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true }),
   ]);
 
-  const profiles = profilesResponse.data || [];
+  const rawProfiles = profilesResponse.data || [];
   const error = profilesResponse.error;
   const years = (yearsResponse.data || []).map((entry) => entry.program_year);
   const yearOptions = getYearOptions(years, selectedYear, profile.program_year);
+  const guilds = guildsResponse.data || [];
+
+  // Join guild name onto profiles for the roster table
+  const guildMap = new Map(guilds.map((g) => [g.id, g.name]));
+  const profiles = rawProfiles.map((p) => ({
+    ...p,
+    guild_name: p.guild_id ? (guildMap.get(p.guild_id) ?? null) : null,
+  }));
 
   const totalActive = profiles.filter((entry) => entry.is_active).length;
   const editingId = String(params?.edit || "").trim();
@@ -720,21 +775,15 @@ export default async function AdminUsersPage({ searchParams }) {
         <form action={createProgramUser} className="grid-two mt-md">
           <input type="hidden" name="program_year" value={selectedYear} />
           <div className="field">
-            <label className="label" htmlFor="full_name">
-              Full Name
-            </label>
+            <label className="label" htmlFor="full_name">Full Name</label>
             <input id="full_name" name="full_name" className="input" required />
           </div>
           <div className="field">
-            <label className="label" htmlFor="email">
-              Email
-            </label>
+            <label className="label" htmlFor="email">Email</label>
             <input id="email" name="email" type="email" className="input" required />
           </div>
           <div className="field">
-            <label className="label" htmlFor="role">
-              Role
-            </label>
+            <label className="label" htmlFor="role">Role</label>
             <select id="role" name="role" className="select" defaultValue="student">
               <option value="student">Student</option>
               <option value="staff">Staff</option>
@@ -742,15 +791,24 @@ export default async function AdminUsersPage({ searchParams }) {
             </select>
           </div>
           <div className="field">
-            <label className="label" htmlFor="cohort_key">
-              Cohort Key (optional)
-            </label>
-            <input id="cohort_key" name="cohort_key" className="input" placeholder="blue-team" />
+            <label className="label" htmlFor="team_key">Team (optional)</label>
+            <input id="team_key" name="team_key" className="input" placeholder="team-1" />
           </div>
           <div className="field">
-            <label className="label" htmlFor="phone_number">
-              Phone Number (optional)
-            </label>
+            <label className="label" htmlFor="guild_id">Guild (optional)</label>
+            <select id="guild_id" name="guild_id" className="select" defaultValue="">
+              <option value="">— No guild —</option>
+              {guilds.map((g) => (
+                <option key={g.id} value={g.id}>{g.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="room_number">Room (optional)</label>
+            <input id="room_number" name="room_number" className="input" placeholder="Kessler 214" />
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="phone_number">Phone Number (optional)</label>
             <input id="phone_number" name="phone_number" className="input" placeholder="+16095551234" />
           </div>
           <button type="submit" className="button button-primary">
@@ -762,8 +820,11 @@ export default async function AdminUsersPage({ searchParams }) {
       <section className="card">
         <h2>Bulk Upload Users</h2>
         <p className="muted">
-          Upload CSV with columns <code>full_name,email,role,year,cohort_key,phone_number</code>{" "}
+          Upload CSV with columns{" "}
+          <code>full_name,email,role,year,team_key,guild_slug,room_number,phone_number</code>{" "}
           (header optional). If year is blank, this page&apos;s selected year is used.
+          <code>guild_slug</code> must match a guild slug for the year (e.g.{" "}
+          <code>servant-leadership</code>).
         </p>
         <p className="muted">
           <a href="/templates/torch-live-users-template.csv" className="text-link">
@@ -773,20 +834,16 @@ export default async function AdminUsersPage({ searchParams }) {
         <form action={bulkImportUsers} className="stack mt-md">
           <input type="hidden" name="program_year" value={selectedYear} />
           <div className="field">
-            <label className="label" htmlFor="bulk_csv">
-              Paste CSV
-            </label>
+            <label className="label" htmlFor="bulk_csv">Paste CSV</label>
             <textarea
               id="bulk_csv"
               name="bulk_csv"
               className="textarea"
-              placeholder="full_name,email,role,year,cohort_key,phone_number\nJane Example,jane@example.com,student,2026,blue-team,+16095551234"
+              placeholder={`full_name,email,role,year,team_key,guild_slug,room_number,phone_number\nJane Example,jane@example.com,student,2026,team-1,reflection-connection,Kessler 214,+16095551234`}
             />
           </div>
           <div className="field">
-            <label className="label" htmlFor="bulk_file">
-              Or upload CSV file
-            </label>
+            <label className="label" htmlFor="bulk_file">Or upload CSV file</label>
             <input id="bulk_file" name="bulk_file" type="file" accept=".csv,text/csv" className="input" />
           </div>
           <button type="submit" className="button button-primary">
@@ -798,8 +855,8 @@ export default async function AdminUsersPage({ searchParams }) {
       <section className="card">
         <h2>Year Rollover</h2>
         <p className="muted">
-          Smarter yearly pattern: keep previous years in place, deactivate student/staff accounts from
-          the completed year, then import the new cohort for the next year.
+          Keep previous years in place, deactivate student/staff accounts from the completed year,
+          then import the new cohort for the next year.
         </p>
         <form action={deactivateYearUsers} className="mt-md">
           <input type="hidden" name="program_year" value={selectedYear} />
@@ -812,13 +869,11 @@ export default async function AdminUsersPage({ searchParams }) {
       {editingUser ? (
         <section className="card">
           <h2>Edit User</h2>
-          <p className="muted">Update role, email, name, status, and program year.</p>
+          <p className="muted">Update role, email, name, team, guild, room, and status.</p>
           <form action={updateProgramUser} className="grid-two mt-md">
             <input type="hidden" name="id" value={editingUser.id} />
             <div className="field">
-              <label className="label" htmlFor="edit_full_name">
-                Full Name
-              </label>
+              <label className="label" htmlFor="edit_full_name">Full Name</label>
               <input
                 id="edit_full_name"
                 name="full_name"
@@ -828,9 +883,7 @@ export default async function AdminUsersPage({ searchParams }) {
               />
             </div>
             <div className="field">
-              <label className="label" htmlFor="edit_email">
-                Email
-              </label>
+              <label className="label" htmlFor="edit_email">Email</label>
               <input
                 id="edit_email"
                 name="email"
@@ -841,9 +894,7 @@ export default async function AdminUsersPage({ searchParams }) {
               />
             </div>
             <div className="field">
-              <label className="label" htmlFor="edit_role">
-                Role
-              </label>
+              <label className="label" htmlFor="edit_role">Role</label>
               <select id="edit_role" name="role" className="select" defaultValue={editingUser.role}>
                 <option value="student">Student</option>
                 <option value="staff">Staff</option>
@@ -851,9 +902,7 @@ export default async function AdminUsersPage({ searchParams }) {
               </select>
             </div>
             <div className="field">
-              <label className="label" htmlFor="edit_program_year">
-                Program Year
-              </label>
+              <label className="label" htmlFor="edit_program_year">Program Year</label>
               <input
                 id="edit_program_year"
                 name="program_year"
@@ -866,21 +915,41 @@ export default async function AdminUsersPage({ searchParams }) {
               />
             </div>
             <div className="field">
-              <label className="label" htmlFor="edit_cohort_key">
-                Cohort Key (optional)
-              </label>
+              <label className="label" htmlFor="edit_team_key">Team (optional)</label>
               <input
-                id="edit_cohort_key"
-                name="cohort_key"
+                id="edit_team_key"
+                name="team_key"
                 className="input"
-                defaultValue={editingUser.cohort_key || ""}
-                placeholder="blue-team"
+                defaultValue={editingUser.team_key || ""}
+                placeholder="team-1"
               />
             </div>
             <div className="field">
-              <label className="label" htmlFor="edit_phone_number">
-                Phone Number (optional)
-              </label>
+              <label className="label" htmlFor="edit_guild_id">Guild (optional)</label>
+              <select
+                id="edit_guild_id"
+                name="guild_id"
+                className="select"
+                defaultValue={editingUser.guild_id || ""}
+              >
+                <option value="">— No guild —</option>
+                {guilds.map((g) => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="edit_room_number">Room (optional)</label>
+              <input
+                id="edit_room_number"
+                name="room_number"
+                className="input"
+                defaultValue={editingUser.room_number || ""}
+                placeholder="Kessler 214"
+              />
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="edit_phone_number">Phone Number (optional)</label>
               <input
                 id="edit_phone_number"
                 name="phone_number"
@@ -905,114 +974,20 @@ export default async function AdminUsersPage({ searchParams }) {
 
       <section className="card">
         <h2>Current Year Roster</h2>
-        <p className="muted">Edit, deactivate, or remove accounts for year {selectedYear}.</p>
+        <p className="muted">Filter, sort, and manage all accounts for {selectedYear}.</p>
         {error ? (
           <p className="alert alert-error">{error.message}</p>
         ) : profiles.length === 0 ? (
           <p className="empty">No users loaded for {selectedYear}.</p>
         ) : (
-          <>
-            <div className="user-card-list mobile-only mt-md">
-              {profiles.map((entry) => (
-                <article key={entry.id} className="user-card">
-                  <div className="user-card-header">
-                    <div>
-                      <p className="user-card-name">{entry.full_name}</p>
-                      <p className="user-card-email">{entry.email}</p>
-                    </div>
-                    <span className={`pill ${rolePillClass(entry.role)}`}>{entry.role}</span>
-                  </div>
-                  <p className="user-card-meta">
-                    <span className="schedule-label">Status:</span>{" "}
-                    <span className={`status-pill ${entry.is_active ? "status-pill-good" : "status-pill-warn"}`}>
-                      {entry.is_active ? "Active" : "Inactive"}
-                    </span>
-                  </p>
-                  <p className="user-card-meta">
-                    <span className="schedule-label">Year:</span> {entry.program_year}
-                  </p>
-                  <p className="user-card-meta">
-                    <span className="schedule-label">Cohort:</span> {entry.cohort_key || "—"}
-                  </p>
-                  <p className="user-card-meta">
-                    <span className="schedule-label">Phone:</span> {entry.phone_number || "—"}
-                  </p>
-                  <div className="stack-sm mt-sm">
-                    <Link href={usersPageUrl(selectedYear, { edit: entry.id })} className="day-tab">
-                      Edit
-                    </Link>
-                    <form action={toggleUserActive}>
-                      <input type="hidden" name="id" value={entry.id} />
-                      <input type="hidden" name="year" value={selectedYear} />
-                      <input type="hidden" name="next_active" value={entry.is_active ? "0" : "1"} />
-                      <button type="submit" className="button button-ghost">
-                        {entry.is_active ? "Deactivate" : "Activate"}
-                      </button>
-                    </form>
-                    <form action={removeProgramUser}>
-                      <input type="hidden" name="id" value={entry.id} />
-                      <input type="hidden" name="year" value={selectedYear} />
-                      <button type="submit" className="button button-secondary">
-                        Remove
-                      </button>
-                    </form>
-                  </div>
-                </article>
-              ))}
-            </div>
-
-            <div className="table-wrap mt-md desktop-only">
-              <table className="schedule-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Status</th>
-                    <th>Year</th>
-                    <th>Cohort</th>
-                    <th>Phone</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {profiles.map((entry) => (
-                    <tr key={entry.id}>
-                      <td>{entry.full_name}</td>
-                      <td>{entry.email}</td>
-                      <td>{entry.role}</td>
-                      <td>{entry.is_active ? "Active" : "Inactive"}</td>
-                      <td>{entry.program_year}</td>
-                      <td>{entry.cohort_key || "—"}</td>
-                      <td>{entry.phone_number || "—"}</td>
-                      <td>
-                        <div className="stack-sm">
-                          <Link href={usersPageUrl(selectedYear, { edit: entry.id })} className="day-tab">
-                            Edit
-                          </Link>
-                          <form action={toggleUserActive}>
-                            <input type="hidden" name="id" value={entry.id} />
-                            <input type="hidden" name="year" value={selectedYear} />
-                            <input type="hidden" name="next_active" value={entry.is_active ? "0" : "1"} />
-                            <button type="submit" className="button button-ghost">
-                              {entry.is_active ? "Deactivate" : "Activate"}
-                            </button>
-                          </form>
-                          <form action={removeProgramUser}>
-                            <input type="hidden" name="id" value={entry.id} />
-                            <input type="hidden" name="year" value={selectedYear} />
-                            <button type="submit" className="button button-secondary">
-                              Remove
-                            </button>
-                          </form>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
+          <div className="mt-md">
+            <RosterTable
+              profiles={profiles}
+              selectedYear={selectedYear}
+              onToggle={toggleUserActive}
+              onRemove={removeProgramUser}
+            />
+          </div>
         )}
       </section>
     </>

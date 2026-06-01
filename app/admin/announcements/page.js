@@ -116,7 +116,7 @@ async function createAnnouncement(formData) {
     redirect(announcementsPageUrl({ error: "Recipient scope requires audience to include students." }));
   }
   if (recipientScope === "cohort" && !recipientCohort) {
-    redirect(announcementsPageUrl({ error: "Cohort scope requires a cohort key." }));
+    redirect(announcementsPageUrl({ error: "Team scope requires a team key." }));
   }
   if (recipientScope === "custom" && customRecipients.length === 0) {
     redirect(announcementsPageUrl({ error: "Custom scope requires at least one recipient token." }));
@@ -244,7 +244,7 @@ async function updateAnnouncement(formData) {
     );
   }
   if (recipientScope === "cohort" && !recipientCohort) {
-    redirect(announcementsPageUrl({ error: "Cohort scope requires a cohort key.", edit: id }));
+    redirect(announcementsPageUrl({ error: "Team scope requires a team key.", edit: id }));
   }
   if (recipientScope === "custom" && customRecipients.length === 0) {
     redirect(announcementsPageUrl({ error: "Custom scope requires recipients.", edit: id }));
@@ -421,20 +421,20 @@ export default async function AdminAnnouncementsPage({ searchParams }) {
                 defaultValue={editingAnnouncement?.recipient_scope || "all_students"}
               >
                 <option value="all_students">All Students</option>
-                <option value="cohort">Single Cohort</option>
+                <option value="cohort">Single Team</option>
                 <option value="custom">Custom List</option>
               </select>
             </div>
             <div className="field">
               <label htmlFor="recipient_cohort" className="label">
-                Cohort Key (for cohort scope)
+                Team Key (for single team scope)
               </label>
               <input
                 id="recipient_cohort"
                 name="recipient_cohort"
                 className="input"
                 defaultValue={editingAnnouncement?.recipient_cohort || ""}
-                placeholder="blue-team"
+                placeholder="team-1"
               />
             </div>
           </div>
