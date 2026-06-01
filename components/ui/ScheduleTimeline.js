@@ -5,6 +5,8 @@ import {
   formatTimeLabel,
   formatTimeRange,
   getProgramNowSnapshot,
+  programDayNowMinutes,
+  programDaySortMinutes,
   timeToMinutes,
 } from "../../lib/schedule";
 
@@ -54,7 +56,7 @@ function formatCompactTimeRange(startTime, durationMinutes) {
 }
 
 function timeBounds(item) {
-  const start = timeToMinutes(item.start_time) || 0;
+  const start = programDaySortMinutes(item.start_time) || 0;
   const duration = Number(item.duration_minutes || 0);
   return {
     start,
@@ -136,14 +138,15 @@ export default function ScheduleTimeline({
   }
 
   const sorted = [...items].sort((a, b) => {
-    const aStart = timeToMinutes(a.start_time) || 0;
-    const bStart = timeToMinutes(b.start_time) || 0;
+    const aStart = programDaySortMinutes(a.start_time) || 0;
+    const bStart = programDaySortMinutes(b.start_time) || 0;
     if (aStart !== bStart) return aStart - bStart;
     return Number(a.sort_order || 0) - Number(b.sort_order || 0);
   });
 
-  const starts = sorted.map((item) => timeToMinutes(item.start_time) || 0);
-  const ends = sorted.map((item) => (timeToMinutes(item.start_time) || 0) + Number(item.duration_minutes || 0));
+  const bounds = sorted.map((item) => timeBounds(item));
+  const starts = bounds.map((entry) => entry.start);
+  const ends = bounds.map((entry) => entry.end);
   const scaleStart = floorToHour(Math.min(...starts, 7 * 60));
   const scaleEnd = ceilToHour(Math.max(...ends, 20 * 60));
   const pxPerMinute = 1.6;
@@ -170,7 +173,12 @@ export default function ScheduleTimeline({
   const layoutById = buildLayout(sorted);
 
   const programNow = getProgramNowSnapshot(track);
-  const nowMinutes = Number.isFinite(programNow.minutes) ? programNow.minutes : 0;
+  const hasOvernightItems = sorted.some((item) => {
+    const minutes = timeToMinutes(item.start_time);
+    return Number.isFinite(minutes) && minutes < 4 * 60;
+  });
+  const nowMinutesRaw = Number.isFinite(programNow.minutes) ? programNow.minutes : 0;
+  const nowMinutes = programDayNowMinutes(nowMinutesRaw, hasOvernightItems) || nowMinutesRaw;
   const currentDay = programNow.dayNumber;
   const normalizedYear = Number(programYear);
   const normalizedDay = Number(dayNumber);
@@ -276,7 +284,7 @@ export default function ScheduleTimeline({
             </div>
           ) : null}
           {sorted.map((item) => {
-            const startMinutes = timeToMinutes(item.start_time) || scaleStart;
+            const startMinutes = programDaySortMinutes(item.start_time) || scaleStart;
             const durationMinutes = Number(item.duration_minutes || 0);
             const top = (startMinutes - scaleStart) * pxPerMinute;
             const height = Math.max(durationMinutes * pxPerMinute, MIN_BLOCK_HEIGHT_PX);

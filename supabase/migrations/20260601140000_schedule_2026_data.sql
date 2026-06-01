@@ -76,7 +76,7 @@ values
 (2026, 2, '18:15', 45,  'Guild Meeting 2',          'Classrooms',                    'both',  null,           'Brunt/Dom',      null,            null, 140),
 (2026, 2, '19:00', 15,  'Adventure Course Debrief', 'Event Room A',                  'both',  null,           'Dom',            'Meg',           null, 150),
 (2026, 2, '19:15', 45,  'Believe Debrief & Goal Mining','Event Room A',             'both',  null,           'Alex Jones',     'Joe',           null, 160),
-(2026, 2, '20:00', 60,  'Impact',                   'Coffeehouse',                   'both',  'Caroline',     'BO',             null,            'Candles (plastic)', 170),
+(2026, 2, '20:00', 60,  'Impact',                   'Coffee House',                  'both',  null,           'BO',             null,            'Candles (plastic)', 170),
 (2026, 2, '21:00', 5,   'SrC Break 2',              'Campus Center Theatre',         'staff', null,           'SrCs',           'Brunt',         null, 180),
 (2026, 2, '21:05', 170, 'Movie Night',              'Campus Center Theatre',         'both',  null,           'Spencer W.',     'Alex Jones',    'Movie night costumes', 190),
 (2026, 2, '23:55', 5,   'Walking Buffer',           null,                            'staff', null,           null,             null,            null, 200),

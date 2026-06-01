@@ -2,7 +2,7 @@ import Link from "next/link";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { requireUser } from "../../../lib/auth";
-import { dayLabel, timeToMinutes } from "../../../lib/schedule";
+import { dayLabel, programDaySortMinutes } from "../../../lib/schedule";
 
 const REQUIRED_STAFF_DAYS = [0, 1, 2, 3, 4];
 const REQUIRED_STUDENT_DAYS = [1, 2, 3, 4];
@@ -18,8 +18,8 @@ function isConfigured(value) {
 
 function overlapPairs(items) {
   const sorted = [...items].sort((a, b) => {
-    const aStart = timeToMinutes(a.start_time) || 0;
-    const bStart = timeToMinutes(b.start_time) || 0;
+    const aStart = programDaySortMinutes(a.start_time) || 0;
+    const bStart = programDaySortMinutes(b.start_time) || 0;
     return aStart - bStart;
   });
 
@@ -27,7 +27,7 @@ function overlapPairs(items) {
   const active = [];
 
   sorted.forEach((item) => {
-    const start = timeToMinutes(item.start_time) || 0;
+    const start = programDaySortMinutes(item.start_time) || 0;
     const end = start + Number(item.duration_minutes || 0);
 
     for (let index = active.length - 1; index >= 0; index -= 1) {

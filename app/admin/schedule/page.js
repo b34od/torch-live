@@ -21,6 +21,7 @@ import {
   dayNumbersForTrack,
   formatTimeLabel,
   formatTimeRange,
+  programDaySortMinutes,
   resolveDayForTrack,
   timeToMinutes,
 } from "../../../lib/schedule";
@@ -919,8 +920,8 @@ export default async function AdminSchedulePage({ searchParams }) {
   const editingId = String(params?.edit || "").trim();
   const editingItem = items.find((item) => item.id === editingId) || null;
   const sortedItems = [...items].sort((a, b) => {
-    const aStart = timeToMinutes(a.start_time) || 0;
-    const bStart = timeToMinutes(b.start_time) || 0;
+    const aStart = programDaySortMinutes(a.start_time) || 0;
+    const bStart = programDaySortMinutes(b.start_time) || 0;
     if (aStart !== bStart) return aStart - bStart;
     return Number(a.sort_order || 0) - Number(b.sort_order || 0);
   });
@@ -951,8 +952,8 @@ export default async function AdminSchedulePage({ searchParams }) {
   const dependencyCandidates = (dependencyCandidateResponse.data || [])
     .filter((entry) => entry.id !== editingItem?.id)
     .sort((a, b) => {
-      const aStart = timeToMinutes(a.start_time) || 0;
-      const bStart = timeToMinutes(b.start_time) || 0;
+      const aStart = programDaySortMinutes(a.start_time) || 0;
+      const bStart = programDaySortMinutes(b.start_time) || 0;
       if (aStart !== bStart) return aStart - bStart;
       return Number(a.sort_order || 0) - Number(b.sort_order || 0);
     });

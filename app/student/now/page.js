@@ -39,7 +39,7 @@ export default async function StudentNowPage({ searchParams }) {
     { data: announcements, error: announcementError },
     { data: guildRow },
   ] = await Promise.all([
-    getStudentScheduleByDay(supabase, profile.program_year, day),
+    getStudentScheduleByDay(supabase, profile.program_year, day, { simplify: true }),
     getAnnouncements(supabase, profile.program_year, 3),
     profile.guild_id
       ? supabase.from("guilds").select("name").eq("id", profile.guild_id).single()

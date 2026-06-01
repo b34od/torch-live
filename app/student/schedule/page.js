@@ -6,9 +6,9 @@ import { getStudentScheduleByDay } from "../../../lib/data";
 import {
   dayLabel,
   formatTimeLabel,
+  programDaySortMinutes,
   resolveDayForTrack,
   STUDENT_DAY_NUMBERS,
-  timeToMinutes,
 } from "../../../lib/schedule";
 
 const LOCATION_COLORS = [
@@ -37,10 +37,12 @@ export default async function StudentSchedulePage({ searchParams }) {
   const params = searchParams instanceof Promise ? await searchParams : searchParams;
   const day = resolveDayForTrack(params?.day, "student");
   const { supabase, profile } = await requireUser(["student"]);
-  const { data: items, error } = await getStudentScheduleByDay(supabase, profile.program_year, day);
+  const { data: items, error } = await getStudentScheduleByDay(supabase, profile.program_year, day, {
+    simplify: true,
+  });
   const sortedItems = [...(items || [])].sort((a, b) => {
-    const aStart = timeToMinutes(a.start_time) || 0;
-    const bStart = timeToMinutes(b.start_time) || 0;
+    const aStart = programDaySortMinutes(a.start_time) || 0;
+    const bStart = programDaySortMinutes(b.start_time) || 0;
     if (aStart !== bStart) return aStart - bStart;
     return Number(a.sort_order || 0) - Number(b.sort_order || 0);
   });
