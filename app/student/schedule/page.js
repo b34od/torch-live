@@ -5,7 +5,7 @@ import { requireUser } from "../../../lib/auth";
 import { getStudentScheduleByDay } from "../../../lib/data";
 import {
   dayLabel,
-  formatTimeLabel,
+  formatTimeRange,
   resolveDayForTrack,
   STUDENT_DAY_NUMBERS,
   timeToMinutes,
@@ -49,7 +49,7 @@ export default async function StudentSchedulePage({ searchParams }) {
               {sortedItems.map((item) => (
                 <li key={item.id} className="student-schedule-item">
                   <span className="student-schedule-time">
-                    {formatTimeLabel(item.start_time)}
+                    {formatTimeRange(item.start_time, item.duration_minutes)}
                   </span>
                   <div className="student-schedule-body">
                     <span className="student-schedule-activity">{item.activity_name}</span>
