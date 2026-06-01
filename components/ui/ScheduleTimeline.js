@@ -256,6 +256,17 @@ export default function ScheduleTimeline({
       ) : null}
       <p className="timeline-timezone">All schedule times are shown in Eastern Time (ET).</p>
       <div className="timeline-grid" style={{ height: `${timelineHeight}px` }}>
+        <div className="timeline-scale">
+          {hourlyTicks.map((minute) => {
+            const top = (minute - scaleStart) * pxPerMinute;
+            return (
+              <div key={minute} className="timeline-scale-tick" style={{ top: `${top}px` }}>
+                <span>{formatTimeLabel(addMinutesToTime("00:00", minute))}</span>
+              </div>
+            );
+          })}
+        </div>
+
         <div className="timeline-lane">
           {showNow ? (
             <div className="timeline-now-line" style={{ top: `${nowTop}px` }}>
@@ -332,16 +343,6 @@ export default function ScheduleTimeline({
           })}
         </div>
 
-        <div className="timeline-scale">
-          {hourlyTicks.map((minute) => {
-            const top = (minute - scaleStart) * pxPerMinute;
-            return (
-              <div key={minute} className="timeline-scale-tick" style={{ top: `${top}px` }}>
-                <span>{formatTimeLabel(addMinutesToTime("00:00", minute))}</span>
-              </div>
-            );
-          })}
-        </div>
       </div>
     </div>
   );

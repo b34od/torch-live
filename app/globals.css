@@ -1034,22 +1034,24 @@ img {
 
 .timeline-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 110px;
-  gap: 0.6rem;
+  /* Scale on left, lane on right, no gap so hour lines span both columns */
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 0;
   position: relative;
 }
 
 .timeline-lane {
   position: relative;
   border: 1px solid rgba(44, 44, 44, 0.1);
-  border-radius: var(--radius-sm);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   background:
+    /* Stripe every 96px = 1 hour at 1.6 px/min. Update both if pxPerMinute changes. */
     repeating-linear-gradient(
       to bottom,
-      rgba(44, 44, 44, 0.04),
-      rgba(44, 44, 44, 0.04) 1px,
+      rgba(44, 44, 44, 0.07),
+      rgba(44, 44, 44, 0.07) 1px,
       transparent 1px,
-      transparent 36px
+      transparent 96px
     ),
     linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(248, 248, 248, 0.9));
 }
@@ -1194,27 +1196,34 @@ img {
 
 .timeline-scale {
   position: relative;
-  border-left: 1px dashed rgba(44, 44, 44, 0.24);
+  /* Right border aligns with the lane's left border */
+  border-right: 1px solid rgba(44, 44, 44, 0.15);
+  border-top: 1px solid rgba(44, 44, 44, 0.1);
+  border-bottom: 1px solid rgba(44, 44, 44, 0.1);
+  border-left: 1px solid rgba(44, 44, 44, 0.1);
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  background: rgba(250, 250, 250, 0.7);
+  overflow: visible;
 }
 
 .timeline-scale-tick {
   position: absolute;
   left: 0;
   right: 0;
-  transform: translateY(-0.55rem);
+  /* Center the label vertically on the exact tick pixel — matches block top positions */
+  transform: translateY(-50%);
 }
 
 .timeline-scale-tick span {
-  display: inline-block;
-  margin-left: 0.5rem;
-  padding: 0.08rem 0.25rem;
-  font-size: 0.76rem;
+  display: block;
+  text-align: right;
+  padding-right: 0.4rem;
+  font-size: 0.72rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
-  color: #4a4b4b;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 4px;
+  color: #5a5b5b;
+  white-space: nowrap;
 }
 
 .status-grid {
@@ -1565,14 +1574,14 @@ img {
   }
 
   .timeline-grid {
-    grid-template-columns: minmax(0, 1fr) 72px;
-    gap: 0.4rem;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 0;
   }
 
   .timeline-block {
-    left: 0.35rem;
-    width: calc(100% - 0.7rem);
-    padding: 0.24rem 0.28rem;
+    left: 0.3rem;
+    width: calc(100% - 0.6rem);
+    padding: 0.2rem 0.24rem;
   }
 
   .timeline-block-meta {
@@ -1586,9 +1595,8 @@ img {
   }
 
   .timeline-scale-tick span {
-    margin-left: 0.36rem;
-    padding: 0.06rem 0.2rem;
-    font-size: 0.68rem;
+    padding-right: 0.3rem;
+    font-size: 0.62rem;
   }
 }
 
