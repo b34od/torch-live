@@ -4,17 +4,15 @@ import ScheduleViewTabs from "../../../components/ui/ScheduleViewTabs";
 import { requireUser } from "../../../lib/auth";
 import { getStudentScheduleByDay } from "../../../lib/data";
 import {
-  addMinutesToTime,
   dayLabel,
   formatTimeLabel,
-  formatTimeRange,
   resolveDayForTrack,
   STUDENT_DAY_NUMBERS,
   timeToMinutes,
 } from "../../../lib/schedule";
 
 export const metadata = {
-  title: "Student Schedule",
+  title: "Schedule",
 };
 
 export default async function StudentSchedulePage({ searchParams }) {
@@ -28,69 +26,47 @@ export default async function StudentSchedulePage({ searchParams }) {
     if (aStart !== bStart) return aStart - bStart;
     return Number(a.sort_order || 0) - Number(b.sort_order || 0);
   });
-  const firstItem = sortedItems[0] || null;
-  const lastItem = sortedItems[sortedItems.length - 1] || null;
-  const endTime = lastItem ? addMinutesToTime(lastItem.start_time, lastItem.duration_minutes) : "";
 
   return (
     <section className="card">
-      <h2>Student Schedule</h2>
-      <p className="muted">Day-by-day schedule curated for students.</p>
+      <h2>Schedule</h2>
       <DayTabs basePath="/student/schedule" selectedDay={day} days={STUDENT_DAY_NUMBERS} />
 
       {error ? (
-        <p className="alert alert-error mt-md">
-          {error.message}
-        </p>
-      ) : items.length === 0 ? (
-        <p className="empty mt-md">
-          No schedule items yet for {dayLabel(day)}.
-        </p>
+        <p className="alert alert-error mt-md">{error.message}</p>
+      ) : sortedItems.length === 0 ? (
+        <p className="empty mt-md">No schedule posted for {dayLabel(day)} yet.</p>
       ) : (
         <>
-          <p className="muted mt-sm">
-            {items.length} item{items.length === 1 ? "" : "s"} · starts at{" "}
-            <strong>{formatTimeLabel(firstItem.start_time)}</strong> · ends at{" "}
-            <strong>{formatTimeLabel(endTime)}</strong> · Eastern Time (ET)
-          </p>
           <ScheduleViewTabs />
-          <div className="schedule-view-tabs mobile-only mt-md">
+          <div className="schedule-view-tabs mt-md">
             <button className="schedule-view-tab" data-view="list" data-default="true">List</button>
             <button className="schedule-view-tab" data-view="timeline">Timeline</button>
           </div>
 
-          <div className="schedule-view-panel schedule-view-list mobile-only" data-view="list">
-            <div className="schedule-card-list schedule-card-list-student mt-sm">
+          <div className="schedule-view-panel" data-view="list">
+            <ul className="student-schedule-list mt-sm">
               {sortedItems.map((item) => (
-                <article key={item.id} className="schedule-card">
-                  <div className="schedule-card-header">
-                    <span className="schedule-time">{formatTimeRange(item.start_time, item.duration_minutes)}</span>
-                    <span className="schedule-duration">{item.duration_minutes}m</span>
+                <li key={item.id} className="student-schedule-item">
+                  <span className="student-schedule-time">
+                    {formatTimeLabel(item.start_time)}
+                  </span>
+                  <div className="student-schedule-body">
+                    <span className="student-schedule-activity">{item.activity_name}</span>
+                    {item.location ? (
+                      <span className="student-schedule-location">{item.location}</span>
+                    ) : null}
                   </div>
-                  <p className="schedule-activity">{item.activity_name}</p>
-                  <p className="schedule-detail">
-                    <span className="schedule-label">Location:</span> {item.location || "TBD"}
-                  </p>
-                </article>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
 
-          <div className="schedule-view-panel schedule-view-timeline mobile-only" data-view="timeline" hidden>
+          <div className="schedule-view-panel" data-view="timeline" hidden>
             <ScheduleTimeline
               items={sortedItems}
               track="student"
-              showNowMarker={false}
-              dayNumber={day}
-              programYear={profile.program_year}
-            />
-          </div>
-
-          <div className="desktop-only mt-md">
-            <ScheduleTimeline
-              items={sortedItems}
-              track="student"
-              showNowMarker={false}
+              showNowMarker={true}
               dayNumber={day}
               programYear={profile.program_year}
             />

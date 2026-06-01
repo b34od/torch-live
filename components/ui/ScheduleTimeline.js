@@ -156,14 +156,17 @@ export default function ScheduleTimeline({
 
   const legendByLocation = new Map();
   sorted.forEach((item) => {
-    const location = item.location || "TBD";
-    if (!legendByLocation.has(location)) {
-      legendByLocation.set(location, colorForLocation(location));
+    const location = item.location || "";
+    const key = location || (track === "staff" ? "TBD" : "");
+    if (key) {
+      legendByLocation.set(key, colorForLocation(key));
+    } else {
+      legendByLocation.set("", colorForLocation(""));
     }
   });
-  const legendItems = [...legendByLocation.entries()];
+  const legendItems = [...legendByLocation.entries()].filter(([loc]) => loc !== "");
   const hasMultipleLocations = legendItems.length > 1;
-  const singleLocationLabel = hasMultipleLocations ? "" : legendItems[0]?.[0] || "TBD";
+  const singleLocationLabel = hasMultipleLocations ? "" : legendItems[0]?.[0] || "";
   const layoutById = buildLayout(sorted);
 
   const programNow = getProgramNowSnapshot(track);
@@ -246,11 +249,11 @@ export default function ScheduleTimeline({
             </span>
           ))}
         </div>
-      ) : (
+      ) : singleLocationLabel ? (
         <p className="timeline-single-location" aria-label="Single location for this day">
           Location: <strong>{singleLocationLabel}</strong>
         </p>
-      )}
+      ) : null}
       <p className="timeline-timezone">All schedule times are shown in Eastern Time (ET).</p>
       <div className="timeline-grid" style={{ height: `${timelineHeight}px` }}>
         <div className="timeline-lane">
@@ -264,7 +267,7 @@ export default function ScheduleTimeline({
             const durationMinutes = Number(item.duration_minutes || 0);
             const top = (startMinutes - scaleStart) * pxPerMinute;
             const height = Math.max(durationMinutes * pxPerMinute, MIN_BLOCK_HEIGHT_PX);
-            const locationLabel = item.location || "TBD";
+            const locationLabel = item.location || (track === "staff" ? "TBD" : "");
             const color = colorForLocation(locationLabel);
             const layout = layoutById.get(item.id);
             const lane = layout?.lane || 0;
