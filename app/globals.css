@@ -2009,6 +2009,33 @@ img {
   border: 2px solid var(--color-primary);
 }
 
+.guild-preference-summary {
+  margin: var(--space-sm) 0 0;
+  padding-left: 1.25rem;
+}
+
+.guild-preference-summary li + li {
+  margin-top: var(--space-xs);
+}
+
+.guild-board-header {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.guild-board-counts {
+  display: grid;
+  gap: var(--space-sm);
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.guild-board-count-card p {
+  margin-top: 0.2rem;
+}
+
 .ml-sm {
   margin-left: var(--space-sm);
 }

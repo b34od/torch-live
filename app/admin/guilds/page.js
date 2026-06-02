@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
+import GuildPreferenceBoard from "../../_components/GuildPreferenceBoard";
 import { requireUser } from "../../../lib/auth";
+import { getGuildPreferenceBoardData } from "../../../lib/data";
 import { createAdminSupabaseClient } from "../../../lib/supabase/admin";
 
 export const metadata = {
@@ -50,11 +52,17 @@ export default async function AdminGuildsPage({ searchParams }) {
 
   const editingId = String(params?.edit || "").trim() || null;
 
-  const { data: guilds, error } = await supabase
-    .from("guilds")
-    .select("*")
-    .eq("program_year", profile.program_year)
-    .order("sort_order", { ascending: true });
+  const [
+    { data: guilds, error },
+    { data: boardData, error: boardError },
+  ] = await Promise.all([
+    supabase
+      .from("guilds")
+      .select("*")
+      .eq("program_year", profile.program_year)
+      .order("sort_order", { ascending: true }),
+    getGuildPreferenceBoardData(supabase, profile.program_year),
+  ]);
 
   const editingGuild = editingId ? (guilds || []).find((g) => g.id === editingId) : null;
 
@@ -188,6 +196,17 @@ export default async function AdminGuildsPage({ searchParams }) {
           </div>
         )}
       </section>
+
+      {boardError ? (
+        <p className="alert alert-error">{boardError.message}</p>
+      ) : (
+        <GuildPreferenceBoard
+          rows={boardData?.rows || []}
+          counts={boardData?.counts || []}
+          selectionOpen={Boolean(boardData?.selectionOpen)}
+          year={profile.program_year}
+        />
+      )}
     </>
   );
 }

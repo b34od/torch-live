@@ -1,4 +1,6 @@
+import GuildPreferenceBoard from "../../_components/GuildPreferenceBoard";
 import { requireUser } from "../../../lib/auth";
+import { getGuildPreferenceBoardData } from "../../../lib/data";
 
 export const metadata = {
   title: "Guilds",
@@ -7,7 +9,7 @@ export const metadata = {
 export default async function StaffGuildsPage() {
   const { supabase, profile } = await requireUser(["staff", "admin"]);
 
-  const [guildsResponse, profileResponse] = await Promise.all([
+  const [guildsResponse, profileResponse, boardResponse] = await Promise.all([
     supabase
       .from("guilds")
       .select("id, slug, name, staff_description, sort_order")
@@ -19,6 +21,7 @@ export default async function StaffGuildsPage() {
       .select("guild_id")
       .eq("id", profile.id)
       .single(),
+    getGuildPreferenceBoardData(supabase, profile.program_year),
   ]);
 
   const guilds = guildsResponse.data || [];
@@ -66,6 +69,17 @@ export default async function StaffGuildsPage() {
           </div>
         )}
       </section>
+
+      {boardResponse.error ? (
+        <p className="alert alert-error">{boardResponse.error.message}</p>
+      ) : (
+        <GuildPreferenceBoard
+          rows={boardResponse.data?.rows || []}
+          counts={boardResponse.data?.counts || []}
+          selectionOpen={Boolean(boardResponse.data?.selectionOpen)}
+          year={profile.program_year}
+        />
+      )}
     </>
   );
 }

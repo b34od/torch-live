@@ -2,6 +2,7 @@ import Link from "next/link";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { requireUser } from "../../../lib/auth";
+import { createAdminSupabaseClient } from "../../../lib/supabase/admin";
 import { dayLabel, programDaySortMinutes } from "../../../lib/schedule";
 
 const REQUIRED_STAFF_DAYS = [0, 1, 2, 3, 4];
@@ -10,6 +11,29 @@ const REQUIRED_ROLES = ["admin", "staff", "student"];
 
 function configured(value) {
   return value ? "Configured" : "Missing";
+}
+
+function settingsPageUrl(params = {}) {
+  const search = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== null && value !== undefined && value !== "") {
+      search.set(key, String(value));
+    }
+  });
+  const suffix = search.toString();
+  return suffix ? `/admin/settings?${suffix}` : "/admin/settings";
+}
+
+function settingsAlertFromParams(params) {
+  if (params?.guilds_saved === "1") {
+    return { className: "alert alert-success", text: "Guild selection setting updated." };
+  }
+
+  if (params?.error) {
+    return { className: "alert alert-error", text: decodeURIComponent(params.error) };
+  }
+
+  return null;
 }
 
 function isConfigured(value) {
@@ -287,12 +311,40 @@ async function auditLiveMagicLinkTemplate() {
   }
 }
 
+async function updateGuildSelectionSetting(formData) {
+  "use server";
+
+  const { profile } = await requireUser(["admin"]);
+  const nextValue = String(formData.get("guild_selection_open") || "") === "true" ? "true" : "false";
+  const year = profile.program_year;
+  const adminClient = createAdminSupabaseClient();
+
+  const { error } = await adminClient
+    .from("program_settings")
+    .upsert(
+      {
+        program_year: year,
+        key: "guild_selection_open",
+        value: nextValue,
+      },
+      { onConflict: "program_year,key" },
+    );
+
+  if (error) {
+    redirect(settingsPageUrl({ error: error.message }));
+  }
+
+  redirect(settingsPageUrl({ guilds_saved: "1" }));
+}
+
 export const metadata = {
   title: "Admin Settings",
 };
 
-export default async function AdminSettingsPage() {
+export default async function AdminSettingsPage({ searchParams }) {
+  const params = searchParams instanceof Promise ? await searchParams : searchParams;
   const { profile, supabase } = await requireUser(["admin"]);
+  const alert = settingsAlertFromParams(params);
   const pushEnvConfigured = isConfigured(process.env.NEXT_PUBLIC_SITE_URL);
   const publicKeyConfigured = isConfigured(
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -300,7 +352,7 @@ export default async function AdminSettingsPage() {
   const serviceKeyConfigured = isConfigured(process.env.SUPABASE_SERVICE_ROLE_KEY);
   const supabaseUrlConfigured = isConfigured(process.env.NEXT_PUBLIC_SUPABASE_URL);
 
-  const [studentRowsResponse, staffRowsResponse, rosterResponse] = await Promise.all([
+  const [studentRowsResponse, staffRowsResponse, rosterResponse, guildSelectionResponse] = await Promise.all([
     supabase
       .from("schedule_items")
       .select("id, day_number, start_time, duration_minutes, activity_name, visibility")
@@ -315,6 +367,12 @@ export default async function AdminSettingsPage() {
       .from("user_profiles")
       .select("id, role, is_active")
       .eq("program_year", profile.program_year),
+    supabase
+      .from("program_settings")
+      .select("value")
+      .eq("program_year", profile.program_year)
+      .eq("key", "guild_selection_open")
+      .maybeSingle(),
   ]);
   const [templateAudit, liveTemplateAudit] = await Promise.all([
     auditMagicLinkTemplate(),
@@ -333,6 +391,8 @@ export default async function AdminSettingsPage() {
   const studentRows = studentRowsResponse.data || [];
   const staffRows = staffRowsResponse.data || [];
   const rosterRows = rosterResponse.data || [];
+  const guildSelectionOpen = guildSelectionResponse.data?.value === "true";
+  const guildSelectionReady = !guildSelectionResponse.error;
 
   const studentConflicts = conflictByDay(studentRows);
   const staffConflicts = conflictByDay(staffRows);
@@ -515,6 +575,8 @@ export default async function AdminSettingsPage() {
 
   return (
     <>
+      {alert ? <p className={alert.className}>{alert.text}</p> : null}
+
       <section className="card">
         <h2>Launch Readiness Snapshot</h2>
         <p className="muted">
@@ -560,6 +622,31 @@ export default async function AdminSettingsPage() {
             <strong>Program Time Zone</strong>
             <p className="muted">All schedules and now snapshots are fixed to Eastern Time (ET).</p>
           </article>
+        </div>
+        <div className="surface surface-pad mt-md">
+          <div className="status-row">
+            <div>
+              <strong>Guild Selection Window</strong>
+              <p className="muted">
+                {guildSelectionReady
+                  ? guildSelectionOpen
+                    ? "Students can submit or update ranked guild preferences."
+                    : "Students can view guild info, but preference submission is closed."
+                  : guildSelectionResponse.error?.message || "Guild selection setting unavailable until the migration is applied."}
+              </p>
+            </div>
+            <span className={`status-pill ${guildSelectionOpen ? "status-pill-good" : "status-pill-warn"}`}>
+              {guildSelectionOpen ? "Open" : "Closed"}
+            </span>
+          </div>
+          {guildSelectionReady ? (
+            <form action={updateGuildSelectionSetting} className="mt-md">
+              <input type="hidden" name="guild_selection_open" value={guildSelectionOpen ? "false" : "true"} />
+              <button type="submit" className="button button-secondary">
+                {guildSelectionOpen ? "Close Guild Selection" : "Open Guild Selection"}
+              </button>
+            </form>
+          ) : null}
         </div>
       </section>
 
