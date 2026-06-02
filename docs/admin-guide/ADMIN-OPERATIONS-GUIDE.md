@@ -129,7 +129,44 @@ Optional one-time bootstrap:
 1. `TORCH_BOOTSTRAP_ADMIN_EMAIL`
 2. `TORCH_BOOTSTRAP_ADMIN_NAME`
 
-## 8) Email and URL Configuration
+## 8) Deployment Sync Contract
+
+TORCH Live release work must keep three systems in sync:
+1. `GitHub` is the source of truth for code and migration history.
+2. `Supabase` is the source of truth for live schema/data state.
+3. `Vercel` is the source of truth for the running production build.
+
+### Required Order
+1. Commit code and migration files locally.
+2. Verify local build with `npm run build`.
+3. Apply approved Supabase migrations to production.
+4. Verify live migration state and any critical data side effects.
+5. Push the exact commit containing those migration files to GitHub.
+6. Let Vercel deploy from that pushed commit on `main`.
+7. Run production smoke checks and record evidence.
+
+### Never Do This
+1. Do not apply a production Supabase migration that does not exist in the repo.
+2. Do not push app code that depends on a migration that has not been applied yet.
+3. Do not treat Vercel deploy success as proof that Supabase state is correct.
+4. Do not patch production data ad hoc and leave the repo without a matching corrective migration file.
+
+### If Production Drift Is Found
+1. If a migration name exists in Supabase but the intended rows/state are incomplete, do not rewrite history.
+2. Create a new corrective migration file in the repo.
+3. Apply that corrective migration to Supabase.
+4. Verify the live rows/state.
+5. Commit the corrective migration file so GitHub history matches Supabase history.
+
+### Release Evidence Required
+For each production-affecting change, capture:
+1. Git commit SHA pushed to `origin/main`
+2. Supabase migration name(s) applied or verified
+3. Vercel deployment identifier or production deploy confirmation
+4. Smoke-test results (`/login`, `/admin/settings`, and impacted role routes)
+5. Any remaining unverified risk
+
+## 9) Email and URL Configuration
 
 ### Supabase Auth Settings
 1. `Site URL` should be `https://live.torchleadershipacademy.org`.
@@ -146,7 +183,7 @@ Optional one-time bootstrap:
 ### Template Source
 `supabase/templates/magic-link.html`
 
-## 9) Legal and Risk Ownership
+## 10) Legal and Risk Ownership
 
 Published pages:
 1. `/legal/privacy`
@@ -162,7 +199,7 @@ Operational ownership baseline:
 3. Operational support contact: `info@torchleadershipacademy.org`
 4. Audience scope: authorized users age 14+ only
 
-## 10) Troubleshooting
+## 11) Troubleshooting
 
 ### "Signups not allowed for otp"
 Likely missing auth user or disabled signup path. Create/repair user in `/admin/users`.
@@ -185,11 +222,11 @@ Mismatch in Supabase URL config and/or `NEXT_PUBLIC_SITE_URL`. Correct both.
 ### Login redirect error about profile
 Missing or inactive `user_profiles` row. Repair in `/admin/users`.
 
-## 11) Known Limitation
+## 12) Known Limitation
 
 Current model does not support clean historical multi-year membership under one identity without reassignment.
 
-## 12) Documentation Contract
+## 13) Documentation Contract
 
 For any admin-impacting change:
 1. Update relevant files in `docs/admin-guide/*`.

@@ -203,13 +203,23 @@ Transition from prior year to new year without deleting history.
 
 ### Before Deploy
 1. Run `npm run build`.
-2. Validate affected admin flows.
-3. Update docs in `docs/admin-guide/*` and `docs/legal-risk-checklist.md` as needed.
-4. Append `CHANGELOG.md` entry.
+2. Confirm all required migration files are committed locally before any production apply.
+3. Validate affected admin flows.
+4. Update docs in `docs/admin-guide/*` and `docs/legal-risk-checklist.md` as needed.
+5. Append `CHANGELOG.md` entry.
+
+### Release Order
+1. Apply approved Supabase migrations first.
+2. Verify live schema/data effect immediately after apply.
+3. Push the exact matching commit to GitHub `main`.
+4. Confirm Vercel production deploy is built from that pushed commit.
+5. Record Git SHA, Supabase migration names, and deploy evidence together.
 
 ### After Deploy
 1. Smoke test `/login`, `/admin/schedule`, `/admin/users`, `/admin/announcements`, `/admin/resources`.
 2. If auth/email changed, run one magic-link test end-to-end.
+3. If migrations changed schema or production data, verify `list_migrations` and at least one impacted live query/state check.
+4. If production was corrected with a follow-up migration, ensure the corrective migration file is committed to the repo before closeout.
 
 ## Technical Owner SOP 5: Legal and Risk Operations Cadence
 
