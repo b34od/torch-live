@@ -3,8 +3,9 @@
 import { useState } from "react";
 
 export default function ProfileEditForm({ profile }) {
-  const [showEmail,   setShowEmail]   = useState(profile.show_email   ?? true);
-  const [showPhone,   setShowPhone]   = useState(profile.show_phone   ?? true);
+  const isStaffRole = profile.role === "staff" || profile.role === "admin";
+  const [showEmail,   setShowEmail]   = useState(profile.show_email   ?? !isStaffRole);
+  const [showPhone,   setShowPhone]   = useState(profile.show_phone   ?? !isStaffRole);
   const [showSocial,  setShowSocial]  = useState(profile.show_social  ?? true);
   const [showInDir,   setShowInDir]   = useState(profile.show_in_directory ?? true);
   const [social,      setSocial]      = useState(profile.social_handle ?? "");

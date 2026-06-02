@@ -37,10 +37,11 @@ export default function DirectoryList({ profiles, showRoom }) {
 
   const q = search.trim().toLowerCase();
   let rows = profiles.filter((p) => {
+    const email = String(p.email || "").toLowerCase();
     if (filterRole !== "all" && p.role !== filterRole) return false;
     if (filterTeam !== "all" && p.team_key !== filterTeam) return false;
     if (filterGuild !== "all" && p.guild_name !== filterGuild) return false;
-    if (q && !p.full_name.toLowerCase().includes(q) && !p.email.toLowerCase().includes(q)) {
+    if (q && !p.full_name.toLowerCase().includes(q) && !email.includes(q)) {
       return false;
     }
     return true;
