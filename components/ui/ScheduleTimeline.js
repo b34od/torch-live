@@ -10,24 +10,40 @@ import {
   timeToMinutes,
 } from "../../lib/schedule";
 
-const COLOR_PALETTE = [
-  { bg: "rgba(237, 103, 103, 0.22)", border: "rgba(237, 103, 103, 0.65)" },
-  { bg: "rgba(238, 183, 95, 0.24)", border: "rgba(212, 141, 25, 0.62)" },
-  { bg: "rgba(147, 204, 134, 0.24)", border: "rgba(51, 120, 76, 0.62)" },
-  { bg: "rgba(113, 60, 151, 0.18)", border: "rgba(90, 48, 121, 0.62)" },
-  { bg: "rgba(173, 174, 215, 0.24)", border: "rgba(91, 95, 146, 0.62)" },
-];
 const MIN_BLOCK_HEIGHT_PX = 24;
 
 function colorForLocation(location) {
-  const text = String(location || "TBD");
-  let hash = 0;
-  for (let index = 0; index < text.length; index += 1) {
-    hash = (hash << 5) - hash + text.charCodeAt(index);
-    hash |= 0;
+  const loc = String(location || "").toLowerCase();
+  if (loc.includes("outside") || loc.includes("quad") || loc.includes("behind") ||
+      loc.includes("grass") || loc.includes("amphitheatre") || loc.includes("field")) {
+    return { bg: "rgba(147,204,134,0.24)", border: "rgba(51,120,76,0.72)" };
   }
-  const color = COLOR_PALETTE[Math.abs(hash) % COLOR_PALETTE.length];
-  return color;
+  if (loc.includes("classroom")) {
+    return { bg: "rgba(238,183,95,0.26)", border: "rgba(184,114,0,0.72)" };
+  }
+  if (loc.includes("theatre") || loc.includes("theater")) {
+    return { bg: "rgba(173,174,215,0.28)", border: "rgba(91,95,146,0.72)" };
+  }
+  if (loc.includes("dining")) {
+    return { bg: "rgba(113,180,220,0.24)", border: "rgba(45,110,158,0.72)" };
+  }
+  if (loc.includes("event room") || (loc.includes("campus") && loc.includes("ctr"))) {
+    return { bg: "rgba(237,103,103,0.22)", border: "rgba(196,64,64,0.72)" };
+  }
+  if (loc.includes("housing")) {
+    return { bg: "rgba(255,180,195,0.24)", border: "rgba(176,64,112,0.72)" };
+  }
+  if (loc.includes("coffee") || loc.includes("coffeehouse")) {
+    return { bg: "rgba(100,200,190,0.24)", border: "rgba(42,138,128,0.72)" };
+  }
+  if (loc.includes("trlc")) {
+    return { bg: "rgba(237,103,103,0.22)", border: "rgba(196,64,64,0.72)" };
+  }
+  if (loc.includes("staff lounge")) {
+    return { bg: "rgba(44,44,44,0.1)", border: "rgba(44,44,44,0.35)" };
+  }
+  // fallback
+  return { bg: "rgba(173,174,215,0.20)", border: "rgba(136,136,170,0.55)" };
 }
 
 function floorToHour(minutes) {

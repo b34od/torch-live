@@ -11,22 +11,36 @@ import {
   STUDENT_DAY_NUMBERS,
 } from "../../../lib/schedule";
 
-const LOCATION_COLORS = [
-  { bg: "rgba(237,103,103,0.13)", border: "#ed6767" },
-  { bg: "rgba(238,183,95,0.18)",  border: "#d48d19" },
-  { bg: "rgba(147,204,134,0.18)", border: "#33784c" },
-  { bg: "rgba(113,60,151,0.12)",  border: "#713c97" },
-  { bg: "rgba(173,174,215,0.18)", border: "#5b5f92" },
-];
-
+// Explicit keyword-based color map — avoids hash collisions between
+// visually similar location types (e.g. Outside vs Classrooms).
 function locationColor(location) {
-  const text = String(location || "");
-  let hash = 0;
-  for (let i = 0; i < text.length; i++) {
-    hash = (hash << 5) - hash + text.charCodeAt(i);
-    hash |= 0;
+  const loc = String(location || "").toLowerCase();
+  if (loc.includes("outside") || loc.includes("quad") || loc.includes("behind") ||
+      loc.includes("grass") || loc.includes("amphitheatre") || loc.includes("field")) {
+    return { bg: "rgba(147,204,134,0.22)", border: "#33784c" };      // green — outdoors
   }
-  return LOCATION_COLORS[Math.abs(hash) % LOCATION_COLORS.length];
+  if (loc.includes("classroom")) {
+    return { bg: "rgba(238,183,95,0.24)", border: "#b87200" };       // amber — classrooms
+  }
+  if (loc.includes("theatre") || loc.includes("theater")) {
+    return { bg: "rgba(173,174,215,0.28)", border: "#5b5f92" };      // lavender — theatre
+  }
+  if (loc.includes("dining") || loc.includes("d)")) {
+    return { bg: "rgba(113,180,220,0.22)", border: "#2d6e9e" };      // blue — dining hall
+  }
+  if (loc.includes("event room") || loc.includes("campus ctr") || loc.includes("campus center")) {
+    return { bg: "rgba(237,103,103,0.18)", border: "#c44040" };      // coral — event room / campus ctr
+  }
+  if (loc.includes("housing")) {
+    return { bg: "rgba(255,180,195,0.22)", border: "#b04070" };      // rose — housing
+  }
+  if (loc.includes("coffee") || loc.includes("coffeehouse")) {
+    return { bg: "rgba(100,200,190,0.22)", border: "#2a8a80" };      // teal — coffeehouse
+  }
+  if (loc.includes("trlc")) {
+    return { bg: "rgba(237,103,103,0.18)", border: "#c44040" };      // coral — TRLC
+  }
+  return { bg: "rgba(173,174,215,0.18)", border: "#8888aa" };        // fallback lavender
 }
 
 export const metadata = {
