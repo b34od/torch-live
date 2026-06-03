@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSessionContext } from "../../../lib/auth";
 
-const ALLOWED_BOOLEAN = ["show_email", "show_phone", "show_social", "show_in_directory"];
-const ALLOWED_TEXT    = ["social_handle", "phone_number"];
+const ALLOWED_BOOLEAN = ["show_social", "show_in_directory"];
+const ALLOWED_TEXT    = ["social_handle"];
 const MAX_TEXT_LENGTH = 120;
 
 export async function POST(request) {
