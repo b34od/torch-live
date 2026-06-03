@@ -1,4 +1,4 @@
-import GuildPreferenceBoard from "../../_components/GuildPreferenceBoard";
+import GuildAssignBoard from "../../_components/GuildAssignBoard";
 import { requireUser } from "../../../lib/auth";
 import { getGuildPreferenceBoardData } from "../../../lib/data";
 
@@ -73,12 +73,25 @@ export default async function StaffGuildsPage() {
       {boardResponse.error ? (
         <p className="alert alert-error">{boardResponse.error.message}</p>
       ) : (
-        <GuildPreferenceBoard
-          rows={boardResponse.data?.rows || []}
-          counts={boardResponse.data?.counts || []}
-          selectionOpen={Boolean(boardResponse.data?.selectionOpen)}
-          year={profile.program_year}
-        />
+        <section className="card">
+          <div className="guild-board-header">
+            <div>
+              <h2>Guild Assignment Board</h2>
+              <p className="muted">
+                Assign each student to a guild. Rankings show their stated preferences.
+              </p>
+            </div>
+            <span className={`status-pill ${boardResponse.data?.selectionOpen ? "status-pill-good" : "status-pill-warn"}`}>
+              Selection {boardResponse.data?.selectionOpen ? "Open" : "Closed"}
+            </span>
+          </div>
+          <GuildAssignBoard
+            rows={boardResponse.data?.rows || []}
+            guilds={guilds.map((g) => ({ id: g.id, name: g.name }))}
+            counts={boardResponse.data?.counts || []}
+            totalStudents={boardResponse.data?.rows?.length || 0}
+          />
+        </section>
       )}
     </>
   );

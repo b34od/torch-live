@@ -2039,3 +2039,212 @@ img {
 .ml-sm {
   margin-left: var(--space-sm);
 }
+
+/* ─── Guild assignment board ─────────────────────────────── */
+
+.guild-board-wrap {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 700px) {
+  .guild-board-wrap {
+    grid-template-columns: 1fr;
+  }
+}
+
+.guild-balance-bar {
+  border: 1px solid rgba(44,44,44,0.1);
+  border-radius: var(--radius-sm);
+  padding: 0.7rem;
+  background: rgba(255,255,255,0.9);
+  position: sticky;
+  top: 0.5rem;
+}
+
+.guild-balance-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #555;
+  margin: 0 0 0.35rem;
+}
+
+.guild-balance-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.18rem 0;
+  border-bottom: 1px solid rgba(44,44,44,0.06);
+  font-size: 0.78rem;
+}
+
+.guild-balance-row:last-child {
+  border-bottom: none;
+}
+
+.guild-balance-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.guild-balance-count {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.guild-balance-over {
+  color: #c44040;
+}
+
+.guild-board-table-wrap {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.guild-board-team-section + .guild-board-team-section {
+  margin-top: 1.25rem;
+}
+
+.guild-board-team-header {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #666;
+  margin: 0 0 0.4rem;
+}
+
+.guild-board-table {
+  font-size: 0.8rem;
+}
+
+.guild-board-row-saving {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* ─── Guild preference form ──────────────────────────────── */
+
+.guild-pref-descriptions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border: 1px solid rgba(44,44,44,0.1);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem;
+  background: rgba(255,255,255,0.85);
+}
+
+.guild-pref-desc-item {
+  border-bottom: 1px solid rgba(44,44,44,0.06);
+  padding-bottom: 0.3rem;
+}
+
+.guild-pref-desc-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.guild-pref-desc-summary {
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.2rem 0;
+  list-style: disclosure-closed;
+}
+
+details[open] .guild-pref-desc-summary {
+  list-style: disclosure-open;
+}
+
+.guild-pref-desc-body {
+  font-size: 0.82rem;
+  color: #555;
+  margin: 0.25rem 0 0.5rem 1rem;
+  line-height: 1.45;
+}
+
+.guild-pref-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 360px;
+}
+
+.guild-pref-readonly {
+  margin-top: 0.75rem;
+}
+
+.guild-pref-readonly-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #555;
+  margin: 0 0 0.4rem;
+}
+
+.guild-pref-readonly-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.875rem;
+}
+
+.guild-pref-readonly-list li + li {
+  margin-top: 0.2rem;
+}
+
+/* ─── Admin guild controls ───────────────────────────────── */
+
+.guild-control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.guild-control-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.guild-control-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* ─── Status pills ───────────────────────────────────────── */
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.status-pill-good {
+  background: rgba(147,204,134,0.28);
+  color: #245f36;
+}
+
+.status-pill-warn {
+  background: rgba(238,183,95,0.28);
+  color: #7a4f00;
+}

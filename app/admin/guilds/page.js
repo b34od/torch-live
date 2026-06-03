@@ -1,12 +1,60 @@
 import { redirect } from "next/navigation";
-import GuildPreferenceBoard from "../../_components/GuildPreferenceBoard";
+import GuildAssignBoard from "../../_components/GuildAssignBoard";
 import { requireUser } from "../../../lib/auth";
-import { getGuildPreferenceBoardData } from "../../../lib/data";
+import { getGuildPreferenceBoardData, getProgramSetting } from "../../../lib/data";
 import { createAdminSupabaseClient } from "../../../lib/supabase/admin";
 
 export const metadata = {
   title: "Admin Guilds",
 };
+
+async function toggleGuildSelection(formData) {
+  "use server";
+  const { profile } = await requireUser(["admin"]);
+  const newValue = String(formData.get("open") || "") === "true" ? "true" : "false";
+  const adminClient = createAdminSupabaseClient();
+  await adminClient.from("program_settings").upsert(
+    { program_year: profile.program_year, key: "guild_selection_open", value: newValue },
+    { onConflict: "program_year,key" },
+  );
+  redirect("/admin/guilds?setting_saved=1");
+}
+
+async function assignAllToTopChoice() {
+  "use server";
+  const { profile } = await requireUser(["admin"]);
+  const adminClient = createAdminSupabaseClient();
+
+  // Get all unassigned students who have a rank_1 preference
+  const { data: prefs } = await adminClient
+    .from("guild_preferences")
+    .select("student_id, rank_1")
+    .eq("program_year", profile.program_year)
+    .not("rank_1", "is", null);
+
+  if (!prefs?.length) redirect("/admin/guilds?batch=0");
+
+  const unassignedIds = [];
+  for (const pref of prefs) {
+    const { data: student } = await adminClient
+      .from("user_profiles")
+      .select("id, guild_id")
+      .eq("id", pref.student_id)
+      .maybeSingle();
+    if (student && !student.guild_id) unassignedIds.push(pref);
+  }
+
+  let assigned = 0;
+  for (const pref of unassignedIds) {
+    const { error } = await adminClient
+      .from("user_profiles")
+      .update({ guild_id: pref.rank_1 })
+      .eq("id", pref.student_id);
+    if (!error) assigned += 1;
+  }
+
+  redirect(`/admin/guilds?batch=${assigned}`);
+}
 
 async function saveGuild(formData) {
   "use server";
@@ -54,7 +102,8 @@ export default async function AdminGuildsPage({ searchParams }) {
 
   const [
     { data: guilds, error },
-    { data: boardData, error: boardError },
+    boardResult,
+    selectionOpenValue,
   ] = await Promise.all([
     supabase
       .from("guilds")
@@ -62,12 +111,25 @@ export default async function AdminGuildsPage({ searchParams }) {
       .eq("program_year", profile.program_year)
       .order("sort_order", { ascending: true }),
     getGuildPreferenceBoardData(supabase, profile.program_year),
+    getProgramSetting(supabase, profile.program_year, "guild_selection_open"),
   ]);
+
+  const boardData = boardResult.data;
+  const boardError = boardResult.error;
+  const selectionOpen = selectionOpenValue === "true";
+  const submittedCount = (boardData?.rows || []).filter((r) => r.rank_1_name).length;
+  const assignedCount = (boardData?.rows || []).filter((r) => r.assigned_guild_id).length;
+  const totalStudents = boardData?.rows?.length || 0;
 
   const editingGuild = editingId ? (guilds || []).find((g) => g.id === editingId) : null;
 
+  const batchCount = params?.batch !== undefined ? Number(params.batch) : null;
   const alert = params?.saved === "1"
     ? { className: "alert alert-success", text: "Guild saved." }
+    : params?.setting_saved === "1"
+    ? { className: "alert alert-success", text: `Guild selection is now ${selectionOpen ? "open" : "closed"}.` }
+    : batchCount !== null
+    ? { className: "alert alert-success", text: `Assigned ${batchCount} student${batchCount !== 1 ? "s" : ""} to their top choice.` }
     : params?.error
     ? { className: "alert alert-error", text: decodeURIComponent(params.error) }
     : null;
@@ -75,6 +137,34 @@ export default async function AdminGuildsPage({ searchParams }) {
   return (
     <>
       {alert ? <p className={alert.className}>{alert.text}</p> : null}
+
+      {/* Guild selection control panel */}
+      <section className="card">
+        <h2>Guild Selection Controls</h2>
+        <div className="guild-control-row mt-sm">
+          <div className="guild-control-stats">
+            <span className={`status-pill ${selectionOpen ? "status-pill-good" : "status-pill-warn"}`}>
+              Selection {selectionOpen ? "Open" : "Closed"}
+            </span>
+            <span className="muted" style={{ fontSize: "0.82rem" }}>
+              {submittedCount} / {totalStudents} submitted · {assignedCount} / {totalStudents} assigned
+            </span>
+          </div>
+          <div className="guild-control-actions">
+            <form action={toggleGuildSelection} className="inline-form">
+              <input type="hidden" name="open" value={selectionOpen ? "false" : "true"} />
+              <button type="submit" className={`button ${selectionOpen ? "button-ghost" : "button-secondary"}`}>
+                {selectionOpen ? "Close Selection" : "Open Selection"}
+              </button>
+            </form>
+            <form action={assignAllToTopChoice} className="inline-form">
+              <button type="submit" className="button button-ghost">
+                Assign All Unassigned → Top Choice
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
 
       <section className="card">
         <h2>{editingGuild ? `Edit Guild: ${editingGuild.name}` : "Add Guild"}</h2>
@@ -200,12 +290,16 @@ export default async function AdminGuildsPage({ searchParams }) {
       {boardError ? (
         <p className="alert alert-error">{boardError.message}</p>
       ) : (
-        <GuildPreferenceBoard
-          rows={boardData?.rows || []}
-          counts={boardData?.counts || []}
-          selectionOpen={Boolean(boardData?.selectionOpen)}
-          year={profile.program_year}
-        />
+        <section className="card">
+          <h2>Guild Assignment Board</h2>
+          <p className="muted">Assign students to guilds based on their ranked preferences.</p>
+          <GuildAssignBoard
+            rows={boardData?.rows || []}
+            guilds={(guilds || []).filter((g) => g.is_active).map((g) => ({ id: g.id, name: g.name }))}
+            counts={boardData?.counts || []}
+            totalStudents={totalStudents}
+          />
+        </section>
       )}
     </>
   );
