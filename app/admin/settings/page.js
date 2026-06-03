@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { redirect } from "next/navigation";
 import { requireUser } from "../../../lib/auth";
 import { createAdminSupabaseClient } from "../../../lib/supabase/admin";
 import { dayLabel, programDaySortMinutes } from "../../../lib/schedule";
