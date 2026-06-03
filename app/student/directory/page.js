@@ -27,7 +27,7 @@ export default async function StudentDirectoryPage() {
       {error ? (
         <p className="alert alert-error">{error.message}</p>
       ) : (
-        <DirectoryList profiles={data || []} showRoom={false} />
+        <DirectoryList profiles={data || []} showRoom={false} showPhone={false} showEmail={false} />
       )}
     </section>
   );

@@ -10,7 +10,7 @@ function rolePillClass(role) {
   return "pill-student";
 }
 
-export default function DirectoryList({ profiles, showRoom }) {
+export default function DirectoryList({ profiles, showRoom, showPhone = true, showEmail = true }) {
   const [sortCol, setSortCol] = useState("full_name");
   const [sortDir, setSortDir] = useState("asc");
   const [filterRole, setFilterRole] = useState("all");
@@ -37,12 +37,13 @@ export default function DirectoryList({ profiles, showRoom }) {
 
   const q = search.trim().toLowerCase();
   let rows = profiles.filter((p) => {
-    const email = String(p.email || "").toLowerCase();
     if (filterRole !== "all" && p.role !== filterRole) return false;
     if (filterTeam !== "all" && p.team_key !== filterTeam) return false;
     if (filterGuild !== "all" && p.guild_name !== filterGuild) return false;
-    if (q && !p.full_name.toLowerCase().includes(q) && !email.includes(q)) {
-      return false;
+    if (q) {
+      const nameMatch = p.full_name.toLowerCase().includes(q);
+      const emailMatch = showEmail && String(p.email || "").toLowerCase().includes(q);
+      if (!nameMatch && !emailMatch) return false;
     }
     return true;
   });
@@ -70,7 +71,7 @@ export default function DirectoryList({ profiles, showRoom }) {
         <input
           type="search"
           className="input input-sm"
-          placeholder="Search name or email…"
+          placeholder={showEmail ? "Search name or email…" : "Search name…"}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -100,10 +101,10 @@ export default function DirectoryList({ profiles, showRoom }) {
             <div className="user-card-header">
               <div>
                 <p className="user-card-name">{p.full_name}</p>
-                {p.email ? (
+                {showEmail && p.email ? (
                   <a href={`mailto:${p.email}`} className="user-card-email text-link">{p.email}</a>
                 ) : null}
-                {p.phone_number ? <p className="muted">{p.phone_number}</p> : null}
+                {showPhone && p.phone_number ? <p className="muted">{p.phone_number}</p> : null}
                 {p.social_handle ? <p className="muted">{p.social_handle}</p> : null}
               </div>
               <span className={`pill ${rolePillClass(p.role)}`}>{p.role}</span>
@@ -128,12 +129,12 @@ export default function DirectoryList({ profiles, showRoom }) {
           <thead>
             <tr>
               <SortTh col="full_name" label="Name" />
-              <SortTh col="email" label="Email" />
+              {showEmail ? <SortTh col="email" label="Email" /> : null}
               <SortTh col="role" label="Role" />
               <SortTh col="team_key" label="Team" />
               <SortTh col="guild_name" label="Guild" />
               {showRoom ? <SortTh col="room_number" label="Room" /> : null}
-              <th>Phone</th>
+              {showPhone ? <th>Phone</th> : null}
               <th>Social</th>
             </tr>
           </thead>
@@ -141,22 +142,24 @@ export default function DirectoryList({ profiles, showRoom }) {
             {rows.map((p) => (
               <tr key={p.id}>
                 <td>{p.full_name}</td>
-                <td>
-                  {p.email
-                    ? <a href={`mailto:${p.email}`} className="text-link">{p.email}</a>
-                    : <span className="muted">—</span>}
-                </td>
+                {showEmail ? (
+                  <td>
+                    {p.email
+                      ? <a href={`mailto:${p.email}`} className="text-link">{p.email}</a>
+                      : <span className="muted">—</span>}
+                  </td>
+                ) : null}
                 <td><span className={`pill ${rolePillClass(p.role)}`}>{p.role}</span></td>
                 <td>{p.team_key || <span className="muted">—</span>}</td>
                 <td>{p.guild_name || <span className="muted">—</span>}</td>
                 {showRoom ? <td>{p.room_number || <span className="muted">—</span>}</td> : null}
-                <td>{p.phone_number || <span className="muted">—</span>}</td>
+                {showPhone ? <td>{p.phone_number || <span className="muted">—</span>}</td> : null}
                 <td>{p.social_handle || <span className="muted">—</span>}</td>
               </tr>
             ))}
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={showRoom ? 8 : 7} className="empty">No matches.</td>
+                <td colSpan={3 + (showEmail ? 1 : 0) + (showPhone ? 1 : 0) + (showRoom ? 1 : 0) + 2} className="empty">No matches.</td>
               </tr>
             ) : null}
           </tbody>
