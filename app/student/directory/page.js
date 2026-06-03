@@ -22,12 +22,12 @@ export default async function StudentDirectoryPage() {
         </Link>
       </div>
       <p className="muted">
-        Contact your teammates and staff. Use "Edit My Info" to control what others see.
+        Find your teammates and staff. This platform does not support private messaging — all program communication is group-only.
       </p>
       {error ? (
         <p className="alert alert-error">{error.message}</p>
       ) : (
-        <DirectoryList profiles={data || []} showRoom={false} />
+        <DirectoryList profiles={data || []} showRoom={false} showSocial={false} />
       )}
     </section>
   );

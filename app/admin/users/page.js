@@ -7,6 +7,17 @@ import RosterTable from "./RosterTable";
 
 const ROLES = ["student", "staff", "admin"];
 const MIN_YEAR = 2020;
+
+async function auditLog(adminClient, actorId, actorEmail, action, targetUserId, targetEmail, details) {
+  await adminClient.from("admin_audit_log").insert({
+    action,
+    actor_id: actorId || null,
+    actor_email: actorEmail || null,
+    target_user_id: targetUserId || null,
+    target_email: targetEmail || null,
+    details: details || null,
+  }).catch(() => {});
+}
 const MAX_YEAR = 2100;
 const BULK_LIMIT = 500;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -369,6 +380,8 @@ async function createProgramUser(formData) {
     if (profileError) {
       throw new Error(profileError.message);
     }
+
+    await auditLog(adminClient, profile.id, profile.email, "create_user", authUser.id, email, { role, program_year: selectedYear });
   } catch (error) {
     createErrorMessage = error?.message || "User creation failed.";
   }
@@ -504,6 +517,16 @@ async function bulkImportUsers(formData) {
     importErrorMessage = error?.message || "Bulk import failed.";
   }
 
+  if (!importErrorMessage) {
+    await auditLog(adminClient, profile.id, profile.email, "bulk_import_users", null, null, {
+      program_year: selectedYear,
+      created_count: createdCount,
+      linked_count: linkedCount,
+      skipped_count: skippedCount,
+      failed_count: failedCount,
+    });
+  }
+
   if (importErrorMessage) {
     redirect(usersPageUrl(selectedYear, { error: importErrorMessage }));
   }
@@ -593,6 +616,8 @@ async function updateProgramUser(formData) {
     if (error) {
       throw new Error(error.message);
     }
+
+    await auditLog(adminClient, profile.id, profile.email, "update_user", userId, email, { role, is_active: isActive, program_year: selectedYear });
   } catch (error) {
     updateErrorMessage = error?.message || "User update failed.";
   }
@@ -630,6 +655,8 @@ async function toggleUserActive(formData) {
     redirect(usersPageUrl(selectedYear, { error: error.message }));
   }
 
+  await auditLog(adminClient, user.id, profile.email, nextActive ? "activate_user" : "deactivate_user", userId, null, { program_year: selectedYear });
+
   redirect(usersPageUrl(selectedYear, { toggled: "1" }));
 }
 
@@ -654,6 +681,8 @@ async function removeProgramUser(formData) {
   if (error) {
     redirect(usersPageUrl(selectedYear, { error: error.message }));
   }
+
+  await auditLog(adminClient, user.id, profile.email, "remove_user", userId, null, { program_year: selectedYear });
 
   redirect(usersPageUrl(selectedYear, { removed: "1" }));
 }

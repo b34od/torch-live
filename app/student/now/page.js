@@ -111,6 +111,14 @@ export default async function StudentNowPage({ searchParams }) {
       </section>
 
       <section className="card">
+        <h2>Need Help?</h2>
+        <p className="muted">
+          Speak with any staff member, or text the TORCH team directly:{" "}
+          <a href="tel:+16093006397" className="text-link">(609) 300-6397</a>
+        </p>
+      </section>
+
+      <section className="card">
         <h2>Latest Updates</h2>
         {announcementError ? (
           <p className="alert alert-error">{announcementError.message}</p>
