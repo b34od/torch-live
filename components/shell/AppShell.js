@@ -96,14 +96,24 @@ export default function AppShell({ role, profile, children }) {
       <header className="topbar">
         <div className="topbar-row">
           <div className="topbar-brand">
-            <Image
-              src="/logos/torch-main.png"
-              width={188}
-              height={60}
-              alt="Torch Leadership Academy"
-              className="topbar-logo"
-              priority
-            />
+            <div className="theme-logo-stack">
+              <Image
+                src="/logos/torch-main.png"
+                width={188}
+                height={60}
+                alt="Torch Leadership Academy"
+                className="topbar-logo theme-logo-light"
+                priority
+              />
+              <Image
+                src="/logos/torch-main-white.svg"
+                width={188}
+                height={60}
+                alt="Torch Leadership Academy"
+                className="topbar-logo theme-logo-dark"
+                priority
+              />
+            </div>
             <div className="topbar-profile">
               <p className="topbar-title">TORCH Live</p>
               <p className="topbar-name">{profile.full_name}</p>

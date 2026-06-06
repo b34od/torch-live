@@ -408,13 +408,24 @@ export default async function LoginPage({ searchParams }) {
     <main className="auth-shell">
       <section className="auth-card">
         <div className="brand-lockup">
-          <Image
-            src="/logos/torch-main.png"
-            width={150}
-            height={48}
-            alt="TORCH Leadership Academy"
-            priority
-          />
+          <div className="theme-logo-stack">
+            <Image
+              src="/logos/torch-main.png"
+              width={150}
+              height={48}
+              alt="TORCH Leadership Academy"
+              className="theme-logo-light"
+              priority
+            />
+            <Image
+              src="/logos/torch-main-white.svg"
+              width={150}
+              height={48}
+              alt="TORCH Leadership Academy"
+              className="theme-logo-dark"
+              priority
+            />
+          </div>
         </div>
         <p className="brand-kicker">
           Torch Leadership Academy live operations app. Sign in with your registered email.

@@ -6,6 +6,7 @@ export default function ProfileEditForm({ profile }) {
   const [showSocial,  setShowSocial]  = useState(profile.show_social  ?? true);
   const [showInDir,   setShowInDir]   = useState(profile.show_in_directory ?? true);
   const [social,      setSocial]      = useState(profile.social_handle ?? "");
+  const [linkedIn,    setLinkedIn]    = useState(profile.linkedin_url ?? "");
   const [pronouns,    setPronouns]    = useState(profile.pronouns ?? "");
   const [cotlColor,   setCotlColor]   = useState(profile.cotl_color ?? "");
   const [superpower,  setSuperpower]  = useState(profile.superpower ?? "");
@@ -24,6 +25,7 @@ export default function ProfileEditForm({ profile }) {
         show_social:       showSocial,
         show_in_directory: showInDir,
         social_handle:     social.trim() || null,
+        linkedin_url:      linkedIn.trim() || null,
         pronouns:          pronouns.trim() || null,
         cotl_color:        cotlColor || null,
         superpower:        superpower.trim() || null,
@@ -101,7 +103,26 @@ export default function ProfileEditForm({ profile }) {
       </div>
 
       <div className="field">
-        <label className="label" htmlFor="pe-social">Instagram / Social Handle</label>
+        <label className="label" htmlFor="pe-linkedin">LinkedIn Profile (optional)</label>
+        <input
+          id="pe-linkedin"
+          type="url"
+          className="input"
+          placeholder="https://www.linkedin.com/in/your-name"
+          value={linkedIn}
+          onChange={(e) => setLinkedIn(e.target.value)}
+          maxLength={240}
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+        />
+        <p className="muted" style={{ fontSize: "0.78rem", marginTop: "0.15rem" }}>
+          When shared, clicking your name in the directory opens your LinkedIn profile.
+        </p>
+      </div>
+
+      <div className="field">
+        <label className="label" htmlFor="pe-social">Instagram / Social Handle (optional)</label>
         <input
           id="pe-social"
           type="text"
@@ -111,6 +132,9 @@ export default function ProfileEditForm({ profile }) {
           onChange={(e) => setSocial(e.target.value)}
           maxLength={120}
         />
+        <p className="muted" style={{ fontSize: "0.78rem", marginTop: "0.15rem" }}>
+          Shared only with staff and admins when social sharing is turned on.
+        </p>
       </div>
 
       <fieldset className="profile-edit-privacy">
@@ -132,7 +156,7 @@ export default function ProfileEditForm({ profile }) {
             onChange={(e) => setShowSocial(e.target.checked)}
             disabled={!showInDir}
           />
-          <span>Show my social handle</span>
+          <span>Show my LinkedIn profile and social info</span>
         </label>
       </fieldset>
 

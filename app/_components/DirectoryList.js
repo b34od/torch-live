@@ -62,6 +62,30 @@ export default function DirectoryList({ profiles, showRoom, showSocial = true })
     );
   }
 
+  function renderName(p) {
+    const content = (
+      <>
+        {p.full_name}
+        {p.pronouns ? <span className="user-card-pronouns"> ({p.pronouns})</span> : null}
+      </>
+    );
+
+    if (!p.linkedin_url) {
+      return content;
+    }
+
+    return (
+      <a
+        href={p.linkedin_url}
+        target="_blank"
+        rel="noreferrer noopener"
+        className="user-card-name-link"
+      >
+        {content}
+      </a>
+    );
+  }
+
   return (
     <div className="mt-md">
       <div className="roster-filters">
@@ -97,10 +121,7 @@ export default function DirectoryList({ profiles, showRoom, showSocial = true })
           <article key={p.id} className="surface surface-pad">
             <div className="user-card-header">
               <div>
-                <p className="user-card-name">
-                  {p.full_name}
-                  {p.pronouns ? <span className="user-card-pronouns"> ({p.pronouns})</span> : null}
-                </p>
+                <p className="user-card-name">{renderName(p)}</p>
                 {(p.cotl_color || p.superpower) ? (
                   <p className="user-card-badges">
                     {p.cotl_color ? <span className={`pill pill-cotl-${p.cotl_color}`}>{p.cotl_color}</span> : null}
@@ -146,8 +167,7 @@ export default function DirectoryList({ profiles, showRoom, showSocial = true })
             {rows.map((p) => (
               <tr key={p.id}>
                 <td>
-                  {p.full_name}
-                  {p.pronouns ? <span className="user-card-pronouns"> ({p.pronouns})</span> : null}
+                  {renderName(p)}
                   {(p.cotl_color || p.superpower) ? (
                     <span className="user-card-badges">
                       {p.cotl_color ? <span className={`pill pill-cotl-${p.cotl_color}`}>{p.cotl_color}</span> : null}

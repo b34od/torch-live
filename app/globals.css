@@ -221,6 +221,27 @@ img {
   gap: 0.8rem;
 }
 
+.theme-logo-stack {
+  display: inline-flex;
+  align-items: center;
+}
+
+.theme-logo-light {
+  display: block;
+}
+
+.theme-logo-dark {
+  display: none;
+}
+
+[data-theme="dark"] .theme-logo-light {
+  display: none;
+}
+
+[data-theme="dark"] .theme-logo-dark {
+  display: block;
+}
+
 .brand-lockup h1 {
   margin: 0;
   font-family: var(--font-playfair-display), serif;
@@ -1436,6 +1457,24 @@ img {
 .user-card-name {
   margin: 0;
   font-weight: 800;
+}
+
+.user-card-name-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(113, 60, 151, 0.45);
+  text-underline-offset: 0.15em;
+}
+
+.user-card-name-link:hover {
+  color: var(--torch-purple);
+  text-decoration-color: currentColor;
+}
+
+.user-card-name-link:focus-visible {
+  outline: 2px solid rgba(236, 113, 79, 0.55);
+  outline-offset: 2px;
+  border-radius: 0.2rem;
 }
 
 .user-card-email {

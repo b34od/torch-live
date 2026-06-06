@@ -21,7 +21,7 @@ export default async function StaffDirectoryPage() {
           Edit My Info
         </Link>
       </div>
-      <p className="muted">Contact participants and view team/guild/room assignments.</p>
+      <p className="muted">Contact participants and view team/guild/room assignments. Names with a LinkedIn profile open in a new tab.</p>
       {error ? (
         <p className="alert alert-error">{error.message}</p>
       ) : (

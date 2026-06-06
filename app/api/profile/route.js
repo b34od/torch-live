@@ -4,8 +4,42 @@ import { getSessionContext } from "../../../lib/auth";
 const ALLOWED_BOOLEAN = ["show_social", "show_in_directory"];
 const ALLOWED_TEXT    = ["social_handle", "pronouns", "superpower"];
 const ALLOWED_ENUM    = { cotl_color: ["blue", "green", "gold", "orange"] };
-const TEXT_MAX        = { social_handle: 120, pronouns: 60, superpower: 30 };
+const TEXT_MAX        = { social_handle: 120, linkedin_url: 240, pronouns: 60, superpower: 30 };
 const MAX_TEXT_LENGTH = 120;
+
+function normalizeLinkedInUrl(value) {
+  if (value === null) return null;
+
+  const trimmed = String(value).trim();
+  if (!trimmed) return null;
+
+  const raw = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+
+  let url;
+  try {
+    url = new URL(raw);
+  } catch {
+    throw new Error("LinkedIn profile must be a valid URL.");
+  }
+
+  const host = url.hostname.toLowerCase();
+  if (host !== "linkedin.com" && host !== "www.linkedin.com") {
+    throw new Error("LinkedIn profile must use linkedin.com.");
+  }
+
+  const pathname = url.pathname.replace(/\/+$/, "");
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments.length < 2 || !["in", "pub"].includes(segments[0])) {
+    throw new Error("LinkedIn profile must look like linkedin.com/in/your-name.");
+  }
+
+  url.protocol = "https:";
+  url.pathname = pathname;
+  url.search = "";
+  url.hash = "";
+
+  return url.toString();
+}
 
 export async function POST(request) {
   const { supabase, profile } = await getSessionContext();
@@ -36,6 +70,15 @@ export async function POST(request) {
       const maxLen = TEXT_MAX[key] ?? MAX_TEXT_LENGTH;
       const value = body[key] === null ? null : String(body[key]).trim().slice(0, maxLen) || null;
       updates[key] = value;
+    }
+  }
+
+  if ("linkedin_url" in body) {
+    try {
+      const raw = body.linkedin_url === null ? null : String(body.linkedin_url).slice(0, TEXT_MAX.linkedin_url);
+      updates.linkedin_url = normalizeLinkedInUrl(raw);
+    } catch (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
   }
 
