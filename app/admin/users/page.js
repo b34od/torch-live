@@ -322,7 +322,13 @@ async function createProgramUser(formData) {
   const guildId = String(formData.get("guild_id") || "").trim() || null;
   const roomNumber = String(formData.get("room_number") || "").trim() || null;
   const phoneNumber = normalizePhoneNumber(formData.get("phone_number"));
+  const pronouns = String(formData.get("pronouns") || "").trim().slice(0, 60) || null;
+  const cotlColor = String(formData.get("cotl_color") || "").trim() || null;
+  const specialtyTag = String(formData.get("specialty_tag") || "").trim() || null;
   const selectedYear = parseProgramYear(formData.get("program_year"), profile.program_year);
+
+  const COTL_VALUES = ["blue", "green", "gold", "orange"];
+  const SPECIALTY_VALUES = ["Nurse", "Wellbeing Advisor"];
 
   if (!fullName || !email || !role) {
     redirect(usersPageUrl(selectedYear, { error: "Name, email, and role are required." }));
@@ -342,6 +348,14 @@ async function createProgramUser(formData) {
 
   if (!isValidPhoneNumber(phoneNumber)) {
     redirect(usersPageUrl(selectedYear, { error: "Phone number must be E.164 format (for example: +16095551234)." }));
+  }
+
+  if (cotlColor !== null && !COTL_VALUES.includes(cotlColor)) {
+    redirect(usersPageUrl(selectedYear, { error: "Invalid COTL color." }));
+  }
+
+  if (specialtyTag !== null && !SPECIALTY_VALUES.includes(specialtyTag)) {
+    redirect(usersPageUrl(selectedYear, { error: "Invalid specialty tag." }));
   }
 
   const adminClient = createAdminSupabaseClient();
@@ -371,6 +385,9 @@ async function createProgramUser(formData) {
         guild_id: guildId,
         room_number: roomNumber,
         phone_number: phoneNumber,
+        pronouns,
+        cotl_color: cotlColor,
+        specialty_tag: specialtyTag,
         is_active: true,
         program_year: selectedYear,
       },
@@ -557,7 +574,13 @@ async function updateProgramUser(formData) {
   const roomNumber = String(formData.get("room_number") || "").trim() || null;
   const phoneNumber = normalizePhoneNumber(formData.get("phone_number"));
   const isActive = formData.get("is_active") === "on";
+  const pronouns = String(formData.get("pronouns") || "").trim().slice(0, 60) || null;
+  const cotlColor = String(formData.get("cotl_color") || "").trim() || null;
+  const specialtyTag = String(formData.get("specialty_tag") || "").trim() || null;
   const selectedYear = parseProgramYear(formData.get("program_year"), profile.program_year);
+
+  const COTL_VALUES = ["blue", "green", "gold", "orange"];
+  const SPECIALTY_VALUES = ["Nurse", "Wellbeing Advisor"];
 
   if (!userId || !fullName || !email || !role) {
     redirect(usersPageUrl(selectedYear, { error: "All edit fields are required." }));
@@ -577,6 +600,14 @@ async function updateProgramUser(formData) {
 
   if (!isValidPhoneNumber(phoneNumber)) {
     redirect(usersPageUrl(selectedYear, { error: "Phone number must be E.164 format (for example: +16095551234)." }));
+  }
+
+  if (cotlColor !== null && !COTL_VALUES.includes(cotlColor)) {
+    redirect(usersPageUrl(selectedYear, { error: "Invalid COTL color." }));
+  }
+
+  if (specialtyTag !== null && !SPECIALTY_VALUES.includes(specialtyTag)) {
+    redirect(usersPageUrl(selectedYear, { error: "Invalid specialty tag." }));
   }
 
   const adminClient = createAdminSupabaseClient();
@@ -607,6 +638,9 @@ async function updateProgramUser(formData) {
         guild_id: guildId,
         room_number: roomNumber,
         phone_number: phoneNumber,
+        pronouns,
+        cotl_color: cotlColor,
+        specialty_tag: specialtyTag,
         is_active: isActive,
         program_year: selectedYear,
       },
@@ -840,6 +874,28 @@ export default async function AdminUsersPage({ searchParams }) {
             <label className="label" htmlFor="phone_number">Phone Number (optional)</label>
             <input id="phone_number" name="phone_number" className="input" placeholder="+16095551234" />
           </div>
+          <div className="field">
+            <label className="label" htmlFor="pronouns">Pronouns (optional)</label>
+            <input id="pronouns" name="pronouns" className="input" placeholder="she/her" maxLength={60} />
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="cotl_color">COTL Color (optional)</label>
+            <select id="cotl_color" name="cotl_color" className="select" defaultValue="">
+              <option value="">— None —</option>
+              <option value="blue">Blue</option>
+              <option value="green">Green</option>
+              <option value="gold">Gold</option>
+              <option value="orange">Orange</option>
+            </select>
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="specialty_tag">Specialty Tag (staff only, optional)</label>
+            <select id="specialty_tag" name="specialty_tag" className="select" defaultValue="">
+              <option value="">— None —</option>
+              <option value="Nurse">Nurse</option>
+              <option value="Wellbeing Advisor">Wellbeing Advisor</option>
+            </select>
+          </div>
           <button type="submit" className="button button-primary">
             Create User
           </button>
@@ -986,6 +1042,45 @@ export default async function AdminUsersPage({ searchParams }) {
                 defaultValue={editingUser.phone_number || ""}
                 placeholder="+16095551234"
               />
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="edit_pronouns">Pronouns (optional)</label>
+              <input
+                id="edit_pronouns"
+                name="pronouns"
+                className="input"
+                defaultValue={editingUser.pronouns || ""}
+                placeholder="she/her"
+                maxLength={60}
+              />
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="edit_cotl_color">COTL Color (optional)</label>
+              <select
+                id="edit_cotl_color"
+                name="cotl_color"
+                className="select"
+                defaultValue={editingUser.cotl_color || ""}
+              >
+                <option value="">— None —</option>
+                <option value="blue">Blue</option>
+                <option value="green">Green</option>
+                <option value="gold">Gold</option>
+                <option value="orange">Orange</option>
+              </select>
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="edit_specialty_tag">Specialty Tag (staff only, optional)</label>
+              <select
+                id="edit_specialty_tag"
+                name="specialty_tag"
+                className="select"
+                defaultValue={editingUser.specialty_tag || ""}
+              >
+                <option value="">— None —</option>
+                <option value="Nurse">Nurse</option>
+                <option value="Wellbeing Advisor">Wellbeing Advisor</option>
+              </select>
             </div>
             <label className="inline-check muted">
               <input type="checkbox" name="is_active" defaultChecked={editingUser.is_active} />

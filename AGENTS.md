@@ -5,7 +5,7 @@ Orientation instructions for Codex (and any other automated agent) working in th
 ## Project
 
 TORCH Live is the operational web app for the TORCH Leadership Academy summer program.
-Stack: Next.js 15 (App Router + Server Actions), Supabase (auth + Postgres + RLS), Tailwind CSS, Twilio SMS.
+Stack: Next.js 15 (App Router + Server Actions), Supabase (auth + Postgres + RLS), Pure CSS (no Tailwind), Twilio SMS.
 
 **Second brain:** `/Users/BryanODonnell/Documents/Obsidian Vault/Projects/TORCH Live/`
 Read `TORCH Live.md` (hub), `Backlog.md`, and `Decisions.md` at session start.
@@ -59,6 +59,27 @@ Applied to production (in order):
 5. `20260526000500_torch_live_staff_day_zero.sql`
 6. `20260526091500_torch_live_private_rls_helpers.sql`
 7. `20260528103000_torch_live_schedule_unification_and_urgent_messaging.sql`
+
+8. `20260606120000_nat_sprint_identity_and_specialty.sql`
+
+## Schema Additions (Nat Sprint — awaiting migration 20260606120000)
+
+These columns are implemented in app code and will be active once the migration is applied:
+
+| Column | Table | Type | Access |
+|---|---|---|---|
+| `pronouns` | `user_profiles` | `text` nullable | User self-editable via `/api/profile` |
+| `specialty_tag` | `user_profiles` | `text` CHECK IN ('Nurse','Wellbeing Advisor') | Admin-only (not in `/api/profile`) |
+| `cotl_color` | `user_profiles` | `text` CHECK IN ('blue','green','gold','orange') | User self-editable via `/api/profile` |
+| `superpower` | `user_profiles` | `text` nullable (30 char soft limit) | User self-editable only — not in admin forms |
+
+`get_directory_profiles(year_param INT)` now returns all 4 new columns (visible to all authenticated roles).
+
+`getUserProfiles()` in `lib/data.js` now selects `pronouns, specialty_tag, cotl_color, superpower`.
+
+`/api/profile` route now accepts: `pronouns` (60 char max), `superpower` (30 char max), `cotl_color` (enum-validated).
+
+**Dependency note:** If TL-024 (CSP nonce hardening) is implemented, the inline theme script in `app/layout.js` will need a nonce attribute added.
 
 ## Approval Gates
 

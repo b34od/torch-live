@@ -20,6 +20,7 @@ export default function DirectoryList({ profiles, showRoom, showSocial = true })
 
   const teamOptions = [...new Set(profiles.map((p) => p.team_key).filter(Boolean))].sort();
   const guildOptions = [...new Set(profiles.map((p) => p.guild_name).filter(Boolean))].sort();
+  const hasSpecialty = profiles.some((p) => p.specialty_tag);
 
   function handleSort(col) {
     if (col === sortCol) {
@@ -96,10 +97,22 @@ export default function DirectoryList({ profiles, showRoom, showSocial = true })
           <article key={p.id} className="surface surface-pad">
             <div className="user-card-header">
               <div>
-                <p className="user-card-name">{p.full_name}</p>
+                <p className="user-card-name">
+                  {p.full_name}
+                  {p.pronouns ? <span className="user-card-pronouns"> ({p.pronouns})</span> : null}
+                </p>
+                {(p.cotl_color || p.superpower) ? (
+                  <p className="user-card-badges">
+                    {p.cotl_color ? <span className={`pill pill-cotl-${p.cotl_color}`}>{p.cotl_color}</span> : null}
+                    {p.superpower ? <span className="pill pill-superpower">{p.superpower}</span> : null}
+                  </p>
+                ) : null}
                 {showSocial && p.social_handle ? <p className="muted">{p.social_handle}</p> : null}
               </div>
-              <span className={`pill ${rolePillClass(p.role)}`}>{p.role}</span>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.3rem" }}>
+                <span className={`pill ${rolePillClass(p.role)}`}>{p.role}</span>
+                {p.specialty_tag ? <span className="pill pill-specialty">{p.specialty_tag}</span> : null}
+              </div>
             </div>
             <p className="user-card-meta">
               {p.team_key ? <><span className="schedule-label">Team:</span> {p.team_key} &nbsp;</> : null}
@@ -122,6 +135,7 @@ export default function DirectoryList({ profiles, showRoom, showSocial = true })
             <tr>
               <SortTh col="full_name" label="Name" />
               <SortTh col="role" label="Role" />
+              {hasSpecialty ? <th>Specialty</th> : null}
               <SortTh col="team_key" label="Team" />
               <SortTh col="guild_name" label="Guild" />
               {showRoom ? <SortTh col="room_number" label="Room" /> : null}
@@ -131,8 +145,18 @@ export default function DirectoryList({ profiles, showRoom, showSocial = true })
           <tbody>
             {rows.map((p) => (
               <tr key={p.id}>
-                <td>{p.full_name}</td>
+                <td>
+                  {p.full_name}
+                  {p.pronouns ? <span className="user-card-pronouns"> ({p.pronouns})</span> : null}
+                  {(p.cotl_color || p.superpower) ? (
+                    <span className="user-card-badges">
+                      {p.cotl_color ? <span className={`pill pill-cotl-${p.cotl_color}`}>{p.cotl_color}</span> : null}
+                      {p.superpower ? <span className="pill pill-superpower">{p.superpower}</span> : null}
+                    </span>
+                  ) : null}
+                </td>
                 <td><span className={`pill ${rolePillClass(p.role)}`}>{p.role}</span></td>
+                {hasSpecialty ? <td>{p.specialty_tag ? <span className="pill pill-specialty">{p.specialty_tag}</span> : <span className="muted">—</span>}</td> : null}
                 <td>{p.team_key || <span className="muted">—</span>}</td>
                 <td>{p.guild_name || <span className="muted">—</span>}</td>
                 {showRoom ? <td>{p.room_number || <span className="muted">—</span>}</td> : null}
@@ -141,7 +165,7 @@ export default function DirectoryList({ profiles, showRoom, showSocial = true })
             ))}
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={3 + (showRoom ? 1 : 0) + (showSocial ? 1 : 0) + 1} className="empty">No matches.</td>
+                <td colSpan={3 + (hasSpecialty ? 1 : 0) + (showRoom ? 1 : 0) + (showSocial ? 1 : 0) + 1} className="empty">No matches.</td>
               </tr>
             ) : null}
           </tbody>

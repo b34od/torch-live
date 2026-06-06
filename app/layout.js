@@ -52,8 +52,11 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body className={`${poppins.variable} ${playfairDisplay.variable}`}>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${poppins.variable} ${playfairDisplay.variable}`}>
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var s=localStorage.getItem('torch-live-theme');document.documentElement.setAttribute('data-theme',s==='dark'||s==='light'?s:window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');}catch(e){}})();` }} />
+        {children}
+      </body>
     </html>
   );
 }

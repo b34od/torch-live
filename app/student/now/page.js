@@ -113,7 +113,8 @@ export default async function StudentNowPage({ searchParams }) {
       <section className="card">
         <h2>Need Help?</h2>
         <p className="muted">
-          Speak with any staff member, or text the TORCH team directly:{" "}
+          Speak with any staff member, or call{" "}
+          {process.env.NEXT_PUBLIC_EMERGENCY_CONTACT_NAME || "the TORCH team"} directly:{" "}
           <a href="tel:+16093006397" className="text-link">(609) 300-6397</a>
         </p>
       </section>
