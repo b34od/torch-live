@@ -35,6 +35,7 @@ Codex is not only an audit/readiness lane for TORCH Live. Codex is also the PM d
 ### Delivery and Readiness
 
 - Pre-deploy security audit: RLS policies, server actions, auth flows.
+- `launch-security-preflight` is the required pre-deploy security gate for auth-backed surfaces before merge/deploy closeout; rerun it after auth, middleware, header/CSP/CDN, provider, or secret-handling changes.
 - GitHub PR review and merge closeout.
 - Narrow correctness fixes after audit findings.
 - Release checklist validation before July 12 deploy.

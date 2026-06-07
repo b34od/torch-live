@@ -328,7 +328,7 @@ async function createProgramUser(formData) {
   const selectedYear = parseProgramYear(formData.get("program_year"), profile.program_year);
 
   const COTL_VALUES = ["blue", "green", "gold", "orange"];
-  const SPECIALTY_VALUES = ["Nurse", "Wellbeing Advisor"];
+  const SPECIALTY_VALUES = ["Support", "Lead", "Advisor", "Coordinator", "Board"];
 
   if (!fullName || !email || !role) {
     redirect(usersPageUrl(selectedYear, { error: "Name, email, and role are required." }));
@@ -355,7 +355,7 @@ async function createProgramUser(formData) {
   }
 
   if (specialtyTag !== null && !SPECIALTY_VALUES.includes(specialtyTag)) {
-    redirect(usersPageUrl(selectedYear, { error: "Invalid specialty tag." }));
+    redirect(usersPageUrl(selectedYear, { error: "Invalid staff role." }));
   }
 
   const adminClient = createAdminSupabaseClient();
@@ -580,7 +580,7 @@ async function updateProgramUser(formData) {
   const selectedYear = parseProgramYear(formData.get("program_year"), profile.program_year);
 
   const COTL_VALUES = ["blue", "green", "gold", "orange"];
-  const SPECIALTY_VALUES = ["Nurse", "Wellbeing Advisor"];
+  const SPECIALTY_VALUES = ["Support", "Lead", "Advisor", "Coordinator", "Board"];
 
   if (!userId || !fullName || !email || !role) {
     redirect(usersPageUrl(selectedYear, { error: "All edit fields are required." }));
@@ -607,7 +607,7 @@ async function updateProgramUser(formData) {
   }
 
   if (specialtyTag !== null && !SPECIALTY_VALUES.includes(specialtyTag)) {
-    redirect(usersPageUrl(selectedYear, { error: "Invalid specialty tag." }));
+    redirect(usersPageUrl(selectedYear, { error: "Invalid staff role." }));
   }
 
   const adminClient = createAdminSupabaseClient();
@@ -889,11 +889,14 @@ export default async function AdminUsersPage({ searchParams }) {
             </select>
           </div>
           <div className="field">
-            <label className="label" htmlFor="specialty_tag">Specialty Tag (staff only, optional)</label>
+            <label className="label" htmlFor="specialty_tag">Staff Role (optional)</label>
             <select id="specialty_tag" name="specialty_tag" className="select" defaultValue="">
               <option value="">— None —</option>
-              <option value="Nurse">Nurse</option>
-              <option value="Wellbeing Advisor">Wellbeing Advisor</option>
+              <option value="Support">Support</option>
+              <option value="Lead">Lead</option>
+              <option value="Advisor">Advisor</option>
+              <option value="Coordinator">Coordinator</option>
+              <option value="Board">Board</option>
             </select>
           </div>
           <button type="submit" className="button button-primary">
@@ -1070,7 +1073,7 @@ export default async function AdminUsersPage({ searchParams }) {
               </select>
             </div>
             <div className="field">
-              <label className="label" htmlFor="edit_specialty_tag">Specialty Tag (staff only, optional)</label>
+              <label className="label" htmlFor="edit_specialty_tag">Staff Role (optional)</label>
               <select
                 id="edit_specialty_tag"
                 name="specialty_tag"
@@ -1078,8 +1081,11 @@ export default async function AdminUsersPage({ searchParams }) {
                 defaultValue={editingUser.specialty_tag || ""}
               >
                 <option value="">— None —</option>
-                <option value="Nurse">Nurse</option>
-                <option value="Wellbeing Advisor">Wellbeing Advisor</option>
+                <option value="Support">Support</option>
+                <option value="Lead">Lead</option>
+                <option value="Advisor">Advisor</option>
+                <option value="Coordinator">Coordinator</option>
+                <option value="Board">Board</option>
               </select>
             </div>
             <label className="inline-check muted">

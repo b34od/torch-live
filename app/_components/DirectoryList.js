@@ -156,7 +156,7 @@ export default function DirectoryList({ profiles, showRoom, showSocial = true })
             <tr>
               <SortTh col="full_name" label="Name" />
               <SortTh col="role" label="Role" />
-              {hasSpecialty ? <th>Specialty</th> : null}
+              {hasSpecialty ? <th>Staff Role</th> : null}
               <SortTh col="team_key" label="Team" />
               <SortTh col="guild_name" label="Guild" />
               {showRoom ? <SortTh col="room_number" label="Room" /> : null}
