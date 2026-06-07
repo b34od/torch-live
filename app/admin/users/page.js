@@ -328,7 +328,7 @@ async function createProgramUser(formData) {
   const selectedYear = parseProgramYear(formData.get("program_year"), profile.program_year);
 
   const COTL_VALUES = ["blue", "green", "gold", "orange"];
-  const SPECIALTY_VALUES = ["Nurse", "Wellbeing Advisor", "Support", "Lead", "SrC", "Advisor", "Coordinator", "Board"];
+  const SPECIALTY_VALUES = ["Nurse", "Wellbeing Advisor", "Support", "Lead", "SrC", "Advisor", "Coordinator", "Board", "Media Fellow"];
 
   if (!fullName || !email || !role) {
     redirect(usersPageUrl(selectedYear, { error: "Name, email, and role are required." }));
@@ -580,7 +580,7 @@ async function updateProgramUser(formData) {
   const selectedYear = parseProgramYear(formData.get("program_year"), profile.program_year);
 
   const COTL_VALUES = ["blue", "green", "gold", "orange"];
-  const SPECIALTY_VALUES = ["Nurse", "Wellbeing Advisor", "Support", "Lead", "SrC", "Advisor", "Coordinator", "Board"];
+  const SPECIALTY_VALUES = ["Nurse", "Wellbeing Advisor", "Support", "Lead", "SrC", "Advisor", "Coordinator", "Board", "Media Fellow"];
 
   if (!userId || !fullName || !email || !role) {
     redirect(usersPageUrl(selectedYear, { error: "All edit fields are required." }));
@@ -898,6 +898,7 @@ export default async function AdminUsersPage({ searchParams }) {
               <option value="Coordinator">Coordinator</option>
               <option value="Support">Support</option>
               <option value="Board">Board</option>
+              <option value="Media Fellow">Media Fellow</option>
               <option value="Nurse">Nurse</option>
               <option value="Wellbeing Advisor">Wellbeing Advisor</option>
             </select>
@@ -1090,6 +1091,7 @@ export default async function AdminUsersPage({ searchParams }) {
                 <option value="Coordinator">Coordinator</option>
                 <option value="Support">Support</option>
                 <option value="Board">Board</option>
+                <option value="Media Fellow">Media Fellow</option>
                 <option value="Nurse">Nurse</option>
                 <option value="Wellbeing Advisor">Wellbeing Advisor</option>
               </select>
