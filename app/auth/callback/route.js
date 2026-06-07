@@ -66,8 +66,6 @@ export async function GET(request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const tokenHash = requestUrl.searchParams.get("token_hash");
-  const accessToken = requestUrl.searchParams.get("access_token");
-  const refreshToken = requestUrl.searchParams.get("refresh_token");
   const type = requestUrl.searchParams.get("type");
   const callbackError =
     requestUrl.searchParams.get("error_description") || requestUrl.searchParams.get("error");
@@ -88,9 +86,7 @@ export async function GET(request) {
     return response;
   }
 
-  const hasSessionPair = Boolean(accessToken && refreshToken);
-
-  if (!code && !tokenHash && !hasSessionPair) {
+  if (!code && !tokenHash) {
     redirectUrl.searchParams.set("error", "Invalid sign-in link.");
     response.headers.set("Location", redirectUrl.toString());
     return response;
@@ -121,12 +117,6 @@ export async function GET(request) {
   } else if (code) {
     const exchange = await supabase.auth.exchangeCodeForSession(code);
     error = exchange.error;
-  } else if (hasSessionPair) {
-    const restore = await supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    });
-    error = restore.error;
   } else {
     error = { message: "Invalid sign-in link." };
   }
