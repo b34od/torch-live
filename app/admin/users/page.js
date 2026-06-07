@@ -328,7 +328,7 @@ async function createProgramUser(formData) {
   const selectedYear = parseProgramYear(formData.get("program_year"), profile.program_year);
 
   const COTL_VALUES = ["blue", "green", "gold", "orange"];
-  const SPECIALTY_VALUES = ["Nurse", "Wellbeing Advisor", "Support", "Lead", "Advisor", "Coordinator", "Board"];
+  const SPECIALTY_VALUES = ["Nurse", "Wellbeing Advisor", "Support", "Lead", "SrC", "Advisor", "Coordinator", "Board"];
 
   if (!fullName || !email || !role) {
     redirect(usersPageUrl(selectedYear, { error: "Name, email, and role are required." }));
@@ -580,7 +580,7 @@ async function updateProgramUser(formData) {
   const selectedYear = parseProgramYear(formData.get("program_year"), profile.program_year);
 
   const COTL_VALUES = ["blue", "green", "gold", "orange"];
-  const SPECIALTY_VALUES = ["Nurse", "Wellbeing Advisor", "Support", "Lead", "Advisor", "Coordinator", "Board"];
+  const SPECIALTY_VALUES = ["Nurse", "Wellbeing Advisor", "Support", "Lead", "SrC", "Advisor", "Coordinator", "Board"];
 
   if (!userId || !fullName || !email || !role) {
     redirect(usersPageUrl(selectedYear, { error: "All edit fields are required." }));
@@ -893,6 +893,7 @@ export default async function AdminUsersPage({ searchParams }) {
             <select id="specialty_tag" name="specialty_tag" className="select" defaultValue="">
               <option value="">— None —</option>
               <option value="Lead">Lead</option>
+              <option value="SrC">SrC</option>
               <option value="Advisor">Advisor</option>
               <option value="Coordinator">Coordinator</option>
               <option value="Support">Support</option>
@@ -1084,6 +1085,7 @@ export default async function AdminUsersPage({ searchParams }) {
               >
                 <option value="">— None —</option>
                 <option value="Lead">Lead</option>
+                <option value="SrC">SrC</option>
                 <option value="Advisor">Advisor</option>
                 <option value="Coordinator">Coordinator</option>
                 <option value="Support">Support</option>

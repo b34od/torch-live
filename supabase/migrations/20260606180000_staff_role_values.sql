@@ -11,5 +11,5 @@ alter table public.user_profiles
   add constraint user_profiles_specialty_tag_check
   check (specialty_tag in (
     'Nurse', 'Wellbeing Advisor',
-    'Support', 'Lead', 'Advisor', 'Coordinator', 'Board'
+    'Support', 'Lead', 'SrC', 'Advisor', 'Coordinator', 'Board'
   ));
