@@ -165,6 +165,15 @@
   background: rgba(237, 103, 103, 0.14);
   border-color: rgba(237, 103, 103, 0.35);
 }
+[data-theme="dark"] .team-roster-card {
+  background: rgba(28, 28, 28, 0.95);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+[data-theme="dark"] .team-roster-card-unassigned {
+  background: rgba(238, 183, 95, 0.06);
+  border-color: rgba(238, 183, 95, 0.3);
+}
+[data-theme="dark"] .team-roster-role-label { color: #8a8b8b; }
 
 /* Theme toggle button */
 .theme-toggle {
