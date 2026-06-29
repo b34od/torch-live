@@ -1,5 +1,9 @@
+import { headers } from "next/headers";
 import localFont from "next/font/local";
+import Script from "next/script";
 import "./globals.css";
+
+const THEME_INIT_SCRIPT = `(function(){try{var s=localStorage.getItem('torch-live-theme');document.documentElement.setAttribute('data-theme',s==='dark'||s==='light'?s:window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');}catch(e){}})();`;
 
 const poppins = localFont({
   variable: "--font-poppins",
@@ -50,11 +54,15 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const nonce = (await headers()).get("x-nonce") || undefined;
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${poppins.variable} ${playfairDisplay.variable}`}>
-        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var s=localStorage.getItem('torch-live-theme');document.documentElement.setAttribute('data-theme',s==='dark'||s==='light'?s:window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');}catch(e){}})();` }} />
+        <Script id="theme-init" strategy="beforeInteractive" nonce={nonce}>
+          {THEME_INIT_SCRIPT}
+        </Script>
         {children}
       </body>
     </html>

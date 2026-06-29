@@ -364,6 +364,9 @@ export default function ScheduleTimeline({
                     {item.rain_location ? <span>Rain: {item.rain_location}</span> : null}
                   </p>
                 ) : null}
+                {item.splitHint && height >= 48 ? (
+                  <p className="timeline-block-split-hint">{item.splitHint}</p>
+                ) : null}
               </article>
             );
           })}
