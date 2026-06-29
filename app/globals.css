@@ -2233,10 +2233,120 @@ img {
   color: var(--torch-neutral-900);
 }
 
+.schedule-list-body {
+  display: grid;
+  gap: 0.15rem;
+  grid-row: 1 / -1;
+  align-self: center;
+  min-width: 0;
+}
+
+.schedule-list-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.schedule-item-badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+}
+
+.schedule-item-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.4rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.schedule-item-badge-staff {
+  color: #7b2929;
+  background: rgba(237, 103, 103, 0.14);
+  border-color: rgba(237, 103, 103, 0.24);
+}
+
+.schedule-item-badge-lead {
+  color: #4f3367;
+  background: rgba(113, 60, 151, 0.1);
+  border-color: rgba(113, 60, 151, 0.2);
+}
+
 .student-schedule-location {
   font-size: 0.775rem;
   color: #5a5b5b;
   margin-top: 0.15rem;
+}
+
+.schedule-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.6rem;
+  margin-top: 0.3rem;
+  font-size: 0.72rem;
+  color: #5a5b5b;
+}
+
+.schedule-item-details {
+  margin-top: 0.4rem;
+  border: 1px solid rgba(44,44,44,0.1);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.66);
+  padding: 0.38rem 0.48rem;
+}
+
+.schedule-item-details summary {
+  list-style: none;
+  cursor: pointer;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #4f5050;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.schedule-item-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.schedule-item-details summary::before {
+  content: "▸";
+  color: #666767;
+  transition: transform 120ms ease;
+}
+
+.schedule-item-details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.schedule-item-details-grid {
+  display: grid;
+  gap: 0.24rem;
+  margin-top: 0.42rem;
+}
+
+.schedule-item-detail {
+  margin: 0;
+  font-size: 0.76rem;
+  color: #555656;
+  line-height: 1.3;
+}
+
+.student-schedule-list-staff {
+  gap: 0.65rem;
+}
+
+.schedule-list-item-staff {
+  grid-template-columns: 5.5rem minmax(0, 1fr);
 }
 
 .student-schedule-split-row {
@@ -2284,6 +2394,15 @@ img {
 }
 
 @media (max-width: 540px) {
+  .schedule-list-heading {
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .schedule-item-badges {
+    justify-content: flex-start;
+  }
+
   .student-schedule-split-pair {
     grid-template-columns: 1fr;
   }

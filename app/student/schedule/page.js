@@ -1,4 +1,5 @@
 import DayTabs from "../../../components/ui/DayTabs";
+import ScheduleList from "../../../components/ui/ScheduleList";
 import ScheduleTimeline from "../../../components/ui/ScheduleTimeline";
 import ScheduleViewTabs from "../../../components/ui/ScheduleViewTabs";
 import { requireUser } from "../../../lib/auth";
@@ -6,7 +7,6 @@ import { getStudentScheduleByDay } from "../../../lib/data";
 import {
   addMinutesToTime,
   dayLabel,
-  formatTimeLabel,
   programDaySortMinutes,
   resolveDayForTrack,
   STUDENT_DAY_NUMBERS,
@@ -85,38 +85,6 @@ function expandSplitPairs(items, dayNumber, teamKey) {
   return result;
 }
 
-// Explicit keyword-based color map — avoids hash collisions between
-// visually similar location types (e.g. Outside vs Classrooms).
-function locationColor(location) {
-  const loc = String(location || "").toLowerCase();
-  if (loc.includes("outside") || loc.includes("quad") || loc.includes("behind") ||
-      loc.includes("grass") || loc.includes("amphitheatre") || loc.includes("field")) {
-    return { bg: "rgba(147,204,134,0.22)", border: "#33784c" };      // green — outdoors
-  }
-  if (loc.includes("classroom")) {
-    return { bg: "rgba(238,183,95,0.24)", border: "#b87200" };       // amber — classrooms
-  }
-  if (loc.includes("theatre") || loc.includes("theater")) {
-    return { bg: "rgba(173,174,215,0.28)", border: "#5b5f92" };      // lavender — theatre
-  }
-  if (loc.includes("dining") || loc.includes("d)")) {
-    return { bg: "rgba(113,180,220,0.22)", border: "#2d6e9e" };      // blue — dining hall
-  }
-  if (loc.includes("event room") || loc.includes("campus ctr") || loc.includes("campus center")) {
-    return { bg: "rgba(237,103,103,0.18)", border: "#c44040" };      // coral — event room / campus ctr
-  }
-  if (loc.includes("housing")) {
-    return { bg: "rgba(255,180,195,0.22)", border: "#b04070" };      // rose — housing
-  }
-  if (loc.includes("coffee") || loc.includes("coffeehouse")) {
-    return { bg: "rgba(100,200,190,0.22)", border: "#2a8a80" };      // teal — coffeehouse
-  }
-  if (loc.includes("trlc")) {
-    return { bg: "rgba(237,103,103,0.18)", border: "#c44040" };      // coral — TRLC
-  }
-  return { bg: "rgba(173,174,215,0.18)", border: "#8888aa" };        // fallback lavender
-}
-
 export const metadata = {
   title: "Schedule",
 };
@@ -159,60 +127,8 @@ export default async function StudentSchedulePage({ searchParams }) {
             <button className="schedule-view-tab" data-view="timeline">Timeline</button>
           </div>
 
-          <div className="schedule-view-panel" data-view="list">
-            <ul className="student-schedule-list mt-sm">
-              {(() => {
-                const elements = [];
-                let i = 0;
-                while (i < displayItems.length) {
-                  const item = displayItems[i];
-                  if (item.splitPairId && i + 1 < displayItems.length && displayItems[i + 1].splitPairId === item.splitPairId) {
-                    const partner = displayItems[i + 1];
-                    const colorA = locationColor(item.location);
-                    const colorB = locationColor(partner.location);
-                    elements.push(
-                      <li key={item.splitPairId} className="student-schedule-split-row">
-                        <span className="student-schedule-time">
-                          {formatTimeLabel(item.start_time)}
-                        </span>
-                        <div className="student-schedule-split-pair">
-                          <div className="student-schedule-split-block" style={{ borderLeftColor: colorA.border, background: colorA.bg }}>
-                            {item.splitGroupLabel ? <span className="student-schedule-group-label">{item.splitGroupLabel}</span> : null}
-                            <span className="student-schedule-activity">{item.activity_name}</span>
-                            {item.location ? <span className="student-schedule-location">{item.location}</span> : null}
-                          </div>
-                          <div className="student-schedule-split-block" style={{ borderLeftColor: colorB.border, background: colorB.bg }}>
-                            {partner.splitGroupLabel ? <span className="student-schedule-group-label">{partner.splitGroupLabel}</span> : null}
-                            <span className="student-schedule-activity">{partner.activity_name}</span>
-                            {partner.location ? <span className="student-schedule-location">{partner.location}</span> : null}
-                          </div>
-                        </div>
-                      </li>
-                    );
-                    i += 2;
-                  } else {
-                    const color = locationColor(item.location);
-                    elements.push(
-                      <li
-                        key={item.id}
-                        className="student-schedule-item"
-                        style={{ borderLeftColor: color.border, background: color.bg }}
-                      >
-                        <span className="student-schedule-time">
-                          {formatTimeLabel(item.start_time)}
-                        </span>
-                        <span className="student-schedule-activity">{item.activity_name}</span>
-                        {item.location ? (
-                          <span className="student-schedule-location">{item.location}</span>
-                        ) : null}
-                      </li>
-                    );
-                    i += 1;
-                  }
-                }
-                return elements;
-              })()}
-            </ul>
+          <div className="schedule-view-panel mt-sm" data-view="list">
+            <ScheduleList items={displayItems} track="student" groupSplitPairs={true} />
           </div>
 
           <div className="schedule-view-panel" data-view="timeline" hidden>

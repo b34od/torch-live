@@ -1,12 +1,13 @@
 import DayTabs from "../../../components/ui/DayTabs";
+import ScheduleList from "../../../components/ui/ScheduleList";
 import ScheduleTimeline from "../../../components/ui/ScheduleTimeline";
+import ScheduleViewTabs from "../../../components/ui/ScheduleViewTabs";
 import { requireUser } from "../../../lib/auth";
 import { getStaffScheduleByDay } from "../../../lib/data";
 import {
   addMinutesToTime,
   dayLabel,
   formatTimeLabel,
-  formatTimeRange,
   programDaySortMinutes,
   resolveDayForTrack,
   STAFF_DAY_NUMBERS,
@@ -34,7 +35,7 @@ export default async function StaffSchedulePage({ searchParams }) {
   return (
     <section className="card">
       <h2>Staff Schedule</h2>
-      <p className="muted">Operational view including rain plans and point-person assignments.</p>
+      <p className="muted">Shared run-of-show first, with staff-only context tucked into each item when needed.</p>
       <DayTabs basePath="/staff/schedule" selectedDay={day} days={STAFF_DAY_NUMBERS} />
 
       {error ? (
@@ -52,91 +53,24 @@ export default async function StaffSchedulePage({ searchParams }) {
             <strong>{formatTimeLabel(firstItem.start_time)}</strong> · ends at{" "}
             <strong>{formatTimeLabel(endTime)}</strong> · Eastern Time (ET)
           </p>
-          <nav className="schedule-jump-nav mt-sm" aria-label="Staff schedule sections">
-            <a href="#staff-timeline" className="schedule-jump-link">
-              Timeline
-            </a>
-            <a href="#staff-details" className="schedule-jump-link">
-              Details
-            </a>
-          </nav>
+          <ScheduleViewTabs />
+          <div className="schedule-view-tabs mt-md">
+            <button className="schedule-view-tab" data-view="list" data-default="true">List</button>
+            <button className="schedule-view-tab" data-view="timeline">Timeline</button>
+          </div>
 
-          <h3 id="staff-timeline" className="section-anchor mt-md">Ops Timeline</h3>
-          <p className="muted">
-            Calendar-style view for quick handoffs, location checks, and what is next.
-          </p>
-          <ScheduleTimeline
-            items={sortedItems}
-            track="staff"
-            showNowMarker={false}
-            dayNumber={day}
-            programYear={profile.program_year}
-          />
+          <div className="schedule-view-panel mt-sm" data-view="list">
+            <ScheduleList items={sortedItems} track="staff" showOperationalDetails={true} />
+          </div>
 
-          <h3 id="staff-details" className="section-anchor mt-md">Ops Details</h3>
-          <details className="schedule-mobile-details mobile-only mt-sm">
-            <summary>Need larger text? Open details list ({sortedItems.length} items)</summary>
-            <div className="schedule-card-list mt-sm">
-              {sortedItems.map((item) => (
-                <article key={item.id} className="schedule-card">
-                  <div className="schedule-card-header">
-                    <span className="schedule-time">{formatTimeRange(item.start_time, item.duration_minutes)}</span>
-                    <span className="schedule-duration">{item.duration_minutes}m</span>
-                  </div>
-                  <p className="schedule-activity">
-                    {item.activity_name}
-                  </p>
-                  <p className="schedule-detail">
-                    <span className="schedule-label">Location:</span> {item.location || "TBD"}
-                  </p>
-                  <p className="schedule-detail">
-                    <span className="schedule-label">Point:</span>{" "}
-                    {item.point_person || "—"}
-                    {item.secondary_person ? ` / ${item.secondary_person}` : ""}
-                    {item.rain_location ? (
-                      <>{" "}· <span className="schedule-label">Rain:</span> {item.rain_location}</>
-                    ) : null}
-                  </p>
-                  {item.notes ? (
-                    <p className="schedule-detail">
-                      <span className="schedule-label">Notes:</span> {item.notes}
-                    </p>
-                  ) : null}
-                </article>
-              ))}
-            </div>
-          </details>
-
-          <div className="table-wrap mt-md desktop-only">
-            <table className="schedule-table">
-              <thead>
-                <tr>
-                  <th>Time Range</th>
-                  <th>Duration</th>
-                  <th>Activity</th>
-                  <th>Location</th>
-                  <th>Rain</th>
-                  <th>Point</th>
-                  <th>Secondary</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedItems.map((item) => (
-                  <tr key={item.id}>
-                    <td>{formatTimeRange(item.start_time, item.duration_minutes)}</td>
-                    <td>{item.duration_minutes}m</td>
-                    <td>
-                      <strong>{item.activity_name}</strong>
-                      {item.notes ? <p className="muted">{item.notes}</p> : null}
-                    </td>
-                    <td>{item.location || "TBD"}</td>
-                    <td>{item.rain_location || <span className="muted">—</span>}</td>
-                    <td>{item.point_person || <span className="muted">—</span>}</td>
-                    <td>{item.secondary_person || <span className="muted">—</span>}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="schedule-view-panel" data-view="timeline" hidden>
+            <ScheduleTimeline
+              items={sortedItems}
+              track="staff"
+              showNowMarker={false}
+              dayNumber={day}
+              programYear={profile.program_year}
+            />
           </div>
         </>
       )}
