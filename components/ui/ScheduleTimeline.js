@@ -331,10 +331,11 @@ export default function ScheduleTimeline({
             const blockTimeFull = formatTimeRange(item.start_time, item.duration_minutes);
             const blockTimeCompact = formatCompactTimeRange(item.start_time, item.duration_minutes);
             const visibleTime = showTime ? blockTimeFull : blockTimeCompact || blockTimeFull;
-            const visibleTitle = showTime ? blockTitle : `${visibleTime} · ${blockTitle}`;
-            const blockDescription = [blockTitle, blockTimeFull, locationLabel].filter(Boolean).join(" · ");
             const showLocation = height >= 56 && !laneIsCrowded;
+            const blockDescription = [blockTitle, blockTimeFull, locationLabel].filter(Boolean).join(" · ");
             const locationToken = locationLabel.length > 18 ? locationLabel.split(/\s*[–—-]\s*/)[0].trim() : locationLabel;
+            const locationSuffix = !showLocation && locationToken ? ` · ${locationToken}` : "";
+            const visibleTitle = showTime ? blockTitle : `${visibleTime} · ${blockTitle}${locationSuffix}`;
 
             return (
               <article

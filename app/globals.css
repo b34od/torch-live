@@ -1384,9 +1384,10 @@ img {
   font-size: 0.66rem;
   font-weight: 600;
   color: #484949;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .timeline-block-meta {
@@ -2063,7 +2064,7 @@ img {
 .student-schedule-split-block {
   border-left: 4px solid;
   border-radius: var(--radius-sm);
-  padding: 0.55rem 0.65rem;
+  padding: 0.65rem 0.75rem;
   box-shadow: 0 2px 8px rgba(44,44,44,0.05);
 }
 
@@ -2074,7 +2075,7 @@ img {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: #5a5b5b;
-  margin-bottom: 0.15rem;
+  margin-bottom: 0.22rem;
 }
 
 @media (max-width: 540px) {

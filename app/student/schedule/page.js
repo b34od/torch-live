@@ -15,10 +15,10 @@ import {
 const SPLIT_CONFIG = {
   "1@12:35": { type: "team", firstActivity: "lunch" },
   "1@17:30": { type: "guild" },
-  "2@17:35": { type: "guild" },
-  "3@12:00": { type: "team", firstActivity: "lunch" },
-  "3@17:35": { type: "team", firstActivity: "dinner" },
-  "4@12:30": { type: "guild" },
+  "2@17:35": { type: "guild", swapGap: 5 },
+  "3@12:00": { type: "team", firstActivity: "lunch", swapGap: 5 },
+  "3@17:35": { type: "team", firstActivity: "dinner", swapGap: 5 },
+  "4@12:30": { type: "guild", swapGap: 5 },
 };
 
 function expandSplitPairs(items, dayNumber, teamKey) {
@@ -58,6 +58,7 @@ function expandSplitPairs(items, dayNumber, teamKey) {
     const pairId1 = `split-${dayNumber}-${time}`;
     const pairId2 = `split-${dayNumber}-${time}-swap`;
     const dur = itemA.duration_minutes;
+    const swapTime = addMinutesToTime(time, dur + (cfg.swapGap || 0));
 
     if (hasTeam && cfg.type === "team") {
       const myFirst = inGroupA ? itemA : itemB;
@@ -67,13 +68,13 @@ function expandSplitPairs(items, dayNumber, teamKey) {
 
       result.push({ ...myFirst, splitPairId: pairId1, splitGroupLabel: myLabel, splitLane: 0 });
       result.push({ ...otherFirst, splitPairId: pairId1, splitGroupLabel: otherLabel, splitLane: 1 });
-      result.push({ ...otherFirst, id: `synth-${otherFirst.id}`, start_time: addMinutesToTime(time, dur), sort_order: (myFirst.sort_order || 0) + 1, splitPairId: pairId2, splitGroupLabel: myLabel, splitLane: 0, isSynthesized: true });
-      result.push({ ...myFirst, id: `synth-${myFirst.id}`, start_time: addMinutesToTime(time, dur), sort_order: (otherFirst.sort_order || 0) + 1, splitPairId: pairId2, splitGroupLabel: otherLabel, splitLane: 1, isSynthesized: true });
+      result.push({ ...otherFirst, id: `synth-${otherFirst.id}`, start_time: swapTime, sort_order: (myFirst.sort_order || 0) + 1, splitPairId: pairId2, splitGroupLabel: myLabel, splitLane: 0, isSynthesized: true });
+      result.push({ ...myFirst, id: `synth-${myFirst.id}`, start_time: swapTime, sort_order: (otherFirst.sort_order || 0) + 1, splitPairId: pairId2, splitGroupLabel: otherLabel, splitLane: 1, isSynthesized: true });
     } else {
       result.push({ ...itemA, splitPairId: pairId1, splitGroupLabel: labelA, splitLane: 0 });
       result.push({ ...itemB, splitPairId: pairId1, splitGroupLabel: labelB, splitLane: 1 });
-      result.push({ ...itemB, id: `synth-${itemB.id}`, start_time: addMinutesToTime(time, dur), sort_order: (itemA.sort_order || 0) + 1, splitPairId: pairId2, splitGroupLabel: labelA, splitLane: 0, isSynthesized: true });
-      result.push({ ...itemA, id: `synth-${itemA.id}`, start_time: addMinutesToTime(time, dur), sort_order: (itemB.sort_order || 0) + 1, splitPairId: pairId2, splitGroupLabel: labelB, splitLane: 1, isSynthesized: true });
+      result.push({ ...itemB, id: `synth-${itemB.id}`, start_time: swapTime, sort_order: (itemA.sort_order || 0) + 1, splitPairId: pairId2, splitGroupLabel: labelA, splitLane: 0, isSynthesized: true });
+      result.push({ ...itemA, id: `synth-${itemA.id}`, start_time: swapTime, sort_order: (itemB.sort_order || 0) + 1, splitPairId: pairId2, splitGroupLabel: labelB, splitLane: 1, isSynthesized: true });
     }
   }
 
