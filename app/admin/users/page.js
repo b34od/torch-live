@@ -9,14 +9,16 @@ const ROLES = ["student", "staff", "admin"];
 const MIN_YEAR = 2020;
 
 async function auditLog(adminClient, actorId, actorEmail, action, targetUserId, targetEmail, details) {
-  await adminClient.from("admin_audit_log").insert({
-    action,
-    actor_id: actorId || null,
-    actor_email: actorEmail || null,
-    target_user_id: targetUserId || null,
-    target_email: targetEmail || null,
-    details: details || null,
-  }).catch(() => {});
+  try {
+    await adminClient.from("admin_audit_log").insert({
+      action,
+      actor_id: actorId || null,
+      actor_email: actorEmail || null,
+      target_user_id: targetUserId || null,
+      target_email: targetEmail || null,
+      details: details || null,
+    });
+  } catch {}
 }
 const MAX_YEAR = 2100;
 const BULK_LIMIT = 500;

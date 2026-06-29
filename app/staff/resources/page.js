@@ -32,8 +32,12 @@ export default async function StaffResourcesPage() {
               {category.resource_items?.length ? (
                 category.resource_items.map((item) => (
                   <div key={item.id} className="resource-item">
-                    <strong>{item.title}</strong>
-                    <p>{item.body}</p>
+                    {item.url ? (
+                      <strong><a href={item.url} target="_blank" rel="noreferrer noopener" className="text-link">{item.title}</a></strong>
+                    ) : (
+                      <strong>{item.title}</strong>
+                    )}
+                    {item.body ? <p>{item.body}</p> : null}
                     <p className="muted">Visibility: {item.visibility}</p>
                   </div>
                 ))

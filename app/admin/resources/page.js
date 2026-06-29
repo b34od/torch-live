@@ -112,10 +112,11 @@ async function addResourceItem(formData) {
   const categoryId = String(formData.get("category_id") || "").trim();
   const title = String(formData.get("title") || "").trim();
   const body = String(formData.get("body") || "").trim();
+  const url = String(formData.get("url") || "").trim();
   const visibility = parseVisibility(String(formData.get("visibility") || "all"));
 
-  if (!categoryId || !title || !body) {
-    redirect(resourcesPageUrl({ error: "Category, title, and body are required." }));
+  if (!categoryId || !title || (!body && !url)) {
+    redirect(resourcesPageUrl({ error: "Category, title, and either body or URL are required." }));
   }
 
   const { supabase } = await requireUser(["admin"]);
@@ -130,7 +131,8 @@ async function addResourceItem(formData) {
   const { error } = await supabase.from("resource_items").insert({
     category_id: categoryId,
     title,
-    body,
+    body: body || null,
+    url: url || null,
     visibility,
     sort_order: nextSort,
   });
@@ -148,14 +150,15 @@ async function updateResourceItem(formData) {
   const categoryId = String(formData.get("category_id") || "").trim();
   const title = String(formData.get("title") || "").trim();
   const body = String(formData.get("body") || "").trim();
+  const url = String(formData.get("url") || "").trim();
   const visibility = parseVisibility(String(formData.get("visibility") || "all"));
 
   if (!id) {
     redirect(resourcesPageUrl({ error: "Missing resource item id." }));
   }
 
-  if (!categoryId || !title || !body) {
-    redirect(resourcesPageUrl({ error: "Category, title, and body are required.", edit_item: id }));
+  if (!categoryId || !title || (!body && !url)) {
+    redirect(resourcesPageUrl({ error: "Category, title, and either body or URL are required.", edit_item: id }));
   }
 
   const { supabase } = await requireUser(["admin"]);
@@ -164,7 +167,8 @@ async function updateResourceItem(formData) {
     .update({
       category_id: categoryId,
       title,
-      body,
+      body: body || null,
+      url: url || null,
       visibility,
     })
     .eq("id", id);
@@ -293,10 +297,16 @@ export default async function AdminResourcesPage({ searchParams }) {
             <input id="title" name="title" className="input" defaultValue={editingItem?.title || ""} required />
           </div>
           <div className="field">
-            <label className="label" htmlFor="body">
-              Item Body (Markdown supported)
+            <label className="label" htmlFor="url">
+              URL (optional — makes the title a link)
             </label>
-            <textarea id="body" name="body" className="textarea" defaultValue={editingItem?.body || ""} required />
+            <input id="url" name="url" type="url" className="input" placeholder="https://docs.google.com/..." defaultValue={editingItem?.url || ""} />
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="body">
+              Body (optional if URL is provided)
+            </label>
+            <textarea id="body" name="body" className="textarea" defaultValue={editingItem?.body || ""} />
           </div>
           <div className="field">
             <label className="label" htmlFor="visibility">
@@ -356,7 +366,8 @@ export default async function AdminResourcesPage({ searchParams }) {
                   category.resource_items.map((item) => (
                     <div key={item.id} className="resource-item">
                       <strong>{item.title}</strong>
-                      <p>{item.body}</p>
+                      {item.url ? <p className="muted">{item.url}</p> : null}
+                      {item.body ? <p>{item.body}</p> : null}
                       <p className="muted">Visibility: {item.visibility}</p>
                       <div className="item-actions mt-sm">
                         <Link href={resourcesPageUrl({ edit_item: item.id })} className="day-tab">
