@@ -1660,6 +1660,30 @@ img {
 
 .legal-card {
   width: min(860px, 100%);
+  position: relative;
+}
+
+.legal-close {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: none;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border-radius: var(--radius);
+  text-decoration: none;
+}
+
+.legal-close:hover {
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 
 .legal-prose h3 {
@@ -2105,6 +2129,7 @@ img {
   font-size: 0.875rem;
   color: var(--color-text-muted);
 }
+
 
 /* ─── Directory header ──────────────────────────────────────── */
 

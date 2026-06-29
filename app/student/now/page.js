@@ -68,11 +68,7 @@ export default async function StudentNowPage({ searchParams }) {
                 <span className="schedule-label">Guild</span>{" "}
                 <a href="/student/guilds" className="text-link">{guildName}</a>
               </span>
-            ) : (
-              <span className="profile-context-item">
-                <a href="/student/guilds" className="text-link">Choose your guild →</a>
-              </span>
-            )}
+            ) : null}
             {profile.room_number ? (
               <span className="profile-context-item">
                 <span className="schedule-label">Room</span> {profile.room_number}

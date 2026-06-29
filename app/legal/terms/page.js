@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export const metadata = {
   title: "Terms of Use",
 };
@@ -6,6 +8,7 @@ export default function TermsPage() {
   return (
     <main className="legal-shell">
       <article className="card legal-card legal-prose">
+        <Link href="/legal" className="legal-close" aria-label="Close">&times;</Link>
         <h2>TORCH Live Terms of Use</h2>
         <p className="muted">Effective May 25, 2026</p>
 
@@ -63,9 +66,6 @@ export default function TermsPage() {
           300-6397.
         </p>
 
-        <p className="muted mt-md">
-          This draft should be reviewed by legal counsel for your specific state and program model.
-        </p>
       </article>
     </main>
   );

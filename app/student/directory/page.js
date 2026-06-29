@@ -21,9 +21,7 @@ export default async function StudentDirectoryPage() {
           Edit My Info
         </Link>
       </div>
-      <p className="muted">
-        Find your teammates and staff. Names with a LinkedIn profile open in a new tab. This platform does not support private messaging — all program communication is group-only.
-      </p>
+      <p className="muted">Find your teammates and staff.</p>
       {error ? (
         <p className="alert alert-error">{error.message}</p>
       ) : (

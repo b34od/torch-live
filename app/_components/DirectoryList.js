@@ -18,7 +18,7 @@ export default function DirectoryList({ profiles, showRoom, showSocial = true })
   const [filterGuild, setFilterGuild] = useState("all");
   const [search, setSearch] = useState("");
 
-  const teamOptions = [...new Set(profiles.map((p) => p.team_key).filter(Boolean))].sort();
+  const teamOptions = [...new Set(profiles.map((p) => p.team_key).filter(Boolean))].sort((a, b) => Number(a) - Number(b) || String(a).localeCompare(String(b)));
   const guildOptions = [...new Set(profiles.map((p) => p.guild_name).filter(Boolean))].sort();
   const hasSpecialty = profiles.some((p) => p.specialty_tag);
 

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export const metadata = {
   title: "Privacy Notice",
 };
@@ -6,6 +8,7 @@ export default function PrivacyPage() {
   return (
     <main className="legal-shell">
       <article className="card legal-card legal-prose">
+        <Link href="/legal" className="legal-close" aria-label="Close">&times;</Link>
         <h2>TORCH Live Privacy Notice</h2>
         <p className="muted">Effective June 2, 2026</p>
 

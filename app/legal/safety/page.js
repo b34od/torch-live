@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export const metadata = {
   title: "Safety & Emergency Disclaimer",
 };
@@ -6,6 +8,7 @@ export default function SafetyPage() {
   return (
     <main className="legal-shell">
       <article className="card legal-card legal-prose">
+        <Link href="/legal" className="legal-close" aria-label="Close">&times;</Link>
         <h2>Safety & Emergency Disclaimer</h2>
         <p className="muted">Effective May 25, 2026</p>
 
@@ -43,8 +46,8 @@ export default function SafetyPage() {
 
         <h3>Contact</h3>
         <p>
-          For safety concerns, contact TORCH staff directly at
-          <a href="mailto:info@torchleadershipacademy.org"> info@torchleadershipacademy.org</a> or
+          For safety concerns, contact TORCH staff directly at{" "}
+          <a href="mailto:info@torchleadershipacademy.org">info@torchleadershipacademy.org</a> or
           call (609) 300-6397.
         </p>
       </article>
