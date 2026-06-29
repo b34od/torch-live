@@ -10,7 +10,7 @@ import {
   timeToMinutes,
 } from "../../lib/schedule";
 
-const MIN_BLOCK_HEIGHT_PX = 24;
+const MIN_BLOCK_HEIGHT_PX = 38;
 
 function colorForLocation(location) {
   const loc = String(location || "").toLowerCase();
@@ -364,8 +364,8 @@ export default function ScheduleTimeline({
                     {item.rain_location ? <span>Rain: {item.rain_location}</span> : null}
                   </p>
                 ) : null}
-                {item.splitHint && height >= 48 ? (
-                  <p className="timeline-block-split-hint">{item.splitHint}</p>
+                {item.splitGroupLabel && height >= 42 ? (
+                  <p className="timeline-block-group-label">{item.splitGroupLabel}</p>
                 ) : null}
               </article>
             );
