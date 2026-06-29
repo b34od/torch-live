@@ -1412,16 +1412,27 @@ img {
 }
 
 .timeline-block-compact {
-  padding: 0.28rem 0.34rem;
+  padding: 0.22rem 0.34rem;
 }
 
 .timeline-block-tiny {
-  padding: 0.2rem 0.28rem;
+  padding: 0.18rem 0.28rem;
+}
+
+.timeline-block-compact .timeline-block-title {
+  font-size: 0.72rem;
+  line-height: 1.15;
 }
 
 .timeline-block-compact .timeline-block-time {
-  margin-top: 0.12rem;
-  font-size: 0.72rem;
+  margin-top: 0.06rem;
+  font-size: 0.68rem;
+}
+
+.timeline-block-compact .timeline-block-location {
+  margin-top: 0.04rem;
+  font-size: 0.62rem;
+  -webkit-line-clamp: 1;
 }
 
 .timeline-block-compact.timeline-block-no-time .timeline-block-title {
@@ -2066,6 +2077,16 @@ img {
   border-radius: var(--radius-sm);
   padding: 0.65rem 0.75rem;
   box-shadow: 0 2px 8px rgba(44,44,44,0.05);
+}
+
+.student-schedule-split-block .student-schedule-activity {
+  display: block;
+  margin-bottom: 0.15rem;
+}
+
+.student-schedule-split-block .student-schedule-location {
+  display: block;
+  margin-top: 0;
 }
 
 .student-schedule-group-label {

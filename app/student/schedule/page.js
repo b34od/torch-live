@@ -13,8 +13,8 @@ import {
 } from "../../../lib/schedule";
 
 const SPLIT_CONFIG = {
-  "1@12:35": { type: "team", firstActivity: "lunch" },
-  "1@17:30": { type: "guild" },
+  "1@12:35": { type: "team", firstActivity: "lunch", swapGap: 5 },
+  "1@17:30": { type: "guild", swapGap: 5 },
   "2@17:35": { type: "guild", swapGap: 5 },
   "3@12:00": { type: "team", firstActivity: "lunch", swapGap: 5 },
   "3@17:35": { type: "team", firstActivity: "dinner", swapGap: 5 },
