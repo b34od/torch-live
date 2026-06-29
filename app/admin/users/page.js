@@ -837,7 +837,7 @@ export default async function AdminUsersPage({ searchParams }) {
       <section className="card">
         <h2>Roster Year</h2>
         <p className="muted">Switch the working year for user imports, edits, and deactivation.</p>
-        <form method="get" className="grid-two mt-md">
+        <form method="get" className="grid-two roster-year-form mt-md">
           <div className="field">
             <label className="label" htmlFor="year_filter">
               Program Year
@@ -850,7 +850,7 @@ export default async function AdminUsersPage({ searchParams }) {
               ))}
             </select>
           </div>
-          <button type="submit" className="button button-secondary">
+          <button type="submit" className="button button-secondary roster-year-submit">
             Load Year
           </button>
         </form>

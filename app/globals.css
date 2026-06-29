@@ -549,7 +549,7 @@ img {
   position: sticky;
   top: 0.6rem;
   z-index: 10;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .topbar::before {
@@ -627,11 +627,10 @@ img {
 .nav-row {
   margin-top: 0.95rem;
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 0.5rem;
   padding-top: 0.75rem;
-  overflow-x: auto;
-  scrollbar-width: thin;
+  overflow: visible;
   border-top: 1px solid rgba(44, 44, 44, 0.08);
 }
 
@@ -837,6 +836,14 @@ img {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1rem;
+}
+
+.roster-year-form {
+  align-items: end;
+}
+
+.roster-year-submit {
+  width: 100%;
 }
 
 .admin-quick-grid,
@@ -1898,6 +1905,10 @@ img {
     grid-template-columns: 1fr 1fr;
   }
 
+  .roster-year-form {
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 280px);
+  }
+
   .card {
     padding: 1.15rem;
   }
@@ -1908,6 +1919,12 @@ img {
 
   .app-shell {
     padding-bottom: 2.5rem;
+  }
+}
+
+@media (min-width: 760px) and (max-width: 980px) {
+  .roster-year-form {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -2472,7 +2489,7 @@ img {
   display: flex;
   gap: var(--space-xs);
   align-items: center;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 .roster-count {
