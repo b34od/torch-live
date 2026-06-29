@@ -2559,10 +2559,10 @@ img {
 /* ─── Roster table ───────────────────────────────────────────── */
 
 .roster-filters {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: var(--space-sm);
-  align-items: center;
+  align-items: end;
   margin-bottom: var(--space-md);
 }
 
@@ -2604,6 +2604,38 @@ img {
   color: var(--color-text-muted);
 }
 
+.roster-card-list {
+  display: none;
+  gap: 0.75rem;
+}
+
+.roster-card {
+  border-radius: var(--radius-sm);
+}
+
+.roster-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.roster-card-pill-stack {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.roster-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-top: 0.45rem;
+  font-size: 0.82rem;
+  color: #5b5c5c;
+}
+
 .roster-row-actions {
   display: flex;
   gap: var(--space-xs);
@@ -2640,6 +2672,35 @@ img {
 
 .roster-activity-path code {
   font-size: 0.74rem;
+}
+
+.roster-table-wrap {
+  overflow-x: auto;
+}
+
+@media (max-width: 1180px) {
+  .roster-card-list {
+    display: grid;
+    margin-top: var(--space-sm);
+  }
+
+  .roster-table-wrap {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .roster-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .roster-card-head {
+    flex-direction: column;
+  }
+
+  .roster-card-pill-stack {
+    justify-content: flex-start;
+  }
 }
 
 /* ─── Guild cards ────────────────────────────────────────────── */

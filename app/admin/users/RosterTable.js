@@ -109,7 +109,17 @@ function renderActivity(entry) {
   );
 }
 
-export default function RosterTable({ profiles, selectedYear, onToggle, onRemove }) {
+function renderDirectoryStatus(entry) {
+  return (
+    <span
+      className={`status-pill ${entry.show_in_directory === false ? "status-pill-note" : "status-pill-good"}`}
+    >
+      {entry.show_in_directory === false ? "Hidden" : "Visible"}
+    </span>
+  );
+}
+
+export default function RosterTable({ profiles, selectedYear, onToggle, onToggleDirectory, onRemove }) {
   const [sortCol, setSortCol] = useState("full_name");
   const [sortDir, setSortDir] = useState("asc");
   const [filterRole, setFilterRole] = useState("all");
@@ -134,6 +144,7 @@ export default function RosterTable({ profiles, selectedYear, onToggle, onRemove
   function getValue(p, col) {
     if (col === "role") return ROLE_ORDER[p.role] ?? 9;
     if (col === "is_active") return p.is_active ? 0 : 1;
+    if (col === "show_in_directory") return p.show_in_directory === false ? 1 : 0;
     if (col === "activity") return activitySortValue(p);
     return String(p[col] ?? "").toLowerCase();
   }
@@ -203,7 +214,68 @@ export default function RosterTable({ profiles, selectedYear, onToggle, onRemove
         </span>
       </div>
 
-      <div className="table-wrap">
+      <div className="roster-card-list">
+        {rows.map((entry) => (
+          <article key={`card-${entry.id}`} className="surface surface-pad roster-card">
+            <div className="roster-card-head">
+              <div>
+                <div className="roster-name">{entry.full_name}</div>
+                <div className="roster-email">{entry.email}</div>
+                {entry.room_number ? <div className="roster-subtle">Room: {entry.room_number}</div> : null}
+              </div>
+              <div className="roster-card-pill-stack">
+                <span className={`pill ${rolePillClass(entry.role)}`}>{entry.role}</span>
+                <span className={`status-pill ${entry.is_active ? "status-pill-good" : "status-pill-warn"}`}>
+                  {entry.is_active ? "Active" : "Inactive"}
+                </span>
+                {renderDirectoryStatus(entry)}
+              </div>
+            </div>
+            <div className="roster-card-meta">
+              <span><span className="schedule-label">Team:</span> {entry.team_key || "—"}</span>
+              <span><span className="schedule-label">Guild:</span> {entry.guild_name || "—"}</span>
+            </div>
+            <div className="mt-sm">{renderActivity(entry)}</div>
+            <div className="roster-row-actions mt-sm">
+              <a
+                href={buildEditUrl(selectedYear, entry.id)}
+                className="schedule-table-action schedule-table-action-edit"
+              >
+                Edit
+              </a>
+              <form action={onToggle}>
+                <input type="hidden" name="id" value={entry.id} />
+                <input type="hidden" name="year" value={selectedYear} />
+                <input type="hidden" name="next_active" value={entry.is_active ? "0" : "1"} />
+                <button type="submit" className="schedule-table-action">
+                  {entry.is_active ? "Deactivate" : "Activate"}
+                </button>
+              </form>
+              <form action={onToggleDirectory}>
+                <input type="hidden" name="id" value={entry.id} />
+                <input type="hidden" name="year" value={selectedYear} />
+                <input
+                  type="hidden"
+                  name="next_visible"
+                  value={entry.show_in_directory === false ? "1" : "0"}
+                />
+                <button type="submit" className="schedule-table-action">
+                  {entry.show_in_directory === false ? "Show Dir" : "Hide Dir"}
+                </button>
+              </form>
+              <form action={onRemove}>
+                <input type="hidden" name="id" value={entry.id} />
+                <input type="hidden" name="year" value={selectedYear} />
+                <button type="submit" className="schedule-table-action schedule-table-action-remove">
+                  Remove
+                </button>
+              </form>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div className="table-wrap roster-table-wrap">
         <table className="schedule-table roster-table">
           <thead>
             <tr>
@@ -213,6 +285,7 @@ export default function RosterTable({ profiles, selectedYear, onToggle, onRemove
               <SortTh col="is_active" label="Status" {...shProps} />
               <SortTh col="team_key" label="Team" {...shProps} />
               <SortTh col="guild_name" label="Guild" {...shProps} />
+              <SortTh col="show_in_directory" label="Directory" {...shProps} />
               <SortTh col="activity" label="Activity" {...shProps} />
               <th>Actions</th>
             </tr>
@@ -233,6 +306,7 @@ export default function RosterTable({ profiles, selectedYear, onToggle, onRemove
                 </td>
                 <td>{entry.team_key || <span className="muted">—</span>}</td>
                 <td>{entry.guild_name || <span className="muted">—</span>}</td>
+                <td>{renderDirectoryStatus(entry)}</td>
                 <td>{renderActivity(entry)}</td>
                 <td>
                   <div className="roster-row-actions">
@@ -248,6 +322,18 @@ export default function RosterTable({ profiles, selectedYear, onToggle, onRemove
                       <input type="hidden" name="next_active" value={entry.is_active ? "0" : "1"} />
                       <button type="submit" className="schedule-table-action">
                         {entry.is_active ? "Deactivate" : "Activate"}
+                      </button>
+                    </form>
+                    <form action={onToggleDirectory}>
+                      <input type="hidden" name="id" value={entry.id} />
+                      <input type="hidden" name="year" value={selectedYear} />
+                      <input
+                        type="hidden"
+                        name="next_visible"
+                        value={entry.show_in_directory === false ? "1" : "0"}
+                      />
+                      <button type="submit" className="schedule-table-action">
+                        {entry.show_in_directory === false ? "Show Dir" : "Hide Dir"}
                       </button>
                     </form>
                     <form action={onRemove}>

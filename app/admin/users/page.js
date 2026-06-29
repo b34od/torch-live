@@ -229,6 +229,14 @@ function alertFromParams(params) {
     return { className: "alert alert-success", text: "User profile updated." };
   }
 
+  if (params?.directory === "hidden") {
+    return { className: "alert alert-success", text: "User hidden from directory." };
+  }
+
+  if (params?.directory === "visible") {
+    return { className: "alert alert-success", text: "User restored to directory." };
+  }
+
   if (params?.toggled === "1") {
     return { className: "alert alert-success", text: "User status updated." };
   }
@@ -593,6 +601,7 @@ async function updateProgramUser(formData) {
   const roomNumber = String(formData.get("room_number") || "").trim() || null;
   const phoneNumber = normalizePhoneNumber(formData.get("phone_number"));
   const isActive = formData.get("is_active") === "on";
+  const showInDirectory = formData.get("show_in_directory") === "on";
   const pronouns = String(formData.get("pronouns") || "").trim().slice(0, 60) || null;
   const cotlColor = String(formData.get("cotl_color") || "").trim() || null;
   const specialtyTag = String(formData.get("specialty_tag") || "").trim() || null;
@@ -660,6 +669,7 @@ async function updateProgramUser(formData) {
         pronouns,
         cotl_color: cotlColor,
         specialty_tag: specialtyTag,
+        show_in_directory: showInDirectory,
         is_active: isActive,
         program_year: selectedYear,
       },
@@ -670,7 +680,12 @@ async function updateProgramUser(formData) {
       throw new Error(error.message);
     }
 
-    await auditLog(adminClient, profile.id, profile.email, "update_user", userId, email, { role, is_active: isActive, program_year: selectedYear });
+    await auditLog(adminClient, profile.id, profile.email, "update_user", userId, email, {
+      role,
+      is_active: isActive,
+      show_in_directory: showInDirectory,
+      program_year: selectedYear,
+    });
   } catch (error) {
     updateErrorMessage = error?.message || "User update failed.";
   }
@@ -680,6 +695,51 @@ async function updateProgramUser(formData) {
   }
 
   redirect(usersPageUrl(selectedYear, { saved: "1" }));
+}
+
+async function toggleDirectoryVisibility(formData) {
+  "use server";
+
+  const { user, profile } = await requireUser(["admin"]);
+  const userId = String(formData.get("id") || "").trim();
+  const nextVisible = String(formData.get("next_visible") || "") === "1";
+  const selectedYear = parseProgramYear(formData.get("year"), profile.program_year);
+
+  if (!userId) {
+    redirect(usersPageUrl(selectedYear, { error: "Missing user id." }));
+  }
+
+  const adminClient = createAdminSupabaseClient();
+  const { data: target, error: targetError } = await adminClient
+    .from("user_profiles")
+    .select("email")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (targetError) {
+    redirect(usersPageUrl(selectedYear, { error: targetError.message }));
+  }
+
+  const { error } = await adminClient
+    .from("user_profiles")
+    .update({ show_in_directory: nextVisible })
+    .eq("id", userId);
+
+  if (error) {
+    redirect(usersPageUrl(selectedYear, { error: error.message }));
+  }
+
+  await auditLog(
+    adminClient,
+    user.id,
+    profile.email,
+    nextVisible ? "show_user_in_directory" : "hide_user_from_directory",
+    userId,
+    target?.email || null,
+    { program_year: selectedYear, show_in_directory: nextVisible },
+  );
+
+  redirect(usersPageUrl(selectedYear, { directory: nextVisible ? "visible" : "hidden" }));
 }
 
 async function toggleUserActive(formData) {
@@ -1045,7 +1105,7 @@ export default async function AdminUsersPage({ searchParams }) {
       {editingUser ? (
         <section className="card">
           <h2>Edit User</h2>
-          <p className="muted">Update role, email, name, team, guild, room, and status.</p>
+          <p className="muted">Update role, email, name, team, guild, room, status, and directory visibility.</p>
           <form action={updateProgramUser} className="grid-two mt-md">
             <input type="hidden" name="id" value={editingUser.id} />
             <div className="field">
@@ -1184,6 +1244,14 @@ export default async function AdminUsersPage({ searchParams }) {
               <input type="checkbox" name="is_active" defaultChecked={editingUser.is_active} />
               Active account
             </label>
+            <label className="inline-check muted">
+              <input
+                type="checkbox"
+                name="show_in_directory"
+                defaultChecked={editingUser.show_in_directory !== false}
+              />
+              Show in directory
+            </label>
             <button type="submit" className="button button-primary">
               Save Changes
             </button>
@@ -1210,6 +1278,7 @@ export default async function AdminUsersPage({ searchParams }) {
               profiles={profiles}
               selectedYear={selectedYear}
               onToggle={toggleUserActive}
+              onToggleDirectory={toggleDirectoryVisibility}
               onRemove={removeProgramUser}
             />
           </div>
