@@ -53,8 +53,8 @@ function expandSplitPairs(items, dayNumber, teamKey) {
       if ((itemA.sort_order || 0) > (itemB.sort_order || 0)) [itemA, itemB] = [itemB, itemA];
     }
 
-    const labelA = cfg.type === "team" ? "Teams 1–5" : "Group A";
-    const labelB = cfg.type === "team" ? "Teams 6–10" : "Group B";
+    const labelA = cfg.type === "team" ? "Teams 1–5" : null;
+    const labelB = cfg.type === "team" ? "Teams 6–10" : null;
     const pairId1 = `split-${dayNumber}-${time}`;
     const pairId2 = `split-${dayNumber}-${time}-swap`;
     const dur = itemA.duration_minutes;
