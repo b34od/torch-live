@@ -4,6 +4,7 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import EmailSignInForm, { FormSubmitButton } from "../../components/auth/EmailSignInForm";
 import InAppBrowserWarning from "../../components/auth/InAppBrowserWarning";
+import { recordUserActivity } from "../../lib/activity";
 import { getHomeForRole, getSessionContext } from "../../lib/auth";
 import { createAdminSupabaseClient } from "../../lib/supabase/admin";
 import { createSupabaseServerClient } from "../../lib/supabase/server";
@@ -150,11 +151,8 @@ function parseAuthLinkPayload(rawLink) {
   const code = value("code");
   const tokenHash = value("token_hash");
   const type = value("type");
-  const accessToken = value("access_token");
-  const refreshToken = value("refresh_token");
-  const hasSessionPair = Boolean(accessToken && refreshToken);
 
-  if (!code && !tokenHash && !hasSessionPair) {
+  if (!code && !tokenHash) {
     return {
       error:
         "Could not find a valid sign-in token in that link. Paste the complete URL from your newest email.",
@@ -165,8 +163,6 @@ function parseAuthLinkPayload(rawLink) {
     code,
     tokenHash,
     type,
-    accessToken,
-    refreshToken,
   };
 }
 
@@ -325,6 +321,10 @@ async function verifyEmailCode(formData) {
     redirect("/login?error=Account+is+not+active.");
   }
 
+  try {
+    await recordUserActivity(supabase, "login");
+  } catch {}
+
   redirect(getHomeForRole(profile.role));
 }
 
@@ -350,12 +350,6 @@ async function verifyPastedLink(formData) {
   } else if (parsed.code) {
     const exchange = await supabase.auth.exchangeCodeForSession(parsed.code);
     error = exchange.error;
-  } else if (parsed.accessToken && parsed.refreshToken) {
-    const restore = await supabase.auth.setSession({
-      access_token: parsed.accessToken,
-      refresh_token: parsed.refreshToken,
-    });
-    error = restore.error;
   } else {
     error = { message: "Invalid sign-in link." };
   }
@@ -381,6 +375,10 @@ async function verifyPastedLink(formData) {
   if (!profile || !profile.is_active) {
     redirect("/login?error=Account+is+not+active.");
   }
+
+  try {
+    await recordUserActivity(supabase, "login");
+  } catch {}
 
   redirect(getHomeForRole(profile.role));
 }

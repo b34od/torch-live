@@ -957,6 +957,16 @@ export default async function AdminSchedulePage({ searchParams }) {
       if (aStart !== bStart) return aStart - bStart;
       return Number(a.sort_order || 0) - Number(b.sort_order || 0);
     });
+  const editingHasOperationalDetails = Boolean(
+    editingItem &&
+      (
+        (editingItem.rain_location && editingItem.rain_location !== "N/A") ||
+        editingItem.point_person ||
+        editingItem.secondary_person ||
+        editingItem.av_needs ||
+        editingItem.notes
+      ),
+  );
 
   return (
     <>
@@ -1099,43 +1109,46 @@ export default async function AdminSchedulePage({ searchParams }) {
           </label>
 
           {track === "staff" ? (
-            <>
-              <div className="grid-two">
-                <ScheduleLocationSelect
-                  id="add_rain_location"
-                  name="rain_location"
-                  label="Rain Location"
-                  type="rain"
-                  defaultValue="N/A"
-                />
+            <details className="admin-inline-expander">
+              <summary>Operational details</summary>
+              <div className="stack mt-md">
+                <div className="grid-two">
+                  <ScheduleLocationSelect
+                    id="add_rain_location"
+                    name="rain_location"
+                    label="Rain Location"
+                    type="rain"
+                    defaultValue="N/A"
+                  />
+                  <div className="field">
+                    <label className="label" htmlFor="add_point_person">
+                      Point Person
+                    </label>
+                    <input id="add_point_person" name="point_person" className="input" />
+                  </div>
+                </div>
+                <div className="grid-two">
+                  <div className="field">
+                    <label className="label" htmlFor="add_secondary_person">
+                      Secondary Person
+                    </label>
+                    <input id="add_secondary_person" name="secondary_person" className="input" />
+                  </div>
+                  <div className="field">
+                    <label className="label" htmlFor="add_av_needs">
+                      A/V Needs
+                    </label>
+                    <input id="add_av_needs" name="av_needs" className="input" />
+                  </div>
+                </div>
                 <div className="field">
-                  <label className="label" htmlFor="add_point_person">
-                    Point Person
+                  <label className="label" htmlFor="add_notes">
+                    Notes
                   </label>
-                  <input id="add_point_person" name="point_person" className="input" />
+                  <textarea id="add_notes" name="notes" className="textarea" />
                 </div>
               </div>
-              <div className="grid-two">
-                <div className="field">
-                  <label className="label" htmlFor="add_secondary_person">
-                    Secondary Person
-                  </label>
-                  <input id="add_secondary_person" name="secondary_person" className="input" />
-                </div>
-                <div className="field">
-                  <label className="label" htmlFor="add_av_needs">
-                    A/V Needs
-                  </label>
-                  <input id="add_av_needs" name="av_needs" className="input" />
-                </div>
-              </div>
-              <div className="field">
-                <label className="label" htmlFor="add_notes">
-                  Notes
-                </label>
-                <textarea id="add_notes" name="notes" className="textarea" />
-              </div>
-            </>
+            </details>
           ) : null}
 
           <button type="submit" className="button button-primary">
@@ -1145,10 +1158,14 @@ export default async function AdminSchedulePage({ searchParams }) {
       </section>
 
       <section className="card" id="schedule-year-tools">
-        <h2>Year Tools</h2>
-        <p className="muted">Copy schedule blocks from one year to another after annual updates.</p>
+        <details className="admin-collapsible">
+          <summary>
+            <span className="admin-collapsible-title">Year Tools</span>
+            <span className="admin-collapsible-meta">Load draft baselines, clone years, or clear schedule data.</span>
+          </summary>
+          <p className="muted mt-md">Copy schedule blocks from one year to another after annual updates.</p>
 
-        <div className="surface surface-pad-sm mt-md">
+          <div className="surface surface-pad-sm mt-md">
           <h3 className="card-subtitle">Load 2026 Draft Baseline</h3>
           <p className="muted">
             Replaces existing {track} schedule entries for {selectedYear} with a draft baseline
@@ -1239,74 +1256,75 @@ export default async function AdminSchedulePage({ searchParams }) {
               </button>
             </div>
           </form>
-        </div>
-
-        <form action={cloneScheduleYear} className="grid-two mt-md">
-          <input type="hidden" name="track" value={track} />
-          <input type="hidden" name="day" value={day} />
-          <input type="hidden" name="program_year" value={selectedYear} />
-          <input type="hidden" name="source" value={selectedDraftSource} />
-          <div className="field">
-            <label className="label" htmlFor="source_year">
-              Source Year
-            </label>
-            <select id="source_year" name="source_year" className="select" defaultValue={selectedYear}>
-              {yearOptions.map((year) => (
-                <option value={year} key={`source-${year}`}>
-                  {year}
-                </option>
-              ))}
-            </select>
           </div>
-          <div className="field">
-            <label className="label" htmlFor="target_year">
-              Target Year
-            </label>
-            <input
-              id="target_year"
-              name="target_year"
-              type="number"
-              min={MIN_YEAR}
-              max={MAX_YEAR}
-              className="input"
-              defaultValue={selectedYear + 1}
-              required
-            />
-          </div>
-          <button type="submit" className="button button-secondary">
-            Copy Year
-          </button>
-        </form>
 
-        <form action={clearScheduleYear} className="stack mt-md">
-          <input type="hidden" name="track" value={track} />
-          <input type="hidden" name="day" value={day} />
-          <input type="hidden" name="program_year" value={selectedYear} />
-          <input type="hidden" name="source" value={selectedDraftSource} />
-          <div className="grid-two">
+          <form action={cloneScheduleYear} className="grid-two mt-md">
+            <input type="hidden" name="track" value={track} />
+            <input type="hidden" name="day" value={day} />
+            <input type="hidden" name="program_year" value={selectedYear} />
+            <input type="hidden" name="source" value={selectedDraftSource} />
             <div className="field">
-              <label className="label" htmlFor="clear_year">
-                Clear Year
+              <label className="label" htmlFor="source_year">
+                Source Year
               </label>
-              <select id="clear_year" name="clear_year" className="select" defaultValue={selectedYear}>
+              <select id="source_year" name="source_year" className="select" defaultValue={selectedYear}>
                 {yearOptions.map((year) => (
-                  <option value={year} key={`clear-${year}`}>
+                  <option value={year} key={`source-${year}`}>
                     {year}
                   </option>
                 ))}
               </select>
             </div>
             <div className="field">
-              <label className="label" htmlFor="confirm_text">
-                Type year to confirm
+              <label className="label" htmlFor="target_year">
+                Target Year
               </label>
-              <input id="confirm_text" name="confirm_text" className="input" placeholder={`${selectedYear}`} />
+              <input
+                id="target_year"
+                name="target_year"
+                type="number"
+                min={MIN_YEAR}
+                max={MAX_YEAR}
+                className="input"
+                defaultValue={selectedYear + 1}
+                required
+              />
             </div>
-          </div>
-          <button type="submit" className="button button-secondary">
-            Clear Year Data
-          </button>
-        </form>
+            <button type="submit" className="button button-secondary">
+              Copy Year
+            </button>
+          </form>
+
+          <form action={clearScheduleYear} className="stack mt-md">
+            <input type="hidden" name="track" value={track} />
+            <input type="hidden" name="day" value={day} />
+            <input type="hidden" name="program_year" value={selectedYear} />
+            <input type="hidden" name="source" value={selectedDraftSource} />
+            <div className="grid-two">
+              <div className="field">
+                <label className="label" htmlFor="clear_year">
+                  Clear Year
+                </label>
+                <select id="clear_year" name="clear_year" className="select" defaultValue={selectedYear}>
+                  {yearOptions.map((year) => (
+                    <option value={year} key={`clear-${year}`}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="field">
+                <label className="label" htmlFor="confirm_text">
+                  Type year to confirm
+                </label>
+                <input id="confirm_text" name="confirm_text" className="input" placeholder={`${selectedYear}`} />
+              </div>
+            </div>
+            <button type="submit" className="button button-secondary">
+              Clear Year Data
+            </button>
+          </form>
+        </details>
       </section>
 
       {editingItem ? (
@@ -1380,63 +1398,66 @@ export default async function AdminSchedulePage({ searchParams }) {
             ) : null}
 
             {track === "staff" ? (
-              <>
-                <div className="grid-two">
-                  <ScheduleLocationSelect
-                    id="edit_rain_location"
-                    name="rain_location"
-                    label="Rain Location"
-                    type="rain"
-                    defaultValue={editingItem.rain_location || "N/A"}
-                  />
+              <details className="admin-inline-expander" open={editingHasOperationalDetails}>
+                <summary>Operational details</summary>
+                <div className="stack mt-md">
+                  <div className="grid-two">
+                    <ScheduleLocationSelect
+                      id="edit_rain_location"
+                      name="rain_location"
+                      label="Rain Location"
+                      type="rain"
+                      defaultValue={editingItem.rain_location || "N/A"}
+                    />
+                    <div className="field">
+                      <label className="label" htmlFor="edit_point_person">
+                        Point Person
+                      </label>
+                      <input
+                        id="edit_point_person"
+                        name="point_person"
+                        className="input"
+                        defaultValue={editingItem.point_person || ""}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid-two">
+                    <div className="field">
+                      <label className="label" htmlFor="edit_secondary_person">
+                        Secondary Person
+                      </label>
+                      <input
+                        id="edit_secondary_person"
+                        name="secondary_person"
+                        className="input"
+                        defaultValue={editingItem.secondary_person || ""}
+                      />
+                    </div>
+                    <div className="field">
+                      <label className="label" htmlFor="edit_av_needs">
+                        A/V Needs
+                      </label>
+                      <input
+                        id="edit_av_needs"
+                        name="av_needs"
+                        className="input"
+                        defaultValue={editingItem.av_needs || ""}
+                      />
+                    </div>
+                  </div>
                   <div className="field">
-                    <label className="label" htmlFor="edit_point_person">
-                      Point Person
+                    <label className="label" htmlFor="edit_notes">
+                      Notes
                     </label>
-                    <input
-                      id="edit_point_person"
-                      name="point_person"
-                      className="input"
-                      defaultValue={editingItem.point_person || ""}
+                    <textarea
+                      id="edit_notes"
+                      name="notes"
+                      className="textarea"
+                      defaultValue={editingItem.notes || ""}
                     />
                   </div>
                 </div>
-                <div className="grid-two">
-                  <div className="field">
-                    <label className="label" htmlFor="edit_secondary_person">
-                      Secondary Person
-                    </label>
-                    <input
-                      id="edit_secondary_person"
-                      name="secondary_person"
-                      className="input"
-                      defaultValue={editingItem.secondary_person || ""}
-                    />
-                  </div>
-                  <div className="field">
-                    <label className="label" htmlFor="edit_av_needs">
-                      A/V Needs
-                    </label>
-                    <input
-                      id="edit_av_needs"
-                      name="av_needs"
-                      className="input"
-                      defaultValue={editingItem.av_needs || ""}
-                    />
-                  </div>
-                </div>
-                <div className="field">
-                  <label className="label" htmlFor="edit_notes">
-                    Notes
-                  </label>
-                  <textarea
-                    id="edit_notes"
-                    name="notes"
-                    className="textarea"
-                    defaultValue={editingItem.notes || ""}
-                  />
-                </div>
-              </>
+              </details>
             ) : null}
 
             <button type="submit" className="button button-primary">

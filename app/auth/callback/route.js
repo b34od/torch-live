@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
+import { recordUserActivity } from "../../../lib/activity";
 import { ROLE_HOME } from "../../../lib/navigation";
 import { getPublicSupabaseConfig } from "../../../lib/supabase/env";
 
@@ -152,6 +153,10 @@ export async function GET(request) {
     response.headers.set("Location", redirectUrl.toString());
     return response;
   }
+
+  try {
+    await recordUserActivity(supabase, "login");
+  } catch {}
 
   response.headers.set("Location", new URL(homeForRole(profile.role), request.url).toString());
   return response;

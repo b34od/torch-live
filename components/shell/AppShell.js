@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ROLE_NAV } from "../../lib/navigation";
+import { getRoleNav } from "../../lib/navigation";
 
 function rolePillClass(role) {
   if (role === "admin") return "pill pill-admin";
@@ -14,7 +14,10 @@ function rolePillClass(role) {
 
 export default function AppShell({ role, profile, children }) {
   const pathname = usePathname();
-  const navItems = ROLE_NAV[role] || [];
+  const navConfig = getRoleNav(role);
+  const primaryNavItems = navConfig.primary || [];
+  const secondaryNavItems = navConfig.secondary || [];
+  const mobileNavItems = navConfig.mobile || primaryNavItems;
   const installPromptRef = useRef(null);
   const [canPromptInstall, setCanPromptInstall] = useState(false);
   const [installHint, setInstallHint] = useState("");
@@ -31,6 +34,41 @@ export default function AppShell({ role, profile, children }) {
       setTheme(resolved);
       document.documentElement.setAttribute("data-theme", resolved);
     }
+  }, []);
+
+  useEffect(() => {
+    if (!pathname) return;
+
+    fetch("/api/activity", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ pathname }),
+      credentials: "same-origin",
+      keepalive: true,
+    }).catch(() => {});
+  }, [pathname]);
+
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (document.visibilityState !== "visible") return;
+
+      fetch("/api/activity", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ pathname: window.location.pathname }),
+        credentials: "same-origin",
+        keepalive: true,
+      }).catch(() => {});
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -90,6 +128,14 @@ export default function AppShell({ role, profile, children }) {
     document.documentElement.setAttribute("data-theme", next);
     window.localStorage.setItem("torch-live-theme", next);
   }
+
+  function isActiveNavItem(item) {
+    if (!item?.href) return false;
+    if (item.exact) return pathname === item.href;
+    return pathname === item.href || pathname.startsWith(`${item.href}/`);
+  }
+
+  const secondaryActive = secondaryNavItems.some((item) => isActiveNavItem(item));
 
   return (
     <main className="app-shell">
@@ -154,19 +200,33 @@ export default function AppShell({ role, profile, children }) {
           </div>
         </div>
         <nav className="nav-row" aria-label="Primary">
-          {navItems.map((item) => {
-            const active =
-              pathname === item.href || (pathname.startsWith(item.href) && item.href !== "/");
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`nav-link ${active ? "nav-link-active" : ""}`}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
+          {primaryNavItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`nav-link ${isActiveNavItem(item) ? "nav-link-active" : ""}`}
+            >
+              {item.label}
+            </Link>
+          ))}
+          {secondaryNavItems.length > 0 ? (
+            <details className={`nav-more ${secondaryActive ? "nav-more-active" : ""}`}>
+              <summary className={`nav-link nav-more-summary ${secondaryActive ? "nav-link-active" : ""}`}>
+                More
+              </summary>
+              <div className="nav-more-menu">
+                {secondaryNavItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`nav-more-link ${isActiveNavItem(item) ? "nav-more-link-active" : ""}`}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </details>
+          ) : null}
         </nav>
       </header>
       {showInstallHint ? (
@@ -187,8 +247,8 @@ export default function AppShell({ role, profile, children }) {
       ) : null}
       <section className="content-area">{children}</section>
       <nav className={`bottom-nav bottom-nav-${role}`} aria-label="Primary mobile navigation">
-        {navItems.map((item) => {
-          const active = pathname === item.href || (pathname.startsWith(item.href) && item.href !== "/");
+        {mobileNavItems.map((item) => {
+          const active = isActiveNavItem(item);
           const mobileLabel = item.mobileLabel || item.label;
           return (
             <Link

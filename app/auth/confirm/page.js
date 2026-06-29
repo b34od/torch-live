@@ -28,10 +28,8 @@ function buildTargetFromQueryParams(params) {
   const code = firstParam(params, "code");
   const tokenHash = firstParam(params, "token_hash");
   const type = firstParam(params, "type");
-  const accessToken = firstParam(params, "access_token");
-  const refreshToken = firstParam(params, "refresh_token");
 
-  if (!code && !tokenHash && !(accessToken && refreshToken)) {
+  if (!code && !tokenHash) {
     return "/login?error=Invalid+sign-in+link.";
   }
 
@@ -42,10 +40,6 @@ function buildTargetFromQueryParams(params) {
   }
   if (code) callbackParams.set("code", code);
   if (!tokenHash && type) callbackParams.set("type", type);
-  if (accessToken && refreshToken) {
-    callbackParams.set("access_token", accessToken);
-    callbackParams.set("refresh_token", refreshToken);
-  }
 
   return `/auth/callback?${callbackParams.toString()}`;
 }

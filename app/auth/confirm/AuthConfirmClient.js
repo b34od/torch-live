@@ -38,10 +38,8 @@ function buildTargetFromWindow() {
   const code = firstValue(query.get("code"), fragment.get("code"));
   const tokenHash = firstValue(query.get("token_hash"), fragment.get("token_hash"));
   const type = firstValue(query.get("type"), fragment.get("type"), tokenHash ? "email" : "");
-  const accessToken = firstValue(query.get("access_token"), fragment.get("access_token"));
-  const refreshToken = firstValue(query.get("refresh_token"), fragment.get("refresh_token"));
 
-  if (!code && !tokenHash && !(accessToken && refreshToken)) {
+  if (!code && !tokenHash) {
     return "/login?error=Invalid+sign-in+link.";
   }
 
@@ -52,10 +50,6 @@ function buildTargetFromWindow() {
   }
   if (code) callbackParams.set("code", code);
   if (!tokenHash && type) callbackParams.set("type", type);
-  if (accessToken && refreshToken) {
-    callbackParams.set("access_token", accessToken);
-    callbackParams.set("refresh_token", refreshToken);
-  }
 
   return `/auth/callback?${callbackParams.toString()}`;
 }

@@ -240,102 +240,8 @@ export default async function AdminResourcesPage({ searchParams }) {
   return (
     <>
       <section className="card">
-        <h2>{editingCategory ? "Edit Resource Category" : "Resource Categories"}</h2>
-        {alert ? <p className={alert.className}>{alert.text}</p> : null}
-        <form action={editingCategory ? updateCategory : addCategory} className="grid-two">
-          {editingCategory ? <input type="hidden" name="id" value={editingCategory.id} /> : null}
-          <div className="field">
-            <label className="label" htmlFor="name">
-              Category Name
-            </label>
-            <input id="name" name="name" className="input" defaultValue={editingCategory?.name || ""} required />
-          </div>
-          <div className="field">
-            <label className="label" htmlFor="icon">
-              Icon (optional emoji)
-            </label>
-            <input id="icon" name="icon" className="input" defaultValue={editingCategory?.icon || ""} />
-          </div>
-          <button type="submit" className="button button-primary">
-            {editingCategory ? "Save Category" : "Add Category"}
-          </button>
-        </form>
-        {editingCategory ? (
-          <p className="muted mt-sm">
-            <Link href={resourcesPageUrl()}>Done editing</Link>
-          </p>
-        ) : null}
-      </section>
-
-      <section className="card">
-        <h2>{editingItem ? "Edit Resource Item" : "Add Resource Item"}</h2>
-        <form action={editingItem ? updateResourceItem : addResourceItem} className="stack">
-          {editingItem ? <input type="hidden" name="id" value={editingItem.id} /> : null}
-          <div className="field">
-            <label className="label" htmlFor="category_id">
-              Category
-            </label>
-            <select
-              id="category_id"
-              name="category_id"
-              className="select"
-              defaultValue={editingItem?.category_id || ""}
-              required
-            >
-              <option value="">Select a category</option>
-              {categories.map((category) => (
-                <option value={category.id} key={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <label className="label" htmlFor="title">
-              Item Title
-            </label>
-            <input id="title" name="title" className="input" defaultValue={editingItem?.title || ""} required />
-          </div>
-          <div className="field">
-            <label className="label" htmlFor="url">
-              URL (optional — makes the title a link)
-            </label>
-            <input id="url" name="url" type="url" className="input" placeholder="https://docs.google.com/..." defaultValue={editingItem?.url || ""} />
-          </div>
-          <div className="field">
-            <label className="label" htmlFor="body">
-              Body (optional if URL is provided)
-            </label>
-            <textarea id="body" name="body" className="textarea" defaultValue={editingItem?.body || ""} />
-          </div>
-          <div className="field">
-            <label className="label" htmlFor="visibility">
-              Visibility
-            </label>
-            <select
-              id="visibility"
-              name="visibility"
-              className="select"
-              defaultValue={editingItem?.visibility || "all"}
-            >
-              <option value="all">All</option>
-              <option value="staff">Staff only</option>
-              <option value="students">Students only</option>
-            </select>
-          </div>
-          <button type="submit" className="button button-primary">
-            {editingItem ? "Save Resource Item" : "Add Resource Item"}
-          </button>
-        </form>
-        {editingItem ? (
-          <p className="muted mt-sm">
-            <Link href={resourcesPageUrl()}>Done editing</Link>
-          </p>
-        ) : null}
-      </section>
-
-      <section className="card">
         <h2>Current Resources</h2>
+        {alert ? <p className={`${alert.className} mt-md`}>{alert.text}</p> : null}
         {error ? (
           <p className="alert alert-error">{error.message}</p>
         ) : categories.length === 0 ? (
@@ -391,6 +297,110 @@ export default async function AdminResourcesPage({ searchParams }) {
             ))}
           </div>
         )}
+      </section>
+
+      <section className="card">
+        <details className="admin-collapsible" open={Boolean(editingCategory)}>
+          <summary>
+            <span className="admin-collapsible-title">{editingCategory ? "Edit Resource Category" : "Resource Categories"}</span>
+            <span className="admin-collapsible-meta">Create or rename resource groupings without crowding the main list.</span>
+          </summary>
+          <form action={editingCategory ? updateCategory : addCategory} className="grid-two mt-md">
+            {editingCategory ? <input type="hidden" name="id" value={editingCategory.id} /> : null}
+            <div className="field">
+              <label className="label" htmlFor="name">
+                Category Name
+              </label>
+              <input id="name" name="name" className="input" defaultValue={editingCategory?.name || ""} required />
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="icon">
+                Icon (optional emoji)
+              </label>
+              <input id="icon" name="icon" className="input" defaultValue={editingCategory?.icon || ""} />
+            </div>
+            <button type="submit" className="button button-primary">
+              {editingCategory ? "Save Category" : "Add Category"}
+            </button>
+          </form>
+          {editingCategory ? (
+            <p className="muted mt-sm">
+              <Link href={resourcesPageUrl()}>Done editing</Link>
+            </p>
+          ) : null}
+        </details>
+      </section>
+
+      <section className="card">
+        <details className="admin-collapsible" open={Boolean(editingItem)}>
+          <summary>
+            <span className="admin-collapsible-title">{editingItem ? "Edit Resource Item" : "Add Resource Item"}</span>
+            <span className="admin-collapsible-meta">Publish or update individual resource links and notes.</span>
+          </summary>
+          <form action={editingItem ? updateResourceItem : addResourceItem} className="stack mt-md">
+            {editingItem ? <input type="hidden" name="id" value={editingItem.id} /> : null}
+            <div className="field">
+              <label className="label" htmlFor="category_id">
+                Category
+              </label>
+              <select
+                id="category_id"
+                name="category_id"
+                className="select"
+                defaultValue={editingItem?.category_id || ""}
+                required
+              >
+                <option value="">Select a category</option>
+                {categories.map((category) => (
+                  <option value={category.id} key={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="title">
+                Item Title
+              </label>
+              <input id="title" name="title" className="input" defaultValue={editingItem?.title || ""} required />
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="url">
+                URL (optional — makes the title a link)
+              </label>
+              <input id="url" name="url" type="url" className="input" placeholder="https://docs.google.com/..." defaultValue={editingItem?.url || ""} />
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="body">
+                Body (optional if URL is provided)
+              </label>
+              <textarea id="body" name="body" className="textarea" defaultValue={editingItem?.body || ""} />
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="visibility">
+                Visibility
+              </label>
+              <select
+                id="visibility"
+                name="visibility"
+                className="select"
+                defaultValue={editingItem?.visibility || "all"}
+              >
+                <option value="all">All</option>
+                <option value="staff">Staff only</option>
+                <option value="students">Students only</option>
+              </select>
+            </div>
+            <button type="submit" className="button button-primary">
+              {editingItem ? "Save Resource Item" : "Add Resource Item"}
+            </button>
+          </form>
+          {editingItem ? (
+            <p className="muted mt-sm">
+              <Link href={resourcesPageUrl()}>Done editing</Link>
+            </p>
+          ) : null}
+        </details>
       </section>
     </>
   );

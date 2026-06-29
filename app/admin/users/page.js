@@ -30,6 +30,17 @@ function countByRole(profiles, role) {
   return profiles.filter((profile) => profile.role === role && profile.is_active).length;
 }
 
+function hasActivated(profile) {
+  return Boolean(profile.first_activated_at || profile.last_sign_in_at);
+}
+
+function isRecentActivity(timestamp, hours = 24) {
+  if (!timestamp) return false;
+  const value = new Date(timestamp).getTime();
+  if (!Number.isFinite(value)) return false;
+  return Date.now() - value <= hours * 60 * 60 * 1000;
+}
+
 function rolePillClass(role) {
   if (role === "admin") return "pill-admin";
   if (role === "staff") return "pill-staff";
@@ -252,8 +263,8 @@ function alertFromParams(params) {
   return null;
 }
 
-async function listAllAuthUsersByEmail(adminClient) {
-  const usersByEmail = new Map();
+async function listAllAuthUsers(adminClient) {
+  const users = [];
   const perPage = 1000;
 
   for (let page = 1; page <= 25; page += 1) {
@@ -262,19 +273,25 @@ async function listAllAuthUsersByEmail(adminClient) {
       throw new Error(listed.error.message);
     }
 
-    const users = listed.data?.users || [];
-    users.forEach((entry) => {
-      const email = normalizeEmail(entry.email);
-      if (email) {
-        usersByEmail.set(email, entry);
-      }
-    });
+    const pageUsers = listed.data?.users || [];
+    users.push(...pageUsers);
 
-    if (users.length < perPage) {
+    if (pageUsers.length < perPage) {
       break;
     }
   }
 
+  return users;
+}
+
+function mapAuthUsersByEmail(authUsers) {
+  const usersByEmail = new Map();
+  (authUsers || []).forEach((entry) => {
+    const email = normalizeEmail(entry.email);
+    if (email) {
+      usersByEmail.set(email, entry);
+    }
+  });
   return usersByEmail;
 }
 
@@ -292,7 +309,7 @@ async function createOrFetchAuthUser(adminClient, usersByEmail, email, fullName)
 
   if (created.error) {
     if (created.error.message === "A user with this email address has already been registered") {
-      const refreshed = await listAllAuthUsersByEmail(adminClient);
+      const refreshed = mapAuthUsersByEmail(await listAllAuthUsers(adminClient));
       const found = refreshed.get(email);
       if (found?.id) {
         return { id: found.id, created: false };
@@ -364,7 +381,7 @@ async function createProgramUser(formData) {
   let createErrorMessage = "";
 
   try {
-    const usersByEmail = await listAllAuthUsersByEmail(adminClient);
+    const usersByEmail = mapAuthUsersByEmail(await listAllAuthUsers(adminClient));
     const authUser = await createOrFetchAuthUser(adminClient, usersByEmail, email, fullName);
 
     const updatedAuth = await adminClient.auth.admin.updateUserById(authUser.id, {
@@ -455,7 +472,7 @@ async function bulkImportUsers(formData) {
   let importErrorMessage = "";
 
   try {
-    const usersByEmail = await listAllAuthUsersByEmail(adminClient);
+    const usersByEmail = mapAuthUsersByEmail(await listAllAuthUsers(adminClient));
 
     for (const row of parsedRows) {
       if (!row.fullName || !row.email || !row.role) {
@@ -755,7 +772,7 @@ export default async function AdminUsersPage({ searchParams }) {
   const selectedYear = parseProgramYear(params?.year, profile.program_year);
   const alert = alertFromParams(params || {});
 
-  const [profilesResponse, yearsResponse, guildsResponse] = await Promise.all([
+  const [profilesResponse, yearsResponse, guildsResponse, activityResponse] = await Promise.all([
     getUserProfiles(supabase, selectedYear),
     supabase
       .from("user_profiles")
@@ -767,22 +784,51 @@ export default async function AdminUsersPage({ searchParams }) {
       .eq("program_year", selectedYear)
       .eq("is_active", true)
       .order("sort_order", { ascending: true }),
+    supabase
+      .from("user_activity_summary")
+      .select("user_id, first_activated_at, last_app_visit_at, app_visit_count, last_path")
+      .eq("program_year", selectedYear),
   ]);
+
+  const adminClient = createAdminSupabaseClient();
+  let authUsers = [];
+  let authUsersError = null;
+
+  try {
+    authUsers = await listAllAuthUsers(adminClient);
+  } catch (error) {
+    authUsersError = error?.message || "Unable to load auth sign-in metadata.";
+  }
 
   const rawProfiles = profilesResponse.data || [];
   const error = profilesResponse.error;
+  const activityError = activityResponse.error;
+  const activityRows = activityResponse.data || [];
   const years = (yearsResponse.data || []).map((entry) => entry.program_year);
   const yearOptions = getYearOptions(years, selectedYear, profile.program_year);
   const guilds = guildsResponse.data || [];
+  const authUsersById = new Map(authUsers.map((entry) => [entry.id, entry]));
+  const activityByUserId = new Map(activityRows.map((entry) => [entry.user_id, entry]));
 
-  // Join guild name onto profiles for the roster table
   const guildMap = new Map(guilds.map((g) => [g.id, g.name]));
   const profiles = rawProfiles.map((p) => ({
     ...p,
     guild_name: p.guild_id ? (guildMap.get(p.guild_id) ?? null) : null,
+    first_activated_at:
+      activityByUserId.get(p.id)?.first_activated_at || authUsersById.get(p.id)?.last_sign_in_at || null,
+    last_sign_in_at: authUsersById.get(p.id)?.last_sign_in_at || null,
+    last_app_visit_at: activityByUserId.get(p.id)?.last_app_visit_at || null,
+    app_visit_count: Number(activityByUserId.get(p.id)?.app_visit_count || 0),
+    last_path: activityByUserId.get(p.id)?.last_path || null,
   }));
 
   const totalActive = profiles.filter((entry) => entry.is_active).length;
+  const activatedCount = profiles.filter((entry) => entry.is_active && hasActivated(entry)).length;
+  const pendingActivationCount = Math.max(totalActive - activatedCount, 0);
+  const recentlyActiveCount = profiles.filter(
+    (entry) => entry.is_active && isRecentActivity(entry.last_app_visit_at),
+  ).length;
+  const totalTrackedVisits = profiles.reduce((sum, entry) => sum + Number(entry.app_visit_count || 0), 0);
   const editingId = String(params?.edit || "").trim();
   const editingUser = profiles.find((entry) => entry.id === editingId) || null;
 
@@ -813,7 +859,14 @@ export default async function AdminUsersPage({ searchParams }) {
       <section className="card">
         <h2>User Overview</h2>
         <p className="muted">Counts below reflect the selected year only.</p>
-        <div className="grid-two mt-md">
+        {alert ? <p className={`${alert.className} mt-md`}>{alert.text}</p> : null}
+        {authUsersError ? <p className="alert alert-warn mt-md">{authUsersError}</p> : null}
+        {activityError ? (
+          <p className="alert alert-warn mt-md">
+            Activity summary data is unavailable until the new tracking migration is applied.
+          </p>
+        ) : null}
+        <div className="admin-stat-grid mt-md">
           <article className="surface surface-pad">
             <strong>{totalActive}</strong>
             <p>Active accounts</p>
@@ -830,134 +883,163 @@ export default async function AdminUsersPage({ searchParams }) {
             <strong>{countByRole(profiles, "admin")}</strong>
             <p>Admins</p>
           </article>
+          <article className="surface surface-pad">
+            <strong>{activatedCount}</strong>
+            <p>Activated</p>
+          </article>
+          <article className="surface surface-pad">
+            <strong>{pendingActivationCount}</strong>
+            <p>Pending activation</p>
+          </article>
+          <article className="surface surface-pad">
+            <strong>{recentlyActiveCount}</strong>
+            <p>Active in last 24h</p>
+          </article>
+          <article className="surface surface-pad">
+            <strong>{totalTrackedVisits}</strong>
+            <p>Total tracked visits</p>
+          </article>
         </div>
       </section>
 
       <section className="card">
-        <h2>Add User</h2>
-        <p className="muted">Create an auth account and assign a role/year in one step.</p>
-        {alert ? <p className={alert.className}>{alert.text}</p> : null}
-        <form action={createProgramUser} className="grid-two mt-md">
-          <input type="hidden" name="program_year" value={selectedYear} />
-          <div className="field">
-            <label className="label" htmlFor="full_name">Full Name</label>
-            <input id="full_name" name="full_name" className="input" required />
-          </div>
-          <div className="field">
-            <label className="label" htmlFor="email">Email</label>
-            <input id="email" name="email" type="email" className="input" required />
-          </div>
-          <div className="field">
-            <label className="label" htmlFor="role">Role</label>
-            <select id="role" name="role" className="select" defaultValue="student">
-              <option value="student">Student</option>
-              <option value="staff">Staff</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-          <div className="field">
-            <label className="label" htmlFor="team_key">Team (optional)</label>
-            <input id="team_key" name="team_key" className="input" placeholder="team-1" />
-          </div>
-          <div className="field">
-            <label className="label" htmlFor="guild_id">Guild (optional)</label>
-            <select id="guild_id" name="guild_id" className="select" defaultValue="">
-              <option value="">— No guild —</option>
-              {guilds.map((g) => (
-                <option key={g.id} value={g.id}>{g.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <label className="label" htmlFor="room_number">Room (optional)</label>
-            <input id="room_number" name="room_number" className="input" placeholder="Kessler 214" />
-          </div>
-          <div className="field">
-            <label className="label" htmlFor="phone_number">Phone Number (optional)</label>
-            <input id="phone_number" name="phone_number" className="input" placeholder="+16095551234" />
-          </div>
-          <div className="field">
-            <label className="label" htmlFor="pronouns">Pronouns (optional)</label>
-            <input id="pronouns" name="pronouns" className="input" placeholder="she/her" maxLength={60} />
-          </div>
-          <div className="field">
-            <label className="label" htmlFor="cotl_color">COTL Color (optional)</label>
-            <select id="cotl_color" name="cotl_color" className="select" defaultValue="">
-              <option value="">— None —</option>
-              <option value="blue">Blue</option>
-              <option value="green">Green</option>
-              <option value="gold">Gold</option>
-              <option value="orange">Orange</option>
-            </select>
-          </div>
-          <div className="field">
-            <label className="label" htmlFor="specialty_tag">Staff Role (optional)</label>
-            <select id="specialty_tag" name="specialty_tag" className="select" defaultValue="">
-              <option value="">— None —</option>
-              <option value="Lead">Lead</option>
-              <option value="SrC">SrC</option>
-              <option value="Advisor">Advisor</option>
-              <option value="Coordinator">Coordinator</option>
-              <option value="Support">Support</option>
-              <option value="Board">Board</option>
-              <option value="Media Fellow">Media Fellow</option>
-              <option value="Nurse">Nurse</option>
-              <option value="Wellbeing Advisor">Wellbeing Advisor</option>
-            </select>
-          </div>
-          <button type="submit" className="button button-primary">
-            Create User
-          </button>
-        </form>
+        <details className="admin-collapsible">
+          <summary>
+            <span className="admin-collapsible-title">Add User</span>
+            <span className="admin-collapsible-meta">Create an auth account and assign a role/year in one step.</span>
+          </summary>
+          <form action={createProgramUser} className="grid-two mt-md">
+            <input type="hidden" name="program_year" value={selectedYear} />
+            <div className="field">
+              <label className="label" htmlFor="full_name">Full Name</label>
+              <input id="full_name" name="full_name" className="input" required />
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="email">Email</label>
+              <input id="email" name="email" type="email" className="input" required />
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="role">Role</label>
+              <select id="role" name="role" className="select" defaultValue="student">
+                <option value="student">Student</option>
+                <option value="staff">Staff</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="team_key">Team (optional)</label>
+              <input id="team_key" name="team_key" className="input" placeholder="team-1" />
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="guild_id">Guild (optional)</label>
+              <select id="guild_id" name="guild_id" className="select" defaultValue="">
+                <option value="">— No guild —</option>
+                {guilds.map((g) => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="room_number">Room (optional)</label>
+              <input id="room_number" name="room_number" className="input" placeholder="Kessler 214" />
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="phone_number">Phone Number (optional)</label>
+              <input id="phone_number" name="phone_number" className="input" placeholder="+16095551234" />
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="pronouns">Pronouns (optional)</label>
+              <input id="pronouns" name="pronouns" className="input" placeholder="she/her" maxLength={60} />
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="cotl_color">COTL Color (optional)</label>
+              <select id="cotl_color" name="cotl_color" className="select" defaultValue="">
+                <option value="">— None —</option>
+                <option value="blue">Blue</option>
+                <option value="green">Green</option>
+                <option value="gold">Gold</option>
+                <option value="orange">Orange</option>
+              </select>
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="specialty_tag">Staff Role (optional)</label>
+              <select id="specialty_tag" name="specialty_tag" className="select" defaultValue="">
+                <option value="">— None —</option>
+                <option value="Lead">Lead</option>
+                <option value="SrC">SrC</option>
+                <option value="Advisor">Advisor</option>
+                <option value="Coordinator">Coordinator</option>
+                <option value="Support">Support</option>
+                <option value="Board">Board</option>
+                <option value="Media Fellow">Media Fellow</option>
+                <option value="Nurse">Nurse</option>
+                <option value="Wellbeing Advisor">Wellbeing Advisor</option>
+              </select>
+            </div>
+            <button type="submit" className="button button-primary">
+              Create User
+            </button>
+          </form>
+        </details>
       </section>
 
       <section className="card">
-        <h2>Bulk Upload Users</h2>
-        <p className="muted">
-          Upload CSV with columns{" "}
-          <code>full_name,email,role,year,team_key,guild_slug,room_number,phone_number</code>{" "}
-          (header optional). If year is blank, this page&apos;s selected year is used.
-          <code>guild_slug</code> must match a guild slug for the year (e.g.{" "}
-          <code>servant-leadership</code>).
-        </p>
-        <p className="muted">
-          <a href="/templates/torch-live-users-template.csv" className="text-link">
-            Download CSV template
-          </a>
-        </p>
-        <form action={bulkImportUsers} className="stack mt-md">
-          <input type="hidden" name="program_year" value={selectedYear} />
-          <div className="field">
-            <label className="label" htmlFor="bulk_csv">Paste CSV</label>
-            <textarea
-              id="bulk_csv"
-              name="bulk_csv"
-              className="textarea"
-              placeholder={`full_name,email,role,year,team_key,guild_slug,room_number,phone_number\nJane Example,jane@example.com,student,2026,team-1,reflection-connection,Kessler 214,+16095551234`}
-            />
-          </div>
-          <div className="field">
-            <label className="label" htmlFor="bulk_file">Or upload CSV file</label>
-            <input id="bulk_file" name="bulk_file" type="file" accept=".csv,text/csv" className="input" />
-          </div>
-          <button type="submit" className="button button-primary">
-            Import Users
-          </button>
-        </form>
+        <details className="admin-collapsible">
+          <summary>
+            <span className="admin-collapsible-title">Bulk Upload Users</span>
+            <span className="admin-collapsible-meta">Paste or upload roster CSV data for the selected year.</span>
+          </summary>
+          <p className="muted mt-md">
+            Upload CSV with columns{" "}
+            <code>full_name,email,role,year,team_key,guild_slug,room_number,phone_number</code>{" "}
+            (header optional). If year is blank, this page&apos;s selected year is used.
+            <code>guild_slug</code> must match a guild slug for the year (e.g.{" "}
+            <code>servant-leadership</code>).
+          </p>
+          <p className="muted">
+            <a href="/templates/torch-live-users-template.csv" className="text-link">
+              Download CSV template
+            </a>
+          </p>
+          <form action={bulkImportUsers} className="stack mt-md">
+            <input type="hidden" name="program_year" value={selectedYear} />
+            <div className="field">
+              <label className="label" htmlFor="bulk_csv">Paste CSV</label>
+              <textarea
+                id="bulk_csv"
+                name="bulk_csv"
+                className="textarea"
+                placeholder={`full_name,email,role,year,team_key,guild_slug,room_number,phone_number\nJane Example,jane@example.com,student,2026,team-1,reflection-connection,Kessler 214,+16095551234`}
+              />
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="bulk_file">Or upload CSV file</label>
+              <input id="bulk_file" name="bulk_file" type="file" accept=".csv,text/csv" className="input" />
+            </div>
+            <button type="submit" className="button button-primary">
+              Import Users
+            </button>
+          </form>
+        </details>
       </section>
 
       <section className="card">
-        <h2>Year Rollover</h2>
-        <p className="muted">
-          Keep previous years in place, deactivate student/staff accounts from the completed year,
-          then import the new cohort for the next year.
-        </p>
-        <form action={deactivateYearUsers} className="mt-md">
-          <input type="hidden" name="program_year" value={selectedYear} />
-          <button type="submit" className="button button-secondary">
-            Deactivate Student/Staff in {selectedYear}
-          </button>
-        </form>
+        <details className="admin-collapsible">
+          <summary>
+            <span className="admin-collapsible-title">Year Rollover</span>
+            <span className="admin-collapsible-meta">Deactivate last cycle&apos;s student and staff accounts without removing the historical roster.</span>
+          </summary>
+          <p className="muted mt-md">
+            Keep previous years in place, deactivate student/staff accounts from the completed year,
+            then import the new cohort for the next year.
+          </p>
+          <form action={deactivateYearUsers} className="mt-md">
+            <input type="hidden" name="program_year" value={selectedYear} />
+            <button type="submit" className="button button-secondary">
+              Deactivate Student/Staff in {selectedYear}
+            </button>
+          </form>
+        </details>
       </section>
 
       {editingUser ? (
@@ -1114,7 +1196,10 @@ export default async function AdminUsersPage({ searchParams }) {
 
       <section className="card">
         <h2>Current Year Roster</h2>
-        <p className="muted">Filter, sort, and manage all accounts for {selectedYear}.</p>
+        <p className="muted">
+          Filter, sort, and manage all accounts for {selectedYear}. Activity combines activation,
+          last login, last visit, and visit count in one column.
+        </p>
         {error ? (
           <p className="alert alert-error">{error.message}</p>
         ) : profiles.length === 0 ? (

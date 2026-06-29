@@ -166,81 +166,20 @@ export default async function AdminGuildsPage({ searchParams }) {
         </div>
       </section>
 
-      <section className="card">
-        <h2>{editingGuild ? `Edit Guild: ${editingGuild.name}` : "Add Guild"}</h2>
-        <form action={saveGuild} className="stack mt-md">
-          {editingGuild ? <input type="hidden" name="id" value={editingGuild.id} /> : null}
-          <div className="grid-two">
-            <div className="field">
-              <label className="label" htmlFor="guild_name">Name</label>
-              <input
-                id="guild_name"
-                name="name"
-                className="input"
-                defaultValue={editingGuild?.name || ""}
-                required
-              />
-            </div>
-            <div className="field">
-              <label className="label" htmlFor="guild_slug">Slug</label>
-              <input
-                id="guild_slug"
-                name="slug"
-                className="input"
-                placeholder="servant-leadership"
-                defaultValue={editingGuild?.slug || ""}
-                required
-              />
-            </div>
-            <div className="field">
-              <label className="label" htmlFor="sort_order">Sort Order</label>
-              <input
-                id="sort_order"
-                name="sort_order"
-                type="number"
-                className="input"
-                defaultValue={editingGuild?.sort_order ?? 0}
-              />
-            </div>
-            <label className="inline-check muted" style={{ alignSelf: "end" }}>
-              <input
-                type="checkbox"
-                name="is_active"
-                defaultChecked={editingGuild ? editingGuild.is_active : true}
-              />
-              Active (visible to users)
-            </label>
-          </div>
-          <div className="field">
-            <label className="label" htmlFor="student_description">Student Description</label>
-            <textarea
-              id="student_description"
-              name="student_description"
-              className="textarea"
-              rows={4}
-              defaultValue={editingGuild?.student_description || ""}
-            />
-          </div>
-          <div className="field">
-            <label className="label" htmlFor="staff_description">Staff / Counselor Description</label>
-            <textarea
-              id="staff_description"
-              name="staff_description"
-              className="textarea"
-              rows={4}
-              defaultValue={editingGuild?.staff_description || ""}
-            />
-          </div>
-          <div className="stack-sm">
-            <button type="submit" className="button button-primary">
-              {editingGuild ? "Save Changes" : "Add Guild"}
-            </button>
-            {editingGuild ? (
-              <a href="/admin/guilds" className="button button-ghost">Cancel</a>
-            ) : null}
-          </div>
-        </form>
-      </section>
+      {boardError ? (
+        <p className="alert alert-error">{boardError.message}</p>
+      ) : (
+        <section className="card">
+          <h2>Guild Assignment Board</h2>
+          <p className="muted">Assign students to guilds based on their ranked preferences.</p>
+          <GuildAssignBoard
+            rows={boardData?.rows || []}
+            guilds={(guilds || []).filter((g) => g.is_active).map((g) => ({ id: g.id, name: g.name }))}
+            counts={boardData?.counts || []}
+            totalStudents={totalStudents}
+          />
+        </section>
+      )}
 
       <section className="card">
         <h2>Guilds — {profile.program_year}</h2>
@@ -287,20 +226,86 @@ export default async function AdminGuildsPage({ searchParams }) {
         )}
       </section>
 
-      {boardError ? (
-        <p className="alert alert-error">{boardError.message}</p>
-      ) : (
-        <section className="card">
-          <h2>Guild Assignment Board</h2>
-          <p className="muted">Assign students to guilds based on their ranked preferences.</p>
-          <GuildAssignBoard
-            rows={boardData?.rows || []}
-            guilds={(guilds || []).filter((g) => g.is_active).map((g) => ({ id: g.id, name: g.name }))}
-            counts={boardData?.counts || []}
-            totalStudents={totalStudents}
-          />
-        </section>
-      )}
+      <section className="card">
+        <details className="admin-collapsible" open={Boolean(editingGuild)}>
+          <summary>
+            <span className="admin-collapsible-title">{editingGuild ? `Edit Guild: ${editingGuild.name}` : "Add Guild"}</span>
+            <span className="admin-collapsible-meta">Manage guild copy and visibility without crowding the assignment board.</span>
+          </summary>
+          <form action={saveGuild} className="stack mt-md">
+            {editingGuild ? <input type="hidden" name="id" value={editingGuild.id} /> : null}
+            <div className="grid-two">
+              <div className="field">
+                <label className="label" htmlFor="guild_name">Name</label>
+                <input
+                  id="guild_name"
+                  name="name"
+                  className="input"
+                  defaultValue={editingGuild?.name || ""}
+                  required
+                />
+              </div>
+              <div className="field">
+                <label className="label" htmlFor="guild_slug">Slug</label>
+                <input
+                  id="guild_slug"
+                  name="slug"
+                  className="input"
+                  placeholder="servant-leadership"
+                  defaultValue={editingGuild?.slug || ""}
+                  required
+                />
+              </div>
+              <div className="field">
+                <label className="label" htmlFor="sort_order">Sort Order</label>
+                <input
+                  id="sort_order"
+                  name="sort_order"
+                  type="number"
+                  className="input"
+                  defaultValue={editingGuild?.sort_order ?? 0}
+                />
+              </div>
+              <label className="inline-check muted" style={{ alignSelf: "end" }}>
+                <input
+                  type="checkbox"
+                  name="is_active"
+                  defaultChecked={editingGuild ? editingGuild.is_active : true}
+                />
+                Active (visible to users)
+              </label>
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="student_description">Student Description</label>
+              <textarea
+                id="student_description"
+                name="student_description"
+                className="textarea"
+                rows={4}
+                defaultValue={editingGuild?.student_description || ""}
+              />
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="staff_description">Staff / Counselor Description</label>
+              <textarea
+                id="staff_description"
+                name="staff_description"
+                className="textarea"
+                rows={4}
+                defaultValue={editingGuild?.staff_description || ""}
+              />
+            </div>
+            <div className="stack-sm">
+              <button type="submit" className="button button-primary">
+                {editingGuild ? "Save Changes" : "Add Guild"}
+              </button>
+              {editingGuild ? (
+                <a href="/admin/guilds" className="button button-ghost">Cancel</a>
+              ) : null}
+            </div>
+          </form>
+        </details>
+      </section>
     </>
   );
 }

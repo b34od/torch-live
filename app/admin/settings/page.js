@@ -652,165 +652,190 @@ export default async function AdminSettingsPage({ searchParams }) {
       </section>
 
       <section className="card">
-        <h2>Schedule Day Coverage Audit</h2>
-        <p className="muted">
-          Required launch baseline: staff has Friday-Tuesday items, and students have Saturday-Tuesday items.
-        </p>
-        <div className="stack mt-md">
-          <article className="surface surface-pad-sm status-row">
-            <div>
-              <strong>Student Track Days</strong>
-              <p className="muted">
-                {studentRowsResponse.error
-                  ? studentRowsResponse.error.message
-                  : studentMissingDays.length === 0
-                    ? "All required days are populated."
-                    : `Missing: ${studentMissingDays.map(dayLabel).join(", ")}`}
-              </p>
-              <p className="muted">
-                <Link href={`/admin/schedule?track=student&year=${profile.program_year}`} className="text-link">
-                  Open student schedule planning
-                </Link>
-              </p>
-            </div>
-            <span className={`status-pill ${studentDayCoverageReady ? "status-pill-good" : "status-pill-warn"}`}>
-              {studentDayCoverageReady ? "Ready" : "Action Needed"}
-            </span>
-          </article>
-          <article className="surface surface-pad-sm status-row">
-            <div>
-              <strong>Staff Track Days</strong>
-              <p className="muted">
-                {staffRowsResponse.error
-                  ? staffRowsResponse.error.message
-                  : staffMissingDays.length === 0
-                    ? "All required days are populated."
-                    : `Missing: ${staffMissingDays.map(dayLabel).join(", ")}`}
-              </p>
-              <p className="muted">
-                <Link href={`/admin/schedule?track=staff&year=${profile.program_year}`} className="text-link">
-                  Open staff schedule planning
-                </Link>
-              </p>
-            </div>
-            <span className={`status-pill ${staffDayCoverageReady ? "status-pill-good" : "status-pill-warn"}`}>
-              {staffDayCoverageReady ? "Ready" : "Action Needed"}
-            </span>
-          </article>
-        </div>
-      </section>
-
-      <section className="card">
-        <h2>Roster Coverage Audit</h2>
-        <p className="muted">
-          Launch readiness requires at least one active admin, staff, and student user in year {profile.program_year}.
-        </p>
-        {rosterResponse.error ? (
-          <p className="alert alert-error mt-md">{rosterResponse.error.message}</p>
-        ) : (
-          <div className="status-grid mt-md">
-            {REQUIRED_ROLES.map((role) => {
-              const count = roleCounts[role];
-              const roleReady = count > 0;
-              return (
-                <article key={role} className="surface surface-pad-sm status-row">
-                  <div>
-                    <strong>{role[0].toUpperCase() + role.slice(1)} Active Users</strong>
-                    <p className="muted">{count} active account(s) in this program year.</p>
-                    <p className="muted">
-                      <Link href={`/admin/users?year=${profile.program_year}`} className="text-link">
-                        Open user management
-                      </Link>
-                    </p>
-                  </div>
-                  <span className={`status-pill ${roleReady ? "status-pill-good" : "status-pill-warn"}`}>
-                    {roleReady ? "Ready" : "Action Needed"}
-                  </span>
-                </article>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      <section className="card">
-        <h2>Schedule Conflict Audit</h2>
-        <p className="muted">
-          Automatic overlap scan for program year {profile.program_year}. Resolve these before
-          launch unless overlap is intentional.
-        </p>
-        {studentConflictCount === 0 && staffConflictCount === 0 ? (
-          <p className="alert alert-success mt-md">No schedule overlaps detected.</p>
-        ) : (
+        <details className="admin-collapsible">
+          <summary>
+            <span className="admin-collapsible-title">Schedule Day Coverage Audit</span>
+            <span className="admin-collapsible-meta">Check required staff and student day coverage before launch.</span>
+          </summary>
+          <p className="muted mt-md">
+            Required launch baseline: staff has Friday-Tuesday items, and students have Saturday-Tuesday items.
+          </p>
           <div className="stack mt-md">
-            {studentConflicts.map((entry) => (
-              <article className="surface surface-pad-sm" key={`student-${entry.dayNumber}`}>
-                <strong>
-                  Student · {dayLabel(entry.dayNumber)} · {entry.pairs.length} overlap(s)
-                </strong>
+            <article className="surface surface-pad-sm status-row">
+              <div>
+                <strong>Student Track Days</strong>
                 <p className="muted">
-                  <Link
-                    href={`/admin/schedule?track=student&year=${profile.program_year}&day=${entry.dayNumber}`}
-                    className="text-link"
-                  >
-                    Open day in Schedule Management
+                  {studentRowsResponse.error
+                    ? studentRowsResponse.error.message
+                    : studentMissingDays.length === 0
+                      ? "All required days are populated."
+                      : `Missing: ${studentMissingDays.map(dayLabel).join(", ")}`}
+                </p>
+                <p className="muted">
+                  <Link href={`/admin/schedule?track=student&year=${profile.program_year}`} className="text-link">
+                    Open student schedule planning
                   </Link>
                 </p>
-              </article>
-            ))}
-            {staffConflicts.map((entry) => (
-              <article className="surface surface-pad-sm" key={`staff-${entry.dayNumber}`}>
-                <strong>
-                  Staff · {dayLabel(entry.dayNumber)} · {entry.pairs.length} overlap(s)
-                </strong>
+              </div>
+              <span className={`status-pill ${studentDayCoverageReady ? "status-pill-good" : "status-pill-warn"}`}>
+                {studentDayCoverageReady ? "Ready" : "Action Needed"}
+              </span>
+            </article>
+            <article className="surface surface-pad-sm status-row">
+              <div>
+                <strong>Staff Track Days</strong>
                 <p className="muted">
-                  <Link
-                    href={`/admin/schedule?track=staff&year=${profile.program_year}&day=${entry.dayNumber}`}
-                    className="text-link"
-                  >
-                    Open day in Schedule Management
+                  {staffRowsResponse.error
+                    ? staffRowsResponse.error.message
+                    : staffMissingDays.length === 0
+                      ? "All required days are populated."
+                      : `Missing: ${staffMissingDays.map(dayLabel).join(", ")}`}
+                </p>
+                <p className="muted">
+                  <Link href={`/admin/schedule?track=staff&year=${profile.program_year}`} className="text-link">
+                    Open staff schedule planning
                   </Link>
                 </p>
-              </article>
-            ))}
+              </div>
+              <span className={`status-pill ${staffDayCoverageReady ? "status-pill-good" : "status-pill-warn"}`}>
+                {staffDayCoverageReady ? "Ready" : "Action Needed"}
+              </span>
+            </article>
           </div>
-        )}
+        </details>
       </section>
 
       <section className="card">
-        <h2>Environment Readiness</h2>
-        <div className="grid-two">
-          <article className="surface surface-pad">
-            <strong>NEXT_PUBLIC_SUPABASE_URL</strong>
-            <p>{configured(supabaseUrlConfigured)}</p>
-          </article>
-          <article className="surface surface-pad">
-            <strong>Public Supabase Key</strong>
-            <p>{configured(publicKeyConfigured)}</p>
-          </article>
-          <article className="surface surface-pad">
-            <strong>Service Role Key</strong>
-            <p>{configured(serviceKeyConfigured)}</p>
-          </article>
-          <article className="surface surface-pad">
-            <strong>NEXT_PUBLIC_SITE_URL</strong>
-            <p>{configured(pushEnvConfigured)}</p>
-          </article>
-        </div>
+        <details className="admin-collapsible">
+          <summary>
+            <span className="admin-collapsible-title">Roster Coverage Audit</span>
+            <span className="admin-collapsible-meta">Confirm active admin, staff, and student accounts exist for the current year.</span>
+          </summary>
+          <p className="muted mt-md">
+            Launch readiness requires at least one active admin, staff, and student user in year {profile.program_year}.
+          </p>
+          {rosterResponse.error ? (
+            <p className="alert alert-error mt-md">{rosterResponse.error.message}</p>
+          ) : (
+            <div className="status-grid mt-md">
+              {REQUIRED_ROLES.map((role) => {
+                const count = roleCounts[role];
+                const roleReady = count > 0;
+                return (
+                  <article key={role} className="surface surface-pad-sm status-row">
+                    <div>
+                      <strong>{role[0].toUpperCase() + role.slice(1)} Active Users</strong>
+                      <p className="muted">{count} active account(s) in this program year.</p>
+                      <p className="muted">
+                        <Link href={`/admin/users?year=${profile.program_year}`} className="text-link">
+                          Open user management
+                        </Link>
+                      </p>
+                    </div>
+                    <span className={`status-pill ${roleReady ? "status-pill-good" : "status-pill-warn"}`}>
+                      {roleReady ? "Ready" : "Action Needed"}
+                    </span>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </details>
       </section>
 
       <section className="card">
-        <h2>Launch Checklist</h2>
-        <ol className="launch-checklist">
-          <li>Confirm Supabase redirect URLs include `/auth/confirm` and `/auth/callback`.</li>
-          <li>
-            Confirm Supabase Magic Link template includes both `{"{{ .Token }}"}` and
-            token-hash confirm route from `supabase/templates/magic-link.html`.
-          </li>
-          <li>Disable email-link tracking or Safe-Link rewriting in your email provider.</li>
-          <li>Run one admin, one staff, and one student login test on real mobile devices.</li>
-          <li>Verify schedule edits and announcements publish successfully from mobile.</li>
-        </ol>
+        <details className="admin-collapsible">
+          <summary>
+            <span className="admin-collapsible-title">Schedule Conflict Audit</span>
+            <span className="admin-collapsible-meta">Review overlapping schedule blocks that need cleanup before launch.</span>
+          </summary>
+          <p className="muted mt-md">
+            Automatic overlap scan for program year {profile.program_year}. Resolve these before
+            launch unless overlap is intentional.
+          </p>
+          {studentConflictCount === 0 && staffConflictCount === 0 ? (
+            <p className="alert alert-success mt-md">No schedule overlaps detected.</p>
+          ) : (
+            <div className="stack mt-md">
+              {studentConflicts.map((entry) => (
+                <article className="surface surface-pad-sm" key={`student-${entry.dayNumber}`}>
+                  <strong>
+                    Student · {dayLabel(entry.dayNumber)} · {entry.pairs.length} overlap(s)
+                  </strong>
+                  <p className="muted">
+                    <Link
+                      href={`/admin/schedule?track=student&year=${profile.program_year}&day=${entry.dayNumber}`}
+                      className="text-link"
+                    >
+                      Open day in Schedule Management
+                    </Link>
+                  </p>
+                </article>
+              ))}
+              {staffConflicts.map((entry) => (
+                <article className="surface surface-pad-sm" key={`staff-${entry.dayNumber}`}>
+                  <strong>
+                    Staff · {dayLabel(entry.dayNumber)} · {entry.pairs.length} overlap(s)
+                  </strong>
+                  <p className="muted">
+                    <Link
+                      href={`/admin/schedule?track=staff&year=${profile.program_year}&day=${entry.dayNumber}`}
+                      className="text-link"
+                    >
+                      Open day in Schedule Management
+                    </Link>
+                  </p>
+                </article>
+              ))}
+            </div>
+          )}
+        </details>
+      </section>
+
+      <section className="card">
+        <details className="admin-collapsible">
+          <summary>
+            <span className="admin-collapsible-title">Environment Readiness</span>
+            <span className="admin-collapsible-meta">Check required environment variables and service wiring.</span>
+          </summary>
+          <div className="grid-two mt-md">
+            <article className="surface surface-pad">
+              <strong>NEXT_PUBLIC_SUPABASE_URL</strong>
+              <p>{configured(supabaseUrlConfigured)}</p>
+            </article>
+            <article className="surface surface-pad">
+              <strong>Public Supabase Key</strong>
+              <p>{configured(publicKeyConfigured)}</p>
+            </article>
+            <article className="surface surface-pad">
+              <strong>Service Role Key</strong>
+              <p>{configured(serviceKeyConfigured)}</p>
+            </article>
+            <article className="surface surface-pad">
+              <strong>NEXT_PUBLIC_SITE_URL</strong>
+              <p>{configured(pushEnvConfigured)}</p>
+            </article>
+          </div>
+        </details>
+      </section>
+
+      <section className="card">
+        <details className="admin-collapsible">
+          <summary>
+            <span className="admin-collapsible-title">Launch Checklist</span>
+            <span className="admin-collapsible-meta">Manual pre-launch validation steps for auth and mobile readiness.</span>
+          </summary>
+          <ol className="launch-checklist mt-md">
+            <li>Confirm Supabase redirect URLs include `/auth/confirm` and `/auth/callback`.</li>
+            <li>
+              Confirm Supabase Magic Link template includes both `{"{{ .Token }}"}` and
+              token-hash confirm route from `supabase/templates/magic-link.html`.
+            </li>
+            <li>Disable email-link tracking or Safe-Link rewriting in your email provider.</li>
+            <li>Run one admin, one staff, and one student login test on real mobile devices.</li>
+            <li>Verify schedule edits and announcements publish successfully from mobile.</li>
+          </ol>
+        </details>
       </section>
     </>
   );

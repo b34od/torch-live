@@ -53,6 +53,23 @@
   border-color: rgba(255, 255, 255, 0.07);
 }
 
+[data-theme="dark"] .admin-collapsible,
+[data-theme="dark"] .admin-inline-expander {
+  background: rgba(28, 28, 28, 0.95);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .admin-collapsible-title {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .admin-collapsible-meta,
+[data-theme="dark"] .roster-subtle,
+[data-theme="dark"] .roster-activity-meta,
+[data-theme="dark"] .roster-activity-path {
+  color: #a0a1a1;
+}
+
 [data-theme="dark"] .input,
 [data-theme="dark"] .select,
 [data-theme="dark"] .textarea {
@@ -92,6 +109,21 @@
 [data-theme="dark"] .nav-link-active {
   background: rgba(237, 103, 103, 0.2);
   border-color: rgba(237, 103, 103, 0.5);
+  color: #f08080;
+}
+
+[data-theme="dark"] .nav-more-menu {
+  background: rgba(22, 22, 22, 0.98);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .nav-more-link {
+  color: #c0c1c1;
+}
+
+[data-theme="dark"] .nav-more-link:hover,
+[data-theme="dark"] .nav-more-link-active {
+  background: rgba(237, 103, 103, 0.2);
   color: #f08080;
 }
 
@@ -603,6 +635,63 @@ img {
   border-top: 1px solid rgba(44, 44, 44, 0.08);
 }
 
+.nav-more {
+  position: relative;
+}
+
+.nav-more summary {
+  list-style: none;
+}
+
+.nav-more summary::-webkit-details-marker {
+  display: none;
+}
+
+.nav-more-summary::after {
+  content: "▾";
+  display: inline-block;
+  margin-left: 0.35rem;
+  font-size: 0.72rem;
+}
+
+.nav-more[open] .nav-more-summary::after {
+  transform: rotate(180deg);
+}
+
+.nav-more-menu {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  right: 0;
+  min-width: 190px;
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(44, 44, 44, 0.08);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: var(--shadow-soft);
+  z-index: 40;
+}
+
+.nav-more-link {
+  display: block;
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
+  font-weight: 600;
+  color: #545555;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.nav-more-link:hover {
+  background: rgba(173, 174, 215, 0.18);
+  color: var(--torch-purple);
+}
+
+.nav-more-link-active {
+  background: rgba(237, 103, 103, 0.12);
+  color: #8c2d2d;
+}
+
 .nav-link {
   display: inline-flex;
   align-items: center;
@@ -748,6 +837,82 @@ img {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1rem;
+}
+
+.admin-quick-grid,
+.admin-stat-grid,
+.admin-support-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.admin-quick-card,
+.admin-support-card {
+  display: block;
+  min-height: 100%;
+  transition: transform 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.admin-quick-card:hover,
+.admin-support-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(113, 60, 151, 0.24);
+}
+
+.admin-collapsible,
+.admin-inline-expander {
+  border: 1px solid rgba(44, 44, 44, 0.1);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.94);
+  padding: 0.65rem 0.75rem;
+}
+
+.admin-collapsible summary,
+.admin-inline-expander summary {
+  list-style: none;
+  cursor: pointer;
+  display: grid;
+  gap: 0.15rem;
+  padding-right: 1.5rem;
+  position: relative;
+}
+
+.admin-collapsible summary::-webkit-details-marker,
+.admin-inline-expander summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-collapsible summary::after,
+.admin-inline-expander summary::after {
+  content: "▾";
+  position: absolute;
+  right: 0;
+  top: 0;
+  font-size: 0.78rem;
+  color: #666767;
+  transition: transform 120ms ease;
+}
+
+.admin-collapsible[open] summary::after,
+.admin-inline-expander[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.admin-collapsible-title {
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: #3f4040;
+}
+
+.admin-collapsible-meta {
+  font-size: 0.84rem;
+  color: #666666;
+}
+
+.admin-inline-expander summary {
+  font-weight: 700;
+  color: #4f5050;
 }
 
 .table-wrap {
@@ -1655,6 +1820,8 @@ img {
 .input:focus-visible,
 .select:focus-visible,
 .textarea:focus-visible,
+.admin-collapsible summary:focus-visible,
+.admin-inline-expander summary:focus-visible,
 .day-tab:focus-visible,
 .nav-link:focus-visible,
 .bottom-nav-link:focus-visible,
@@ -2289,6 +2456,13 @@ img {
   white-space: nowrap;
 }
 
+.roster-subtle {
+  margin-top: 0.18rem;
+  font-size: 0.79rem;
+  color: #666666;
+  white-space: nowrap;
+}
+
 .roster-email {
   font-size: 0.875rem;
   color: var(--color-text-muted);
@@ -2308,6 +2482,28 @@ img {
 
 .roster-table td {
   vertical-align: middle;
+}
+
+.roster-activity {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 220px;
+}
+
+.roster-activity-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.roster-activity-meta,
+.roster-activity-path {
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.roster-activity-path code {
+  font-size: 0.74rem;
 }
 
 /* ─── Guild cards ────────────────────────────────────────────── */
