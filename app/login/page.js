@@ -25,7 +25,7 @@ function isPkceBrowserMismatch(normalizedMessage) {
 }
 
 function normalizeAuthError(message) {
-  const fallback = "Unable to send sign-in link right now. Please try again.";
+  const fallback = "Something went wrong with sign-in. Wait a moment, then try again — or use the sign-in code from your email.";
   const raw = String(message || "").trim();
   if (!raw) return fallback;
 
@@ -287,7 +287,7 @@ async function sendMagicLink(formData) {
   }
 
   if (error) {
-    console.error("sendMagicLink failed", { email, message: error.message });
+    console.error("sendMagicLink failed", { email, message: error.message, status: error.status, code: error.code });
     redirect(`/login?error=${encodeURIComponent(normalizeAuthError(error.message))}`);
   }
 
