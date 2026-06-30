@@ -207,7 +207,7 @@ export default function RosterTable({ profiles, selectedYear, onToggle, onToggle
           <option value="7d">Seen in 7d</option>
           <option value="never">No tracked visits</option>
         </select>
-        <span className="muted">
+        <span className="muted roster-count">
           {rows.length === profiles.length
             ? `${profiles.length} users`
             : `${rows.length} of ${profiles.length}`}
@@ -277,6 +277,17 @@ export default function RosterTable({ profiles, selectedYear, onToggle, onToggle
 
       <div className="table-wrap roster-table-wrap">
         <table className="schedule-table roster-table">
+          <colgroup>
+            <col className="roster-col-name" />
+            <col className="roster-col-email" />
+            <col className="roster-col-role" />
+            <col className="roster-col-status" />
+            <col className="roster-col-team" />
+            <col className="roster-col-guild" />
+            <col className="roster-col-directory" />
+            <col className="roster-col-activity" />
+            <col className="roster-col-actions" />
+          </colgroup>
           <thead>
             <tr>
               <SortTh col="full_name" label="Name" {...shProps} />

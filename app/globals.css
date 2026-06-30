@@ -2585,7 +2585,7 @@ img {
 
 .roster-filters {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
   gap: var(--space-sm);
   align-items: end;
   margin-bottom: var(--space-md);
@@ -2671,7 +2671,22 @@ img {
 .roster-count {
   font-size: 0.875rem;
   white-space: nowrap;
+  grid-column: 1 / -1;
 }
+
+.roster-table {
+  table-layout: fixed;
+}
+
+.roster-col-name { width: 15%; }
+.roster-col-email { width: 20%; }
+.roster-col-role { width: 8%; }
+.roster-col-status { width: 8%; }
+.roster-col-team { width: 5%; }
+.roster-col-guild { width: 6%; }
+.roster-col-directory { width: 9%; }
+.roster-col-activity { width: 15%; }
+.roster-col-actions { width: 14%; }
 
 .roster-table td {
   vertical-align: middle;
@@ -2681,6 +2696,36 @@ img {
   display: grid;
   gap: 0.25rem;
   min-width: 220px;
+}
+
+.roster-table th,
+.roster-table td {
+  padding: 0.55rem 0.45rem;
+}
+
+.roster-table .roster-name,
+.roster-table .roster-subtle,
+.roster-table .roster-email,
+.roster-table .roster-activity-meta,
+.roster-table .roster-activity-path,
+.roster-table .roster-activity-path code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.roster-table .roster-activity {
+  min-width: 0;
+}
+
+.roster-table .roster-row-actions {
+  gap: 0.3rem;
+}
+
+.roster-table .schedule-table-action {
+  min-height: 24px;
+  padding: 0.14rem 0.38rem;
+  font-size: 0.66rem;
 }
 
 .roster-activity-head {
@@ -2703,7 +2748,7 @@ img {
   overflow-x: auto;
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1480px) {
   .roster-card-list {
     display: grid;
     margin-top: var(--space-sm);
