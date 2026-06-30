@@ -2617,6 +2617,14 @@ img {
   white-space: nowrap;
 }
 
+.roster-name-meta {
+  display: none;
+  margin-top: 0.12rem;
+  font-size: 0.82rem;
+  color: #666666;
+  overflow-wrap: anywhere;
+}
+
 .roster-subtle {
   margin-top: 0.18rem;
   font-size: 0.79rem;
@@ -2748,7 +2756,36 @@ img {
   overflow-x: auto;
 }
 
-@media (max-width: 1480px) {
+@media (max-width: 1380px) {
+  .roster-table th:nth-child(2),
+  .roster-table td:nth-child(2),
+  .roster-col-email {
+    display: none;
+  }
+
+  .roster-name-meta {
+    display: block;
+  }
+
+  .roster-col-name { width: 22%; }
+  .roster-col-role { width: 9%; }
+  .roster-col-status { width: 9%; }
+  .roster-col-team { width: 6%; }
+  .roster-col-guild { width: 7%; }
+  .roster-col-directory { width: 11%; }
+  .roster-col-activity { width: 18%; }
+  .roster-col-actions { width: 18%; }
+}
+
+@media (min-width: 1200px) {
+  .roster-count {
+    grid-column: auto;
+    justify-self: end;
+    align-self: center;
+  }
+}
+
+@media (max-width: 1180px) {
   .roster-card-list {
     display: grid;
     margin-top: var(--space-sm);

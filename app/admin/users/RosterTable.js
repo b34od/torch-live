@@ -306,6 +306,7 @@ export default function RosterTable({ profiles, selectedYear, onToggle, onToggle
               <tr key={entry.id} className={entry.is_active ? "" : "roster-row-inactive"}>
                 <td>
                   <div className="roster-name">{entry.full_name}</div>
+                  <div className="roster-name-meta">{entry.email}</div>
                   {entry.room_number ? <div className="roster-subtle">Room: {entry.room_number}</div> : null}
                 </td>
                 <td className="roster-email">{entry.email}</td>
