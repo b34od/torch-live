@@ -7,6 +7,7 @@ import { getStaffScheduleByDay } from "../../../lib/data";
 import {
   addMinutesToTime,
   dayLabel,
+  expandScheduleSplitPairs,
   formatTimeLabel,
   programDaySortMinutes,
   resolveDayForTrack,
@@ -28,8 +29,15 @@ export default async function StaffSchedulePage({ searchParams }) {
     if (aStart !== bStart) return aStart - bStart;
     return Number(a.sort_order || 0) - Number(b.sort_order || 0);
   });
-  const firstItem = sortedItems[0] || null;
-  const lastItem = sortedItems[sortedItems.length - 1] || null;
+  const displayItems = expandScheduleSplitPairs(sortedItems, day).sort((a, b) => {
+    const aStart = programDaySortMinutes(a.start_time) || 0;
+    const bStart = programDaySortMinutes(b.start_time) || 0;
+    if (aStart !== bStart) return aStart - bStart;
+    if (a.splitPairId && a.splitPairId === b.splitPairId) return (a.splitLane || 0) - (b.splitLane || 0);
+    return Number(a.sort_order || 0) - Number(b.sort_order || 0);
+  });
+  const firstItem = displayItems[0] || null;
+  const lastItem = displayItems[displayItems.length - 1] || null;
   const endTime = lastItem ? addMinutesToTime(lastItem.start_time, lastItem.duration_minutes) : "";
 
   return (
@@ -42,14 +50,14 @@ export default async function StaffSchedulePage({ searchParams }) {
         <p className="alert alert-error mt-md">
           {error.message}
         </p>
-      ) : items.length === 0 ? (
+      ) : displayItems.length === 0 ? (
         <p className="empty mt-md">
           No schedule items yet for {dayLabel(day)}.
         </p>
       ) : (
         <>
           <p className="muted mt-sm">
-            {items.length} item{items.length === 1 ? "" : "s"} · starts at{" "}
+            {sortedItems.length} item{sortedItems.length === 1 ? "" : "s"} · starts at{" "}
             <strong>{formatTimeLabel(firstItem.start_time)}</strong> · ends at{" "}
             <strong>{formatTimeLabel(endTime)}</strong> · Eastern Time (ET)
           </p>
@@ -60,12 +68,17 @@ export default async function StaffSchedulePage({ searchParams }) {
           </div>
 
           <div className="schedule-view-panel mt-sm" data-view="list">
-            <ScheduleList items={sortedItems} track="staff" showOperationalDetails={true} />
+            <ScheduleList
+              items={displayItems}
+              track="staff"
+              groupSplitPairs={true}
+              showOperationalDetails={true}
+            />
           </div>
 
           <div className="schedule-view-panel" data-view="timeline" hidden>
             <ScheduleTimeline
-              items={sortedItems}
+              items={displayItems}
               track="staff"
               showNowMarker={false}
               dayNumber={day}

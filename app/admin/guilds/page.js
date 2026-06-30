@@ -129,7 +129,7 @@ export default async function AdminGuildsPage({ searchParams }) {
     : params?.setting_saved === "1"
     ? { className: "alert alert-success", text: `Guild selection is now ${selectionOpen ? "open" : "closed"}.` }
     : batchCount !== null
-    ? { className: "alert alert-success", text: `Assigned ${batchCount} student${batchCount !== 1 ? "s" : ""} to their top choice.` }
+    ? { className: "alert alert-success", text: `Assigned ${batchCount} student${batchCount !== 1 ? "s" : ""} with the legacy top-choice fill.` }
     : params?.error
     ? { className: "alert alert-error", text: decodeURIComponent(params.error) }
     : null;
@@ -157,11 +157,6 @@ export default async function AdminGuildsPage({ searchParams }) {
                 {selectionOpen ? "Close Selection" : "Open Selection"}
               </button>
             </form>
-            <form action={assignAllToTopChoice} className="inline-form">
-              <button type="submit" className="button button-ghost">
-                Assign All Unassigned → Top Choice
-              </button>
-            </form>
           </div>
         </div>
       </section>
@@ -171,7 +166,9 @@ export default async function AdminGuildsPage({ searchParams }) {
       ) : (
         <section className="card">
           <h2>Guild Assignment Board</h2>
-          <p className="muted">Assign students to guilds based on their ranked preferences.</p>
+          <p className="muted">
+            Assign students to guilds with team and guild filters, suggestion support, and randomized balance simulation for quick operator review.
+          </p>
           <GuildAssignBoard
             rows={boardData?.rows || []}
             guilds={(guilds || []).filter((g) => g.is_active).map((g) => ({ id: g.id, name: g.name }))}
@@ -180,6 +177,20 @@ export default async function AdminGuildsPage({ searchParams }) {
           />
         </section>
       )}
+
+      <section className="card">
+        <details className="admin-collapsible">
+          <summary>
+            <span className="admin-collapsible-title">Legacy Top-Choice Fill</span>
+            <span className="admin-collapsible-meta">Keep this as a fallback only. Use board suggestions first so team/guild balance stays visible.</span>
+          </summary>
+          <form action={assignAllToTopChoice} className="inline-form mt-md">
+            <button type="submit" className="button button-ghost">
+              Assign All Unassigned → Top Choice
+            </button>
+          </form>
+        </details>
+      </section>
 
       <section className="card">
         <h2>Guilds — {profile.program_year}</h2>

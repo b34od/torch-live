@@ -3,8 +3,10 @@ import { redirect } from "next/navigation";
 import ConfirmSubmitButton from "../../../components/ui/ConfirmSubmitButton";
 import DayTabs from "../../../components/ui/DayTabs";
 import ScheduleLocationSelect from "../../../components/ui/ScheduleLocationSelect";
+import ScheduleList from "../../../components/ui/ScheduleList";
 import ScheduleTimeline from "../../../components/ui/ScheduleTimeline";
 import ScheduleTimeFields from "../../../components/ui/ScheduleTimeFields";
+import ScheduleViewTabs from "../../../components/ui/ScheduleViewTabs";
 import { requireUser } from "../../../lib/auth";
 import { getStaffScheduleByDay, getStudentScheduleByDay } from "../../../lib/data";
 import {
@@ -19,10 +21,13 @@ import {
   addMinutesToTime,
   dayLabel,
   dayNumbersForTrack,
+  expandScheduleSplitPairs,
   formatTimeLabel,
   formatTimeRange,
   programDaySortMinutes,
   resolveDayForTrack,
+  simplifyStudentActivityName,
+  simplifyStudentLocation,
   timeToMinutes,
 } from "../../../lib/schedule";
 
@@ -928,6 +933,23 @@ export default async function AdminSchedulePage({ searchParams }) {
   const firstItem = sortedItems[0] || null;
   const lastItem = sortedItems[sortedItems.length - 1] || null;
   const lastEndTime = lastItem ? addMinutesToTime(lastItem.start_time, lastItem.duration_minutes) : "";
+  const studentPreviewItems =
+    track === "student"
+      ? expandScheduleSplitPairs(
+          sortedItems.map((item) => ({
+            ...item,
+            activity_name: simplifyStudentActivityName(item.activity_name),
+            location: simplifyStudentLocation(item.location),
+          })),
+          day,
+        ).sort((a, b) => {
+          const aStart = programDaySortMinutes(a.start_time) || 0;
+          const bStart = programDaySortMinutes(b.start_time) || 0;
+          if (aStart !== bStart) return aStart - bStart;
+          if (a.splitPairId && a.splitPairId === b.splitPairId) return (a.splitLane || 0) - (b.splitLane || 0);
+          return Number(a.sort_order || 0) - Number(b.sort_order || 0);
+        })
+      : [];
   const selectedDraftSource = parseDraftSource(params?.source);
   const draftCounts = getScheduleDraftCounts(selectedYear, selectedDraftSource);
   const draftSourceOptions = getScheduleDraftSourceOptions();
@@ -1078,6 +1100,32 @@ export default async function AdminSchedulePage({ searchParams }) {
           </>
         )}
       </section>
+
+      {track === "student" && studentPreviewItems.length > 0 ? (
+        <section className="card" id="schedule-student-preview">
+          <h2>Student View Preview</h2>
+          <p className="muted">
+            This is the simplified schedule presentation students see for the selected day, so admin and staff can verify the shared run-of-show directly.
+          </p>
+          <ScheduleViewTabs />
+          <div className="schedule-view-tabs mt-md">
+            <button className="schedule-view-tab" data-view="list" data-default="true">List</button>
+            <button className="schedule-view-tab" data-view="timeline">Timeline</button>
+          </div>
+          <div className="schedule-view-panel mt-sm" data-view="list">
+            <ScheduleList items={studentPreviewItems} track="student" groupSplitPairs={true} />
+          </div>
+          <div className="schedule-view-panel" data-view="timeline" hidden>
+            <ScheduleTimeline
+              items={studentPreviewItems}
+              track="student"
+              showNowMarker={false}
+              dayNumber={day}
+              programYear={selectedYear}
+            />
+          </div>
+        </section>
+      ) : null}
 
       <section className="card" id="schedule-add">
         <h2>Add Schedule Item</h2>

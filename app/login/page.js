@@ -62,6 +62,15 @@ function normalizeAuthError(message) {
     return "That sign-in link expired. Request a new magic link and try again.";
   }
 
+  if (
+    normalized.includes("error sending magic link email") ||
+    normalized.includes("error sending confirmation email") ||
+    normalized.includes("smtp") ||
+    normalized.includes("email provider")
+  ) {
+    return "TORCH Live could not send email right now. Wait a minute and try again, or contact TORCH staff if it keeps happening.";
+  }
+
   if (normalized.includes("account is not active") || normalized.includes("profile")) {
     return "Your account is not active yet. Contact TORCH staff for access.";
   }
@@ -193,6 +202,23 @@ async function sendMagicLink(formData) {
   const cookieStore = await cookies();
   setLastLoginEmailCookie(cookieStore, email);
 
+  const adminClient = createAdminSupabaseClient();
+  const programYear = Number(process.env.TORCH_PROGRAM_YEAR || 2026);
+  const { data: rosterProfile } = await adminClient
+    .from("user_profiles")
+    .select("id, is_active")
+    .eq("email", email)
+    .eq("program_year", programYear)
+    .maybeSingle();
+
+  if (!rosterProfile) {
+    redirect("/login?error=That+email+is+not+on+the+TORCH+Live+roster+yet.+Ask+an+admin+to+add+or+update+your+account.");
+  }
+
+  if (!rosterProfile.is_active) {
+    redirect("/login?error=Your+account+is+not+active+yet.+Contact+TORCH+staff+for+access.");
+  }
+
   const supabase = await createSupabaseServerClient();
   const headerList = await headers();
   const originHeader = headerList.get("origin");
@@ -218,8 +244,6 @@ async function sendMagicLink(formData) {
     error?.message === "Signups not allowed for otp" && bootstrapEmail && email === bootstrapEmail;
 
   if (shouldBootstrap) {
-    const adminClient = createAdminSupabaseClient();
-    const programYear = Number(process.env.TORCH_PROGRAM_YEAR || 2026);
     const fullName = process.env.TORCH_BOOTSTRAP_ADMIN_NAME || "TORCH Admin";
 
     const { data: newUserData, error: createUserError } = await adminClient.auth.admin.createUser({
@@ -263,6 +287,7 @@ async function sendMagicLink(formData) {
   }
 
   if (error) {
+    console.error("sendMagicLink failed", { email, message: error.message });
     redirect(`/login?error=${encodeURIComponent(normalizeAuthError(error.message))}`);
   }
 

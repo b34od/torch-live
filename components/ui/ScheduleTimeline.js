@@ -10,7 +10,7 @@ import {
   timeToMinutes,
 } from "../../lib/schedule";
 
-const MIN_BLOCK_HEIGHT_PX = 38;
+const MIN_BLOCK_HEIGHT_PX = 30;
 
 function colorForLocation(location) {
   const loc = String(location || "").toLowerCase();
@@ -165,7 +165,7 @@ export default function ScheduleTimeline({
   const ends = bounds.map((entry) => entry.end);
   const scaleStart = floorToHour(Math.min(...starts, 7 * 60));
   const scaleEnd = ceilToHour(Math.max(...ends, 20 * 60));
-  const pxPerMinute = 1.6;
+  const pxPerMinute = 1.45;
   const timelineHeight = Math.max((scaleEnd - scaleStart) * pxPerMinute, 420);
 
   const hourlyTicks = [];
@@ -314,11 +314,11 @@ export default function ScheduleTimeline({
             const width = `calc(${laneWidthPercent}% - ${((laneCount + 1) * laneGapPx) / laneCount}px)`;
             const left = `calc(${laneWidthPercent * lane}% + ${(lane + 1) * laneGapPx}px)`;
             const hasOverlap = Boolean(layout?.hasOverlap);
-            const isTiny = height < 42;
-            const isCompact = height < 66;
+            const isTiny = height < 36;
+            const isCompact = height < 58;
             const laneIsCrowded = laneCount > 2;
-            const showTime = height >= 48 && !laneIsCrowded;
-            const showStaffMeta = track === "staff" && height >= 52 && !laneIsCrowded && item.point_person;
+            const showTime = height >= 42 && !laneIsCrowded;
+            const showStaffMeta = track === "staff" && height >= 54 && !laneIsCrowded && item.point_person;
             const densityClass = isTiny ? " timeline-block-tiny" : isCompact ? " timeline-block-compact" : "";
             const timeClass = showTime ? "" : " timeline-block-no-time";
             const stateClass =
@@ -331,10 +331,16 @@ export default function ScheduleTimeline({
             const blockTimeFull = formatTimeRange(item.start_time, item.duration_minutes);
             const blockTimeCompact = formatCompactTimeRange(item.start_time, item.duration_minutes);
             const visibleTime = showTime ? blockTimeFull : blockTimeCompact || blockTimeFull;
-            const showLocation = height >= 56 && !laneIsCrowded;
+            const showLocation = height >= 52 && !laneIsCrowded;
             const blockDescription = [blockTitle, blockTimeFull, locationLabel].filter(Boolean).join(" · ");
-            const locationToken = locationLabel.length > 18 ? locationLabel.split(/\s*[–—-]\s*/)[0].trim() : locationLabel;
-            const locationSuffix = !showLocation && locationToken ? ` · ${locationToken}` : "";
+            const shortLocationLabel =
+              locationLabel.length > 20
+                ? locationLabel.split(/\s*[–—-]\s*/)[0].trim()
+                : locationLabel;
+            const locationSuffix =
+              !showLocation && shortLocationLabel && shortLocationLabel.length <= 18
+                ? ` · ${shortLocationLabel}`
+                : "";
             const visibleTitle = showTime ? blockTitle : `${visibleTime} · ${blockTitle}${locationSuffix}`;
 
             return (
@@ -357,7 +363,7 @@ export default function ScheduleTimeline({
                   <p className="timeline-block-time">{blockTimeFull}</p>
                 ) : null}
                 {showLocation ? (
-                  <p className="timeline-block-location">@{locationToken}</p>
+                  <p className="timeline-block-location">@{locationLabel}</p>
                 ) : null}
                 {showStaffMeta ? (
                   <p className="timeline-block-meta">

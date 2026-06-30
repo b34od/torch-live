@@ -30,46 +30,6 @@ export default async function StaffGuildsPage() {
 
   return (
     <>
-      {currentGuild ? (
-        <section className="card">
-          <h2>Your Guild: {currentGuild.name}</h2>
-          <div className="surface surface-pad mt-md">
-            <p>{currentGuild.staff_description}</p>
-          </div>
-        </section>
-      ) : (
-        <section className="card">
-          <h2>Your Guild</h2>
-          <p className="muted">
-            You haven&apos;t been assigned to a guild yet. An admin will assign your guild before
-            the program starts.
-          </p>
-        </section>
-      )}
-
-      <section className="card">
-        <h2>All Guilds</h2>
-        <p className="muted">Staff descriptions for each guild — activities and your role in them.</p>
-        {guilds.length === 0 ? (
-          <p className="empty mt-md">Guild information will be available soon.</p>
-        ) : (
-          <div className="stack mt-md">
-            {guilds.map((g) => (
-              <article
-                key={g.id}
-                className={`surface surface-pad${g.id === currentGuildId ? " guild-card-active" : ""}`}
-              >
-                <h3>
-                  {g.name}
-                  {g.id === currentGuildId ? <span className="pill pill-staff ml-sm">Your Guild</span> : null}
-                </h3>
-                <p className="muted">{g.staff_description}</p>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
-
       {boardResponse.error ? (
         <p className="alert alert-error">{boardResponse.error.message}</p>
       ) : (
@@ -78,7 +38,7 @@ export default async function StaffGuildsPage() {
             <div>
               <h2>Guild Assignment Board</h2>
               <p className="muted">
-                Assign each student to a guild. Rankings show their stated preferences.
+                Focus on live assignments first. Filter by team or guild, use suggestions for balance, then override anything manually.
               </p>
             </div>
             <span className={`status-pill ${boardResponse.data?.selectionOpen ? "status-pill-good" : "status-pill-warn"}`}>
@@ -93,6 +53,48 @@ export default async function StaffGuildsPage() {
           />
         </section>
       )}
+
+      {currentGuild ? (
+        <section className="card">
+          <h2>Your Guild: {currentGuild.name}</h2>
+          <p className="muted">Your assignment is shown here so you can cross-check the live board quickly.</p>
+        </section>
+      ) : (
+        <section className="card">
+          <h2>Your Guild</h2>
+          <p className="muted">
+            You haven&apos;t been assigned to a guild yet. An admin will assign your guild before
+            the program starts.
+          </p>
+        </section>
+      )}
+
+      <section className="card">
+        <details className="admin-collapsible">
+          <summary>
+            <span className="admin-collapsible-title">Guild Descriptions</span>
+            <span className="admin-collapsible-meta">Reference copy only — keep the assignment board as the main workspace.</span>
+          </summary>
+          {guilds.length === 0 ? (
+            <p className="empty mt-md">Guild information will be available soon.</p>
+          ) : (
+            <div className="stack mt-md">
+              {guilds.map((g) => (
+                <article
+                  key={g.id}
+                  className={`surface surface-pad${g.id === currentGuildId ? " guild-card-active" : ""}`}
+                >
+                  <h3>
+                    {g.name}
+                    {g.id === currentGuildId ? <span className="pill pill-staff ml-sm">Your Guild</span> : null}
+                  </h3>
+                  <p className="muted">{g.staff_description}</p>
+                </article>
+              ))}
+            </div>
+          )}
+        </details>
+      </section>
     </>
   );
 }

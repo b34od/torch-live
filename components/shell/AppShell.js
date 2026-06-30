@@ -6,23 +6,31 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { getRoleNav } from "../../lib/navigation";
 
+const SUPPORT_PHONE_RAW = process.env.NEXT_PUBLIC_EMERGENCY_CONTACT_PHONE || "+16093006397";
+const SUPPORT_PHONE_LABEL = process.env.NEXT_PUBLIC_EMERGENCY_CONTACT_PHONE_LABEL || "(609) 300-6397";
+const SUPPORT_CONTACT_NAME = process.env.NEXT_PUBLIC_EMERGENCY_CONTACT_NAME || "the TORCH team";
+
 function rolePillClass(role) {
   if (role === "admin") return "pill pill-admin";
   if (role === "staff") return "pill pill-staff";
   return "pill pill-student";
 }
 
-export default function AppShell({ role, profile, children }) {
+export default function AppShell({ role, profile, children, urgentAnnouncements = [] }) {
   const pathname = usePathname();
   const navConfig = getRoleNav(role);
   const primaryNavItems = navConfig.primary || [];
   const secondaryNavItems = navConfig.secondary || [];
   const mobileNavItems = navConfig.mobile || primaryNavItems;
+  const mobileMenuItems = [...primaryNavItems, ...secondaryNavItems];
   const installPromptRef = useRef(null);
+  const moreRef = useRef(null);
+  const mobileMenuRef = useRef(null);
   const [canPromptInstall, setCanPromptInstall] = useState(false);
   const [installHint, setInstallHint] = useState("");
   const [showInstallHint, setShowInstallHint] = useState(false);
   const [theme, setTheme] = useState("light");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const stored = window.localStorage.getItem("torch-live-theme");
@@ -38,6 +46,11 @@ export default function AppShell({ role, profile, children }) {
 
   useEffect(() => {
     if (!pathname) return;
+
+    setMobileMenuOpen(false);
+    if (moreRef.current) {
+      moreRef.current.open = false;
+    }
 
     fetch("/api/activity", {
       method: "POST",
@@ -68,6 +81,37 @@ export default function AppShell({ role, profile, children }) {
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    function handlePointerDown(event) {
+      const target = event.target;
+      const toggleClicked =
+        target && typeof target.closest === "function" && target.closest(".mobile-menu-toggle");
+      if (moreRef.current && !moreRef.current.contains(event.target)) {
+        moreRef.current.open = false;
+      }
+      if (
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(event.target) &&
+        !toggleClicked
+      ) {
+        setMobileMenuOpen(false);
+      }
+    }
+
+    function handleEscape(event) {
+      if (event.key !== "Escape") return;
+      if (moreRef.current) moreRef.current.open = false;
+      setMobileMenuOpen(false);
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleEscape);
     };
   }, []);
 
@@ -136,6 +180,7 @@ export default function AppShell({ role, profile, children }) {
   }
 
   const secondaryActive = secondaryNavItems.some((item) => isActiveNavItem(item));
+  const urgentItems = (urgentAnnouncements || []).slice(0, 3);
 
   return (
     <main className="app-shell">
@@ -160,6 +205,18 @@ export default function AppShell({ role, profile, children }) {
                 priority
               />
             </div>
+            <button
+              type="button"
+              className={`mobile-menu-toggle ${mobileMenuOpen ? "mobile-menu-toggle-active" : ""}`}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-nav-menu"
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              onClick={() => setMobileMenuOpen((value) => !value)}
+            >
+              <span />
+              <span />
+              <span />
+            </button>
             <div className="topbar-profile">
               <p className="topbar-title">TORCH Live</p>
               <p className="topbar-name">{profile.full_name}</p>
@@ -210,7 +267,7 @@ export default function AppShell({ role, profile, children }) {
             </Link>
           ))}
           {secondaryNavItems.length > 0 ? (
-            <details className={`nav-more ${secondaryActive ? "nav-more-active" : ""}`}>
+            <details ref={moreRef} className={`nav-more ${secondaryActive ? "nav-more-active" : ""}`}>
               <summary className={`nav-link nav-more-summary ${secondaryActive ? "nav-link-active" : ""}`}>
                 More
               </summary>
@@ -220,6 +277,9 @@ export default function AppShell({ role, profile, children }) {
                     key={item.href}
                     href={item.href}
                     className={`nav-more-link ${isActiveNavItem(item) ? "nav-more-link-active" : ""}`}
+                    onClick={() => {
+                      if (moreRef.current) moreRef.current.open = false;
+                    }}
                   >
                     {item.label}
                   </Link>
@@ -228,7 +288,43 @@ export default function AppShell({ role, profile, children }) {
             </details>
           ) : null}
         </nav>
+        <div
+          ref={mobileMenuRef}
+          id="mobile-nav-menu"
+          className={`mobile-nav-panel ${mobileMenuOpen ? "mobile-nav-panel-open" : ""}`}
+          hidden={!mobileMenuOpen}
+        >
+          <div className="mobile-nav-grid">
+            {mobileMenuItems.map((item) => (
+              <Link
+                key={`menu-${item.href}`}
+                href={item.href}
+                className={`mobile-nav-link ${isActiveNavItem(item) ? "mobile-nav-link-active" : ""}`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        </div>
       </header>
+      {urgentItems.length > 0 ? (
+        <section className="urgent-banner" aria-label="Urgent updates">
+          <div className="urgent-banner-label">Urgent Updates</div>
+          <div className="urgent-banner-items">
+            {urgentItems.map((announcement) => (
+              <Link
+                key={announcement.id}
+                href={role === "admin" ? "/admin/announcements" : `/${role}/updates`}
+                className="urgent-banner-item"
+              >
+                <strong>{announcement.title}</strong>
+                <span>{announcement.body}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
       {showInstallHint ? (
         <section className="install-hint surface surface-pad-sm" aria-label="Install helper">
           <p className="install-hint-title">Install TORCH Live for faster access</p>
@@ -262,9 +358,21 @@ export default function AppShell({ role, profile, children }) {
         })}
       </nav>
       <footer className="app-footer">
-        <Link href="/legal/privacy">Privacy</Link>
-        <Link href="/legal/terms">Terms</Link>
-        <Link href="/legal/safety">Safety</Link>
+        <div className="app-footer-help">
+          <strong>Need Help?</strong>
+          <span>
+            Speak with staff or call{" "}
+            <a href={`tel:${SUPPORT_PHONE_RAW}`} className="text-link">
+              {SUPPORT_CONTACT_NAME} at {SUPPORT_PHONE_LABEL}
+            </a>
+            .
+          </span>
+        </div>
+        <div className="app-footer-links">
+          <Link href="/legal/privacy">Privacy</Link>
+          <Link href="/legal/terms">Terms</Link>
+          <Link href="/legal/safety">Safety</Link>
+        </div>
       </footer>
     </main>
   );

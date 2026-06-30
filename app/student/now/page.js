@@ -4,6 +4,7 @@ import {
   formatTimeRange,
   getAnnouncements,
   getCurrentAndNextItem,
+  getResourceCategories,
   getStudentScheduleByDay,
 } from "../../../lib/data";
 import {
@@ -17,6 +18,18 @@ import {
 function eventLabel(item) {
   if (!item) return "No scheduled block";
   return `${formatTimeRange(item.start_time, item.duration_minutes)} - ${item.activity_name}`;
+}
+
+function findSurveyResource(categories) {
+  for (const category of categories || []) {
+    for (const item of category.resource_items || []) {
+      const haystack = `${item.title || ""} ${item.body || ""}`.toLowerCase();
+      if (haystack.includes("survey") || haystack.includes("eval")) {
+        return item;
+      }
+    }
+  }
+  return null;
 }
 
 export const metadata = {
@@ -38,14 +51,17 @@ export default async function StudentNowPage({ searchParams }) {
     { data: scheduleItems, error: scheduleError },
     { data: announcements, error: announcementError },
     { data: guildRow },
+    { data: resourceCategories },
   ] = await Promise.all([
     getStudentScheduleByDay(supabase, profile.program_year, day, { simplify: true }),
     getAnnouncements(supabase, profile.program_year, 3),
     profile.guild_id
       ? supabase.from("guilds").select("name").eq("id", profile.guild_id).single()
       : Promise.resolve({ data: null }),
+    getResourceCategories(supabase, profile.program_year),
   ]);
   const guildName = guildRow?.name ?? null;
+  const surveyResource = findSurveyResource(resourceCategories || []);
   const { current, next } = getCurrentAndNextItem(scheduleItems, {
     track: "student",
     selectedDay: day,
@@ -106,14 +122,19 @@ export default async function StudentNowPage({ searchParams }) {
         )}
       </section>
 
-      <section className="card">
-        <h2>Need Help?</h2>
-        <p className="muted">
-          Speak with any staff member, or call{" "}
-          {process.env.NEXT_PUBLIC_EMERGENCY_CONTACT_NAME || "the TORCH team"} directly:{" "}
-          <a href="tel:+16093006397" className="text-link">(609) 300-6397</a>
-        </p>
-      </section>
+      {surveyResource ? (
+        <section className="card">
+          <h2>Welcome to TORCH</h2>
+          <p className="muted">
+            Start in Resources so you get used to the app flow before program week gets busy.
+          </p>
+          <p>
+            <a href={`/student/resources#resource-${surveyResource.id}`} className="text-link">
+              Open the pre-program survey in Resources
+            </a>
+          </p>
+        </section>
+      ) : null}
 
       <section className="card">
         <h2>Latest Updates</h2>

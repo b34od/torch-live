@@ -11,7 +11,7 @@ export default async function StaffResourcesPage() {
 
   return (
     <section className="card">
-      <h2>Resources & Protocols</h2>
+      <h2>Resources</h2>
       <p className="muted">Operational references for staff and admin.</p>
       {error ? (
         <p className="alert alert-error mt-md">
@@ -31,7 +31,7 @@ export default async function StaffResourcesPage() {
               </h3>
               {category.resource_items?.length ? (
                 category.resource_items.map((item) => (
-                  <div key={item.id} className="resource-item">
+                  <div key={item.id} id={`resource-${item.id}`} className="resource-item">
                     {item.url ? (
                       <strong><a href={item.url} target="_blank" rel="noreferrer noopener" className="text-link">{item.title}</a></strong>
                     ) : (
