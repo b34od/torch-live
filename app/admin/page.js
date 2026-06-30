@@ -139,6 +139,16 @@ export default async function AdminOverviewPage() {
 
   const supportingTools = [
     {
+      href: "/admin/directory",
+      label: "Directory",
+      detail: "See the shared participant directory the way staff do, with room and contact context.",
+    },
+    {
+      href: "/admin/profile",
+      label: "My Info",
+      detail: "Update your own directory visibility, LinkedIn, pronouns, and profile details.",
+    },
+    {
       href: "/admin/resources",
       label: "Resources",
       detail: "Manage handbooks, links, and staff/student resource content.",

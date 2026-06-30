@@ -897,7 +897,7 @@ export default async function AdminUsersPage({ searchParams }) {
       <section className="card">
         <h2>Roster Year</h2>
         <p className="muted">Switch the working year for user imports, edits, and deactivation.</p>
-        <form method="get" className="grid-two roster-year-form mt-md">
+        <form method="get" className="grid-two roster-year-form admin-users-roster-year-form mt-md">
           <div className="field">
             <label className="label" htmlFor="year_filter">
               Program Year
@@ -926,7 +926,7 @@ export default async function AdminUsersPage({ searchParams }) {
             Activity summary data is unavailable until the new tracking migration is applied.
           </p>
         ) : null}
-        <div className="admin-stat-grid mt-md">
+        <div className="admin-stat-grid admin-users-stat-grid mt-md">
           <article className="surface surface-pad">
             <strong>{totalActive}</strong>
             <p>Active accounts</p>

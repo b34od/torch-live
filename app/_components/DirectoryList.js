@@ -21,6 +21,16 @@ export default function DirectoryList({ profiles, showRoom, showSocial = true })
   const teamOptions = [...new Set(profiles.map((p) => p.team_key).filter(Boolean))].sort((a, b) => Number(a) - Number(b) || String(a).localeCompare(String(b)));
   const guildOptions = [...new Set(profiles.map((p) => p.guild_name).filter(Boolean))].sort();
   const hasSpecialty = profiles.some((p) => p.specialty_tag);
+  const sortOptions = [
+    { value: "full_name", label: "Sort: Name" },
+    { value: "role", label: "Sort: Role" },
+    { value: "team_key", label: "Sort: Team" },
+    { value: "guild_name", label: "Sort: Guild" },
+  ];
+
+  if (showRoom) {
+    sortOptions.push({ value: "room_number", label: "Sort: Room" });
+  }
 
   function handleSort(col) {
     if (col === sortCol) {
@@ -101,6 +111,17 @@ export default function DirectoryList({ profiles, showRoom, showSocial = true })
           <option value="student">Students</option>
           <option value="staff">Staff</option>
           <option value="admin">Admins</option>
+        </select>
+        <select className="select select-sm" value={sortCol} onChange={(e) => setSortCol(e.target.value)}>
+          {sortOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <select className="select select-sm" value={sortDir} onChange={(e) => setSortDir(e.target.value)}>
+          <option value="asc">Order: A to Z</option>
+          <option value="desc">Order: Z to A</option>
         </select>
         <select className="select select-sm" value={filterTeam} onChange={(e) => setFilterTeam(e.target.value)}>
           <option value="all">All Teams</option>

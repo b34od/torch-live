@@ -725,6 +725,10 @@ img {
   gap: 1rem;
 }
 
+.content-area > * {
+  min-width: 0;
+}
+
 .install-hint {
   margin-top: 0.95rem;
 }
@@ -844,6 +848,17 @@ img {
 
 .roster-year-submit {
   width: 100%;
+}
+
+.admin-users-roster-year-form,
+.admin-users-roster-year-form > *,
+.admin-users-stat-grid,
+.admin-users-stat-grid > * {
+  min-width: 0;
+}
+
+.admin-users-stat-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
 }
 
 .admin-quick-grid,
@@ -1909,6 +1924,10 @@ img {
     grid-template-columns: minmax(0, 1fr) minmax(180px, 280px);
   }
 
+  .grid-two.admin-users-roster-year-form {
+    grid-template-columns: 1fr;
+  }
+
   .card {
     padding: 1.15rem;
   }
@@ -1925,6 +1944,12 @@ img {
 @media (min-width: 760px) and (max-width: 980px) {
   .roster-year-form {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 1120px) {
+  .grid-two.admin-users-roster-year-form {
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
   }
 }
 
