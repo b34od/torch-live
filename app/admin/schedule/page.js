@@ -1102,27 +1102,13 @@ export default async function AdminSchedulePage({ searchParams }) {
       </section>
 
       {track === "student" && studentPreviewItems.length > 0 ? (
-        <section className="card" id="schedule-student-preview">
-          <h2>Student View Preview</h2>
+        <section className="card student-preview-card" id="schedule-student-preview">
+          <h2>What Students See</h2>
           <p className="muted">
-            This is the simplified schedule presentation students see for the selected day, so admin and staff can verify the shared run-of-show directly.
+            This is exactly how students see the schedule for this day — simplified names, locations, and no staff-only items.
           </p>
-          <ScheduleViewTabs />
-          <div className="schedule-view-tabs mt-md">
-            <button className="schedule-view-tab" data-view="list" data-default="true">List</button>
-            <button className="schedule-view-tab" data-view="timeline">Timeline</button>
-          </div>
-          <div className="schedule-view-panel mt-sm" data-view="list">
+          <div className="mt-sm">
             <ScheduleList items={studentPreviewItems} track="student" groupSplitPairs={true} />
-          </div>
-          <div className="schedule-view-panel" data-view="timeline" hidden>
-            <ScheduleTimeline
-              items={studentPreviewItems}
-              track="student"
-              showNowMarker={false}
-              dayNumber={day}
-              programYear={selectedYear}
-            />
           </div>
         </section>
       ) : null}

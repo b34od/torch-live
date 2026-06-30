@@ -2414,6 +2414,10 @@ img {
   }
 }
 
+.student-preview-card {
+  border-left: 4px solid var(--torch-purple);
+}
+
 /* ─── Student schedule list ─────────────────────────────────── */
 
 .student-schedule-list {
@@ -2693,7 +2697,265 @@ img {
   font-size: 0.85rem;
 }
 
-/* ─── Profile context strip ─────────────────────────────────── */
+/* ─── Student Now page ─────────────────────────────────────── */
+
+.now-hero {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(44, 44, 44, 0.08);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  box-shadow: var(--shadow-soft);
+}
+
+.now-hero-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.now-hero-time {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #626363;
+}
+
+.now-hero-context {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.now-context-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: rgba(113, 60, 151, 0.08);
+  color: #5a3378;
+  border: 1px solid rgba(113, 60, 151, 0.15);
+}
+
+.now-context-chip-link {
+  text-decoration: none;
+}
+
+.now-context-chip-link:hover {
+  background: rgba(113, 60, 151, 0.14);
+}
+
+.now-schedule-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.now-schedule-card {
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 0.8rem;
+  border: 1px solid rgba(44, 44, 44, 0.08);
+  background: rgba(245, 245, 245, 0.6);
+}
+
+.now-schedule-card-active {
+  background: rgba(147, 204, 134, 0.12);
+  border-color: rgba(51, 120, 76, 0.2);
+}
+
+.now-schedule-card-next {
+  background: rgba(238, 183, 95, 0.1);
+  border-color: rgba(184, 114, 0, 0.15);
+}
+
+.now-schedule-card-label {
+  display: block;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #626363;
+  margin-bottom: 0.35rem;
+}
+
+.now-schedule-card-activity {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--torch-neutral-900);
+}
+
+.now-schedule-card-time {
+  margin: 0.2rem 0 0;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  color: #626363;
+}
+
+.now-schedule-card-location {
+  margin: 0.15rem 0 0;
+  font-size: 0.76rem;
+  color: #4f5050;
+}
+
+.now-schedule-card-empty {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #8a8b8b;
+  font-style: italic;
+}
+
+.now-full-schedule-link {
+  display: block;
+  text-align: center;
+  margin-top: 0.65rem;
+  padding: 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--torch-purple);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+}
+
+.now-full-schedule-link:hover {
+  background: rgba(113, 60, 151, 0.06);
+}
+
+.now-survey-card {
+  border-left: 4px solid var(--torch-purple);
+}
+
+.now-survey-button {
+  display: block;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.now-announcement {
+  border: 1px solid rgba(44, 44, 44, 0.08);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 0.85rem;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.now-announcement-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.now-announcement-body {
+  margin: 0.3rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #4f5050;
+}
+
+.now-announcement-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.45rem;
+}
+
+.now-announcement-type {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(113, 60, 151, 0.08);
+  color: #5a3378;
+}
+
+[data-theme="dark"] .now-hero {
+  background: rgba(22, 22, 22, 0.95);
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+[data-theme="dark"] .now-schedule-card {
+  background: rgba(40, 40, 40, 0.6);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .now-schedule-card-active {
+  background: rgba(147, 204, 134, 0.08);
+  border-color: rgba(51, 120, 76, 0.2);
+}
+
+[data-theme="dark"] .now-schedule-card-next {
+  background: rgba(238, 183, 95, 0.06);
+  border-color: rgba(184, 114, 0, 0.15);
+}
+
+[data-theme="dark"] .now-schedule-card-label {
+  color: #a0a1a1;
+}
+
+[data-theme="dark"] .now-schedule-card-time,
+[data-theme="dark"] .now-hero-time {
+  color: #a0a1a1;
+}
+
+[data-theme="dark"] .now-schedule-card-location {
+  color: #b0b1b1;
+}
+
+[data-theme="dark"] .now-schedule-card-empty {
+  color: #a0a1a1;
+}
+
+[data-theme="dark"] .now-context-chip {
+  background: rgba(113, 60, 151, 0.14);
+  border-color: rgba(113, 60, 151, 0.22);
+  color: #c8a0e8;
+}
+
+[data-theme="dark"] .now-announcement {
+  background: rgba(40, 40, 40, 0.5);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .now-announcement-body {
+  color: #b0b1b1;
+}
+
+[data-theme="dark"] .now-announcement-type {
+  background: rgba(113, 60, 151, 0.14);
+  color: #c8a0e8;
+}
+
+[data-theme="dark"] .now-full-schedule-link {
+  color: #c8a0e8;
+}
+
+[data-theme="dark"] .now-survey-card {
+  border-left-color: #8a52b8;
+}
+
+@media (max-width: 540px) {
+  .now-schedule-cards {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .now-schedule-card {
+    padding: 0.7rem 0.75rem;
+  }
+
+  .now-hero {
+    padding: 0.85rem;
+  }
+}
+
+/* ─── Profile context strip (legacy) ──────────────────────────── */
 
 .profile-context-strip {
   padding-top: var(--space-sm);
@@ -2711,7 +2973,6 @@ img {
   font-size: 0.875rem;
   color: var(--color-text-muted);
 }
-
 
 /* ─── Directory header ──────────────────────────────────────── */
 

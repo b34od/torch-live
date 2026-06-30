@@ -71,68 +71,77 @@ export default async function StudentNowPage({ searchParams }) {
 
   return (
     <>
-      {hasProfileContext ? (
-        <section className="card profile-context-strip">
-          <div className="profile-context-items">
-            {profile.team_key ? (
-              <span className="profile-context-item">
-                <span className="schedule-label">Team</span> {profile.team_key}
-              </span>
-            ) : null}
-            {guildName ? (
-              <span className="profile-context-item">
-                <span className="schedule-label">Guild</span>{" "}
-                <a href="/student/guilds" className="text-link">{guildName}</a>
-              </span>
-            ) : null}
-            {profile.room_number ? (
-              <span className="profile-context-item">
-                <span className="schedule-label">Room</span> {profile.room_number}
-              </span>
-            ) : null}
-          </div>
-        </section>
-      ) : null}
-
-      <section className="card">
-        <h2>What&apos;s Happening Now</h2>
-        <p className="muted">
-          Program time: <strong>{currentDayLabel}</strong> · <strong>{currentTimeLabel} ET</strong>
-        </p>
+      <section className="now-hero">
+        <div className="now-hero-header">
+          <p className="now-hero-time">
+            <strong>{currentDayLabel}</strong> · {currentTimeLabel} ET
+          </p>
+          {hasProfileContext ? (
+            <div className="now-hero-context">
+              {profile.team_key ? (
+                <span className="now-context-chip">{profile.team_key}</span>
+              ) : null}
+              {guildName ? (
+                <a href="/student/guilds" className="now-context-chip now-context-chip-link">{guildName}</a>
+              ) : null}
+              {profile.room_number ? (
+                <span className="now-context-chip">Rm {profile.room_number}</span>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
         {!showingCurrentProgramDay ? (
           <p className="alert alert-warn mt-sm">
-            Viewing {dayLabel(day)} schedule while current program day is {currentDayLabel}.
+            Viewing {dayLabel(day)} schedule — current program day is {currentDayLabel}.
           </p>
         ) : null}
         {scheduleError ? (
           <p className="alert alert-error">{scheduleError.message}</p>
         ) : (
-          <div className="grid-two">
-            <article className="surface surface-pad-md">
-              <h3 className="card-subtitle">Current</h3>
-              <p>{eventLabel(current)}</p>
-              {current?.location ? <p className="muted">Location: {current.location}</p> : null}
+          <div className="now-schedule-cards">
+            <article className={`now-schedule-card${current ? " now-schedule-card-active" : ""}`}>
+              <span className="now-schedule-card-label">Now</span>
+              {current ? (
+                <>
+                  <p className="now-schedule-card-activity">{current.activity_name}</p>
+                  <p className="now-schedule-card-time">{formatTimeRange(current.start_time, current.duration_minutes)}</p>
+                  {current.location ? <p className="now-schedule-card-location">{current.location}</p> : null}
+                </>
+              ) : (
+                <p className="now-schedule-card-empty">No scheduled block</p>
+              )}
             </article>
-            <article className="surface surface-pad-md">
-              <h3 className="card-subtitle">Next Up</h3>
-              <p>{eventLabel(next)}</p>
-              {next?.location ? <p className="muted">Location: {next.location}</p> : null}
+            <article className="now-schedule-card now-schedule-card-next">
+              <span className="now-schedule-card-label">Next Up</span>
+              {next ? (
+                <>
+                  <p className="now-schedule-card-activity">{next.activity_name}</p>
+                  <p className="now-schedule-card-time">{formatTimeRange(next.start_time, next.duration_minutes)}</p>
+                  {next.location ? <p className="now-schedule-card-location">{next.location}</p> : null}
+                </>
+              ) : (
+                <p className="now-schedule-card-empty">Nothing else today</p>
+              )}
             </article>
           </div>
         )}
+        <a href="/student/schedule" className="now-full-schedule-link">
+          View full schedule
+        </a>
       </section>
 
       {surveyResource ? (
-        <section className="card">
+        <section className="card now-survey-card">
           <h2>Welcome to TORCH</h2>
           <p className="muted">
-            Start in Resources so you get used to the app flow before program week gets busy.
+            Get familiar with the app before program week.
           </p>
-          <p>
-            <a href={`/student/resources#resource-${surveyResource.id}`} className="text-link">
-              Open the pre-program survey in Resources
-            </a>
-          </p>
+          <a
+            href={`/student/resources#resource-${surveyResource.id}`}
+            className="button button-primary now-survey-button"
+          >
+            Take the Pre-Program Survey
+          </a>
         </section>
       ) : null}
 
@@ -145,13 +154,16 @@ export default async function StudentNowPage({ searchParams }) {
         ) : (
           <div className="stack">
             {announcements.map((announcement) => (
-              <article key={announcement.id} className="surface surface-pad">
-                <strong>{announcement.title}</strong>
-                <p>{announcement.body}</p>
-                <div className="announcement-meta">
+              <article key={announcement.id} className="now-announcement">
+                <div className="now-announcement-header">
+                  <strong>{announcement.title}</strong>
                   {announcement.is_pinned ? <span className="pill pill-admin">Pinned</span> : null}
-                  {announcement.is_push ? <span className="pill pill-staff">Push</span> : null}
-                  {announcement.message_type ? <span className="pill pill-staff">{announcement.message_type}</span> : null}
+                </div>
+                <p className="now-announcement-body">{announcement.body}</p>
+                <div className="now-announcement-meta">
+                  {announcement.message_type ? (
+                    <span className="now-announcement-type">{announcement.message_type}</span>
+                  ) : null}
                   <span className="muted">{formatDateTime(announcement.created_at)}</span>
                 </div>
               </article>
