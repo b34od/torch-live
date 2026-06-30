@@ -1089,11 +1089,16 @@ export default async function AdminSchedulePage({ searchParams }) {
                 Shared student timeline appears here for staff alignment. Edit shared blocks on the Student track; use Staff for Friday and staff-only add-ons.
               </p>
             ) : null}
+            {track === "student" ? (
+              <p className="muted">
+                Showing simplified names and locations — exactly what students see.
+              </p>
+            ) : null}
             <ScheduleTimeline
-              items={sortedItems}
+              items={track === "student" && studentPreviewItems.length > 0 ? studentPreviewItems : sortedItems}
               track={track}
               showNowMarker={false}
-              showConflicts
+              showConflicts={track === "staff"}
               dayNumber={day}
               programYear={selectedYear}
             />
