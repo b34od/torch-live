@@ -2115,7 +2115,7 @@ img {
   }
 
   .app-shell {
-    padding-bottom: 2.5rem;
+    padding-bottom: calc(6.5rem + env(safe-area-inset-bottom));
   }
 }
 
