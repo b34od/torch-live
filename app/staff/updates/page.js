@@ -12,7 +12,7 @@ export default async function StaffUpdatesPage() {
   return (
     <section className="card">
       <h2>Announcements</h2>
-      <p className="muted">All broadcast updates, including staff-targeted messages.</p>
+      <p className="muted">Includes staff-only messages.</p>
       {error ? (
         <p className="alert alert-error mt-md">
           {error.message}

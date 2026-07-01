@@ -12,7 +12,6 @@ export default async function StaffResourcesPage() {
   return (
     <section className="card">
       <h2>Resources</h2>
-      <p className="muted">Operational references for staff and admin.</p>
       {error ? (
         <p className="alert alert-error mt-md">
           {error.message}

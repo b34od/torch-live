@@ -180,9 +180,6 @@ export default async function AdminOverviewPage() {
     <>
       <section className="card">
         <h2>Admin Overview</h2>
-        <p className="muted">
-          Production-week workspace for fast admin actions, cleaner navigation, and adoption visibility for {profile.program_year}.
-        </p>
         <div className="admin-quick-grid mt-md">
           {quickActions.map((item) => (
             <Link key={item.href} href={item.href} className="admin-quick-card surface surface-pad">

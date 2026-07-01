@@ -994,10 +994,6 @@ export default async function AdminSchedulePage({ searchParams }) {
     <>
       <section className="card" id="schedule-controls">
         <h2>Schedule Management</h2>
-        <p className="muted">
-          Manage student and staff schedules by day, with start/end time visibility and timeline
-          interdependency preview.
-        </p>
         {alert ? <p className={alert.className}>{alert.text}</p> : null}
         <form method="get" className="grid-two mt-md">
           <input type="hidden" name="source" value={selectedDraftSource} />

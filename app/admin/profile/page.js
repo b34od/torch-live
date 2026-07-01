@@ -11,9 +11,6 @@ export default async function AdminProfilePage() {
   return (
     <section className="card">
       <h2>My Info</h2>
-      <p className="muted">
-        Control what others see in the directory and keep your admin profile current.
-      </p>
       <ProfileEditForm profile={profile} />
     </section>
   );

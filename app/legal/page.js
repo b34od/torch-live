@@ -9,10 +9,6 @@ export default function LegalIndexPage() {
     <main className="legal-shell">
       <section className="card legal-card">
         <h2>Legal & Safety</h2>
-        <p className="muted">
-          These notices govern use of TORCH Live and set expectations for privacy, communications,
-          and safety-related messaging.
-        </p>
         <div className="stack mt-md">
           <Link href="/legal/privacy" className="day-tab">
             Privacy Notice

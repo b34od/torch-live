@@ -166,9 +166,6 @@ export default async function AdminGuildsPage({ searchParams }) {
       ) : (
         <section className="card">
           <h2>Guild Assignment Board</h2>
-          <p className="muted">
-            Assign students to guilds with team and guild filters, suggestion support, and randomized balance simulation for quick operator review.
-          </p>
           <GuildAssignBoard
             rows={boardData?.rows || []}
             guilds={(guilds || []).filter((g) => g.is_active).map((g) => ({ id: g.id, name: g.name }))}

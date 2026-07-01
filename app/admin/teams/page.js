@@ -46,8 +46,7 @@ export default async function AdminTeamsPage({ searchParams }) {
     <section className="card">
       <h2>Teams — {year}</h2>
       <p className="muted">
-        Read-only roster grouped by team. Assign team numbers in{" "}
-        <a href="/admin/users" className="text-link">Users</a>.{" "}
+        Assign team numbers in <a href="/admin/users" className="text-link">Users</a>.{" "}
         {sortedKeys.length} team{sortedKeys.length !== 1 ? "s" : ""} · {totalStudents} students · {totalStaff} staff
       </p>
 

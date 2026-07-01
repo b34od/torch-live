@@ -912,7 +912,6 @@ export default async function AdminUsersPage({ searchParams }) {
     <>
       <section className="card">
         <h2>Roster Year</h2>
-        <p className="muted">Switch the working year for user imports, edits, and deactivation.</p>
         <form method="get" className="grid-two roster-year-form admin-users-roster-year-form mt-md">
           <div className="field">
             <label className="label" htmlFor="year_filter">

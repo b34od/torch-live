@@ -43,7 +43,6 @@ export default async function StaffSchedulePage({ searchParams }) {
   return (
     <section className="card">
       <h2>Staff Schedule</h2>
-      <p className="muted">Shared run-of-show first, with staff-only context tucked into each item when needed.</p>
       <DayTabs basePath="/staff/schedule" selectedDay={day} days={STAFF_DAY_NUMBERS} />
 
       {error ? (

@@ -12,7 +12,6 @@ export default async function StudentResourcesPage() {
   return (
     <section className="card">
       <h2>Resources</h2>
-      <p className="muted">Program info, campus support details, and frequently asked questions.</p>
       {error ? (
         <p className="alert alert-error mt-md">
           {error.message}

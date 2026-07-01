@@ -37,9 +37,6 @@ export default async function StaffGuildsPage() {
           <div className="guild-board-header">
             <div>
               <h2>Guild Assignment Board</h2>
-              <p className="muted">
-                Focus on live assignments first. Filter by team or guild, use suggestions for balance, then override anything manually.
-              </p>
             </div>
             <span className={`status-pill ${boardResponse.data?.selectionOpen ? "status-pill-good" : "status-pill-warn"}`}>
               Selection {boardResponse.data?.selectionOpen ? "Open" : "Closed"}
@@ -57,7 +54,6 @@ export default async function StaffGuildsPage() {
       {currentGuild ? (
         <section className="card">
           <h2>Your Guild: {currentGuild.name}</h2>
-          <p className="muted">Your assignment is shown here so you can cross-check the live board quickly.</p>
         </section>
       ) : (
         <section className="card">

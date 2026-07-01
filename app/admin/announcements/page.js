@@ -349,7 +349,6 @@ export default async function AdminAnnouncementsPage({ searchParams }) {
     <>
       <section className="card">
         <h2>{editingAnnouncement ? "Edit Announcement" : "Send Announcement"}</h2>
-        <p className="muted">This is the primary communication channel during the program.</p>
         {alert ? <p className={alert.className}>{alert.text}</p> : null}
         <form action={editingAnnouncement ? updateAnnouncement : createAnnouncement} className="stack">
           {editingAnnouncement ? <input type="hidden" name="id" value={editingAnnouncement.id} /> : null}

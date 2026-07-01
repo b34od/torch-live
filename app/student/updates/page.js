@@ -12,7 +12,6 @@ export default async function StudentUpdatesPage() {
   return (
     <section className="card">
       <h2>Announcements</h2>
-      <p className="muted">Live updates from the TORCH admin team.</p>
       {error ? (
         <p className="alert alert-error mt-md">
           {error.message}

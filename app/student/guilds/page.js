@@ -127,7 +127,6 @@ export default async function StudentGuildsPage({ searchParams }) {
       {currentGuild ? (
         <section className="card">
           <h2>Your Assigned Guild: {currentGuild.name}</h2>
-          <p className="muted">This is your current guild assignment for the program.</p>
           <div className="surface surface-pad mt-md">
             <p>{currentGuild.student_description}</p>
           </div>

@@ -133,9 +133,6 @@ export default async function StudentNowPage({ searchParams }) {
       {surveyResource ? (
         <section className="card now-survey-card">
           <h2>Welcome to TORCH</h2>
-          <p className="muted">
-            Get familiar with the app before program week.
-          </p>
           <a
             href={`/student/resources#resource-${surveyResource.id}`}
             className="button button-primary now-survey-button"

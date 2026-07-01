@@ -11,9 +11,6 @@ export default async function StaffProfilePage() {
   return (
     <section className="card">
       <h2>My Info</h2>
-      <p className="muted">
-        Control what others see in the directory.
-      </p>
       <ProfileEditForm profile={profile} />
     </section>
   );

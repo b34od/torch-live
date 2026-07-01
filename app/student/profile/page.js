@@ -11,9 +11,6 @@ export default async function StudentProfilePage() {
   return (
     <section className="card">
       <h2>My Info</h2>
-      <p className="muted">
-        Control what others see in the directory and keep your contact info current.
-      </p>
       <ProfileEditForm profile={profile} />
     </section>
   );
