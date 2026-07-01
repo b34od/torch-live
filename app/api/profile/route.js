@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { getSessionContext } from "../../../lib/auth";
 
 const ALLOWED_BOOLEAN = ["show_social", "show_in_directory"];
-const ALLOWED_TEXT    = ["social_handle", "pronouns", "superpower"];
+const ALLOWED_TEXT    = ["social_handle", "pronouns", "superpower", "full_name"];
 const ALLOWED_ENUM    = { cotl_color: ["blue", "green", "gold", "orange"] };
-const TEXT_MAX        = { social_handle: 120, linkedin_url: 240, pronouns: 60, superpower: 30 };
+const TEXT_MAX        = { social_handle: 120, linkedin_url: 240, pronouns: 60, superpower: 30, full_name: 120 };
 const MAX_TEXT_LENGTH = 120;
 
 function normalizeLinkedInUrl(value) {
@@ -90,6 +90,10 @@ export async function POST(request) {
       }
       updates[key] = value;
     }
+  }
+
+  if ("full_name" in updates && !updates.full_name) {
+    return NextResponse.json({ error: "Name cannot be empty" }, { status: 400 });
   }
 
   if (Object.keys(updates).length === 0) {

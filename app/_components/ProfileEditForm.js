@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 export default function ProfileEditForm({ profile }) {
+  const [fullName,    setFullName]    = useState(profile.full_name ?? "");
   const [showSocial,  setShowSocial]  = useState(profile.show_social  ?? true);
   const [showInDir,   setShowInDir]   = useState(profile.show_in_directory ?? true);
   const [social,      setSocial]      = useState(profile.social_handle ?? "");
@@ -22,6 +23,7 @@ export default function ProfileEditForm({ profile }) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        full_name:         fullName.trim(),
         show_social:       showSocial,
         show_in_directory: showInDir,
         social_handle:     social.trim() || null,
@@ -44,11 +46,16 @@ export default function ProfileEditForm({ profile }) {
   return (
     <form onSubmit={handleSubmit} className="profile-edit-form">
       <div className="field">
-        <label className="label">Name</label>
-        <p className="profile-edit-readonly">{profile.full_name}</p>
-        <p className="muted" style={{ fontSize: "0.78rem", marginTop: "0.15rem" }}>
-          Contact an admin to update your name.
-        </p>
+        <label className="label" htmlFor="pe-name">Name</label>
+        <input
+          id="pe-name"
+          type="text"
+          className="input"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          maxLength={120}
+          required
+        />
       </div>
 
       <div className="field">

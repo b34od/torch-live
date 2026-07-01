@@ -789,13 +789,29 @@ async function removeProgramUser(formData) {
   }
 
   const adminClient = createAdminSupabaseClient();
-  const { error } = await adminClient.auth.admin.deleteUser(userId, true);
 
-  if (error) {
-    redirect(usersPageUrl(selectedYear, { error: error.message }));
+  const { data: target } = await adminClient
+    .from("user_profiles")
+    .select("email")
+    .eq("id", userId)
+    .maybeSingle();
+
+  const { error: profileDeleteError } = await adminClient
+    .from("user_profiles")
+    .delete()
+    .eq("id", userId);
+
+  if (profileDeleteError) {
+    redirect(usersPageUrl(selectedYear, { error: profileDeleteError.message }));
   }
 
-  await auditLog(adminClient, user.id, profile.email, "remove_user", userId, null, { program_year: selectedYear });
+  const { error: authDeleteError } = await adminClient.auth.admin.deleteUser(userId, true);
+
+  if (authDeleteError) {
+    redirect(usersPageUrl(selectedYear, { error: authDeleteError.message }));
+  }
+
+  await auditLog(adminClient, user.id, profile.email, "remove_user", userId, target?.email || null, { program_year: selectedYear });
 
   redirect(usersPageUrl(selectedYear, { removed: "1" }));
 }
