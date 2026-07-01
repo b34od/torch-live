@@ -17,7 +17,7 @@ function rolePillClass(role) {
   return "pill-student";
 }
 
-export default function DirectoryList({ profiles, showRoom, showSocial = true }) {
+export default function DirectoryList({ profiles, showRoom }) {
   const [sortCol, setSortCol] = useState("full_name");
   const [sortDir, setSortDir] = useState("asc");
   const [filterRole, setFilterRole] = useState("all");
@@ -171,7 +171,6 @@ export default function DirectoryList({ profiles, showRoom, showSocial = true })
                     {p.superpower ? <span className="pill pill-superpower">{p.superpower}</span> : null}
                   </p>
                 ) : null}
-                {showSocial && p.social_handle ? <p className="muted">{p.social_handle}</p> : null}
               </div>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.3rem" }}>
                 <span className={`pill ${rolePillClass(p.role)}`}>{p.role}</span>
@@ -203,7 +202,6 @@ export default function DirectoryList({ profiles, showRoom, showSocial = true })
               <SortTh col="team_key" label="Team" />
               <SortTh col="guild_name" label="Guild" />
               {showRoom ? <SortTh col="room_number" label="Room" /> : null}
-              {showSocial ? <th>Social</th> : null}
             </tr>
           </thead>
           <tbody>
@@ -223,12 +221,11 @@ export default function DirectoryList({ profiles, showRoom, showSocial = true })
                 <td>{p.team_key || <span className="muted">—</span>}</td>
                 <td>{p.guild_name || <span className="muted">—</span>}</td>
                 {showRoom ? <td>{p.room_number || <span className="muted">—</span>}</td> : null}
-                {showSocial ? <td>{p.social_handle || <span className="muted">—</span>}</td> : null}
               </tr>
             ))}
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={3 + (hasSpecialty ? 1 : 0) + (showRoom ? 1 : 0) + (showSocial ? 1 : 0) + 1} className="empty">No matches.</td>
+                <td colSpan={3 + (hasSpecialty ? 1 : 0) + (showRoom ? 1 : 0) + 1} className="empty">No matches.</td>
               </tr>
             ) : null}
           </tbody>

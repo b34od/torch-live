@@ -6,7 +6,6 @@ export default function ProfileEditForm({ profile }) {
   const [fullName,    setFullName]    = useState(profile.full_name ?? "");
   const [showSocial,  setShowSocial]  = useState(profile.show_social  ?? true);
   const [showInDir,   setShowInDir]   = useState(profile.show_in_directory ?? true);
-  const [social,      setSocial]      = useState(profile.social_handle ?? "");
   const [linkedIn,    setLinkedIn]    = useState(profile.linkedin_url ?? "");
   const [pronouns,    setPronouns]    = useState(profile.pronouns ?? "");
   const [cotlColor,   setCotlColor]   = useState(profile.cotl_color ?? "");
@@ -26,7 +25,6 @@ export default function ProfileEditForm({ profile }) {
         full_name:         fullName.trim(),
         show_social:       showSocial,
         show_in_directory: showInDir,
-        social_handle:     social.trim() || null,
         linkedin_url:      linkedIn.trim() || null,
         pronouns:          pronouns.trim() || null,
         cotl_color:        cotlColor || null,
@@ -140,22 +138,6 @@ export default function ProfileEditForm({ profile }) {
         </p>
       </div>
 
-      <div className="field">
-        <label className="label" htmlFor="pe-social">Instagram / Social Handle (optional)</label>
-        <input
-          id="pe-social"
-          type="text"
-          className="input"
-          placeholder="@handle"
-          value={social}
-          onChange={(e) => setSocial(e.target.value)}
-          maxLength={120}
-        />
-        <p className="muted" style={{ fontSize: "0.78rem", marginTop: "0.15rem" }}>
-          Shared only with staff and admins when social sharing is turned on.
-        </p>
-      </div>
-
       <fieldset className="profile-edit-privacy">
         <legend className="label">Directory Visibility</legend>
 
@@ -175,7 +157,7 @@ export default function ProfileEditForm({ profile }) {
             onChange={(e) => setShowSocial(e.target.checked)}
             disabled={!showInDir}
           />
-          <span>Show my LinkedIn profile and social info</span>
+          <span>Show my LinkedIn profile</span>
         </label>
       </fieldset>
 

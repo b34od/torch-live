@@ -22,7 +22,7 @@ export default async function AdminDirectoryPage() {
         </Link>
       </div>
       <p className="muted">
-        Review the shared directory with staff-level context, including room assignments and social sharing where users opted in.
+        Review the shared directory with staff-level context, including room assignments.
       </p>
       {error ? (
         <p className="alert alert-error">{error.message}</p>
