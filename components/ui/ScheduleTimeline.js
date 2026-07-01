@@ -331,7 +331,7 @@ export default function ScheduleTimeline({
             const blockTimeFull = formatTimeRange(item.start_time, item.duration_minutes);
             const blockTimeCompact = formatCompactTimeRange(item.start_time, item.duration_minutes);
             const visibleTime = showTime ? blockTimeFull : blockTimeCompact || blockTimeFull;
-            const showLocation = height >= 52 && !laneIsCrowded;
+            const showLocation = height >= 60 && !laneIsCrowded;
             const blockDescription = [blockTitle, blockTimeFull, locationLabel].filter(Boolean).join(" · ");
             const shortLocationLabel =
               locationLabel.length > 20

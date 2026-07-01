@@ -1751,8 +1751,9 @@ img {
   font-weight: 600;
   color: #484949;
   line-height: 1.22;
-  white-space: normal;
-  word-break: break-word;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .timeline-block-meta {
@@ -2235,9 +2236,6 @@ img {
   }
 
   .app-footer {
-    left: 0.75rem;
-    right: 0.75rem;
-    bottom: 0.75rem;
     grid-template-columns: 1fr;
     gap: 0.45rem;
   }
@@ -2289,10 +2287,6 @@ img {
 @media (max-width: 760px) {
   .nav-row {
     display: none;
-  }
-
-  .mobile-nav-panel {
-    display: block;
   }
 
   .bottom-nav {
@@ -2381,6 +2375,16 @@ img {
 
   .schedule-card-list-student .schedule-duration {
     display: inline;
+  }
+
+  .app-footer {
+    position: static;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    z-index: auto;
+    margin-top: 1rem;
+    border-radius: var(--radius-sm);
   }
 }
 
