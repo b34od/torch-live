@@ -79,13 +79,13 @@ export default async function StudentNowPage({ searchParams }) {
           {hasProfileContext ? (
             <div className="now-hero-context">
               {profile.team_key ? (
-                <span className="now-context-chip">{profile.team_key}</span>
+                <span className="now-context-chip now-context-chip-team">Team {profile.team_key}</span>
               ) : null}
               {guildName ? (
-                <a href="/student/guilds" className="now-context-chip now-context-chip-link">{guildName}</a>
+                <a href="/student/guilds" className="now-context-chip now-context-chip-link now-context-chip-guild">{guildName}</a>
               ) : null}
               {profile.room_number ? (
-                <span className="now-context-chip">Room {profile.room_number}</span>
+                <span className="now-context-chip now-context-chip-room">Room {profile.room_number}</span>
               ) : null}
             </div>
           ) : null}

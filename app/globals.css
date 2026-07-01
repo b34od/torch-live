@@ -2286,7 +2286,7 @@ img {
 
 @media (max-width: 760px) {
   .app-shell {
-    padding-bottom: calc(7.4rem + env(safe-area-inset-bottom));
+    padding-bottom: calc(9.25rem + (env(safe-area-inset-bottom) * 2));
   }
 
   .nav-row {
@@ -2772,6 +2772,28 @@ img {
   background: rgba(113, 60, 151, 0.14);
 }
 
+.now-context-chip-team {
+  background: rgba(70, 130, 220, 0.12);
+  color: #1a3a7a;
+  border-color: rgba(70, 130, 220, 0.2);
+}
+
+.now-context-chip-guild {
+  background: rgba(60, 180, 90, 0.14);
+  color: #1a5a30;
+  border-color: rgba(60, 180, 90, 0.22);
+}
+
+.now-context-chip-guild:hover {
+  background: rgba(60, 180, 90, 0.2);
+}
+
+.now-context-chip-room {
+  background: rgba(230, 150, 30, 0.14);
+  color: #7a4500;
+  border-color: rgba(230, 150, 30, 0.22);
+}
+
 .now-schedule-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -2941,6 +2963,28 @@ img {
   color: #c8a0e8;
 }
 
+[data-theme="dark"] .now-context-chip-team {
+  background: rgba(70, 130, 220, 0.18);
+  border-color: rgba(70, 130, 220, 0.3);
+  color: #9cbdf0;
+}
+
+[data-theme="dark"] .now-context-chip-guild {
+  background: rgba(60, 180, 90, 0.18);
+  border-color: rgba(60, 180, 90, 0.3);
+  color: #9ce0b0;
+}
+
+[data-theme="dark"] .now-context-chip-guild:hover {
+  background: rgba(60, 180, 90, 0.26);
+}
+
+[data-theme="dark"] .now-context-chip-room {
+  background: rgba(230, 150, 30, 0.18);
+  border-color: rgba(230, 150, 30, 0.3);
+  color: #f0c080;
+}
+
 [data-theme="dark"] .now-announcement {
   background: rgba(40, 40, 40, 0.5);
   border-color: rgba(255, 255, 255, 0.06);
@@ -2976,25 +3020,6 @@ img {
   .now-hero {
     padding: 0.85rem;
   }
-}
-
-/* ─── Profile context strip (legacy) ──────────────────────────── */
-
-.profile-context-strip {
-  padding-top: var(--space-sm);
-  padding-bottom: var(--space-sm);
-}
-
-.profile-context-items {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-md);
-  align-items: center;
-}
-
-.profile-context-item {
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
 }
 
 /* ─── Directory header ──────────────────────────────────────── */

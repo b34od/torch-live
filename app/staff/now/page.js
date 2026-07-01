@@ -57,23 +57,16 @@ export default async function StaffNowPage({ searchParams }) {
   return (
     <>
       {hasProfileContext ? (
-        <section className="card profile-context-strip">
-          <div className="profile-context-items">
+        <section className="now-hero">
+          <div className="now-hero-context">
             {profile.team_key ? (
-              <span className="profile-context-item">
-                <span className="schedule-label">Team</span> {profile.team_key}
-              </span>
+              <span className="now-context-chip now-context-chip-team">Team {profile.team_key}</span>
             ) : null}
             {guildName ? (
-              <span className="profile-context-item">
-                <span className="schedule-label">Guild</span>{" "}
-                <a href="/staff/guilds" className="text-link">{guildName}</a>
-              </span>
+              <a href="/staff/guilds" className="now-context-chip now-context-chip-link now-context-chip-guild">{guildName}</a>
             ) : null}
             {profile.room_number ? (
-              <span className="profile-context-item">
-                <span className="schedule-label">Room</span> {profile.room_number}
-              </span>
+              <span className="now-context-chip now-context-chip-room">Room {profile.room_number}</span>
             ) : null}
           </div>
         </section>
