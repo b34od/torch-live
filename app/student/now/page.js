@@ -85,7 +85,7 @@ export default async function StudentNowPage({ searchParams }) {
                 <a href="/student/guilds" className="now-context-chip now-context-chip-link">{guildName}</a>
               ) : null}
               {profile.room_number ? (
-                <span className="now-context-chip">Rm {profile.room_number}</span>
+                <span className="now-context-chip">Room {profile.room_number}</span>
               ) : null}
             </div>
           ) : null}

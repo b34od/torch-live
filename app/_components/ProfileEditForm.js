@@ -58,6 +58,18 @@ export default function ProfileEditForm({ profile }) {
         />
       </div>
 
+      {profile.room_number ? (
+        <div className="field">
+          <span className="label">Room</span>
+          <p className="profile-edit-readonly">{profile.room_number}</p>
+          <p className="muted" style={{ fontSize: "0.78rem", marginTop: "0.15rem" }}>
+            {profile.role === "student"
+              ? "Only visible to you. Contact staff if this looks wrong."
+              : "Contact an admin if this looks wrong."}
+          </p>
+        </div>
+      ) : null}
+
       <div className="field">
         <label className="label" htmlFor="pe-pronouns">Pronouns (optional)</label>
         <input
