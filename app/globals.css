@@ -2133,7 +2133,7 @@ img {
 
 @media (max-width: 540px) {
   .app-shell {
-    padding: 0.75rem 0.75rem calc(12.4rem + env(safe-area-inset-bottom));
+    padding: 0.75rem 0.75rem calc(7rem + env(safe-area-inset-bottom));
   }
 
   .topbar {
@@ -2285,6 +2285,10 @@ img {
 }
 
 @media (max-width: 760px) {
+  .app-shell {
+    padding-bottom: calc(7.4rem + env(safe-area-inset-bottom));
+  }
+
   .nav-row {
     display: none;
   }
@@ -2383,8 +2387,23 @@ img {
     right: auto;
     bottom: auto;
     z-index: auto;
-    margin-top: 1rem;
+    margin-top: 0.7rem;
+    padding: 0.56rem 0.72rem;
+    font-size: 0.78rem;
     border-radius: var(--radius-sm);
+  }
+
+  .app-footer-help {
+    gap: 0.08rem;
+  }
+
+  .app-footer-help span {
+    line-height: 1.25;
+  }
+
+  .app-footer-links {
+    font-size: 0.74rem;
+    gap: 0.55rem 0.72rem;
   }
 }
 

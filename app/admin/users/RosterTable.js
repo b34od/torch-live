@@ -10,6 +10,13 @@ const SHORT_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
   minute: "2-digit",
 });
 
+function teamSortValue(value) {
+  const text = String(value || "").trim();
+  if (!text) return Number.POSITIVE_INFINITY;
+  const parsed = Number.parseInt(text.replace(/\D/g, ""), 10);
+  return Number.isFinite(parsed) ? parsed : Number.POSITIVE_INFINITY;
+}
+
 function rolePillClass(role) {
   if (role === "admin") return "pill-admin";
   if (role === "staff") return "pill-staff";
@@ -129,7 +136,12 @@ export default function RosterTable({ profiles, selectedYear, onToggle, onToggle
   const [filterActivation, setFilterActivation] = useState("all");
   const [filterRecent, setFilterRecent] = useState("all");
 
-  const teamOptions = [...new Set(profiles.map((p) => p.team_key).filter(Boolean))].sort();
+  const teamOptions = [...new Set(profiles.map((p) => p.team_key).filter(Boolean))].sort((a, b) => {
+    const aValue = teamSortValue(a);
+    const bValue = teamSortValue(b);
+    if (aValue !== bValue) return aValue - bValue;
+    return String(a).localeCompare(String(b));
+  });
   const guildOptions = [...new Set(profiles.map((p) => p.guild_name).filter(Boolean))].sort();
 
   function handleSort(col) {
@@ -146,6 +158,7 @@ export default function RosterTable({ profiles, selectedYear, onToggle, onToggle
     if (col === "is_active") return p.is_active ? 0 : 1;
     if (col === "show_in_directory") return p.show_in_directory === false ? 1 : 0;
     if (col === "activity") return activitySortValue(p);
+    if (col === "team_key") return teamSortValue(p.team_key);
     return String(p[col] ?? "").toLowerCase();
   }
 

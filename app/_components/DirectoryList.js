@@ -4,6 +4,13 @@ import { useState } from "react";
 
 const ROLE_ORDER = { admin: 0, staff: 1, student: 2 };
 
+function teamSortValue(value) {
+  const text = String(value || "").trim();
+  if (!text) return Number.POSITIVE_INFINITY;
+  const parsed = Number.parseInt(text.replace(/\D/g, ""), 10);
+  return Number.isFinite(parsed) ? parsed : Number.POSITIVE_INFINITY;
+}
+
 function rolePillClass(role) {
   if (role === "admin") return "pill-admin";
   if (role === "staff") return "pill-staff";
@@ -16,10 +23,17 @@ export default function DirectoryList({ profiles, showRoom, showSocial = true })
   const [filterRole, setFilterRole] = useState("all");
   const [filterTeam, setFilterTeam] = useState("all");
   const [filterGuild, setFilterGuild] = useState("all");
+  const [filterSchool, setFilterSchool] = useState("all");
   const [search, setSearch] = useState("");
 
-  const teamOptions = [...new Set(profiles.map((p) => p.team_key).filter(Boolean))].sort((a, b) => Number(a) - Number(b) || String(a).localeCompare(String(b)));
+  const teamOptions = [...new Set(profiles.map((p) => p.team_key).filter(Boolean))].sort((a, b) => {
+    const aValue = teamSortValue(a);
+    const bValue = teamSortValue(b);
+    if (aValue !== bValue) return aValue - bValue;
+    return String(a).localeCompare(String(b));
+  });
   const guildOptions = [...new Set(profiles.map((p) => p.guild_name).filter(Boolean))].sort();
+  const schoolOptions = [...new Set(profiles.map((p) => p.high_school).filter(Boolean))].sort();
   const hasSpecialty = profiles.some((p) => p.specialty_tag);
   const sortOptions = [
     { value: "full_name", label: "Sort: Name" },
@@ -43,6 +57,7 @@ export default function DirectoryList({ profiles, showRoom, showSocial = true })
 
   function getValue(p, col) {
     if (col === "role") return ROLE_ORDER[p.role] ?? 9;
+    if (col === "team_key") return teamSortValue(p.team_key);
     return String(p[col] ?? "").toLowerCase();
   }
 
@@ -51,6 +66,7 @@ export default function DirectoryList({ profiles, showRoom, showSocial = true })
     if (filterRole !== "all" && p.role !== filterRole) return false;
     if (filterTeam !== "all" && p.team_key !== filterTeam) return false;
     if (filterGuild !== "all" && p.guild_name !== filterGuild) return false;
+    if (filterSchool !== "all" && p.high_school !== filterSchool) return false;
     if (q && !p.full_name.toLowerCase().includes(q)) return false;
     return true;
   });
@@ -131,6 +147,12 @@ export default function DirectoryList({ profiles, showRoom, showSocial = true })
           <option value="all">All Guilds</option>
           {guildOptions.map((g) => <option key={g} value={g}>{g}</option>)}
         </select>
+        {schoolOptions.length > 0 && (
+          <select className="select select-sm" value={filterSchool} onChange={(e) => setFilterSchool(e.target.value)}>
+            <option value="all">All Schools</option>
+            {schoolOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        )}
         <span className="muted">
           {rows.length === profiles.length ? `${profiles.length}` : `${rows.length} of ${profiles.length}`}
         </span>
